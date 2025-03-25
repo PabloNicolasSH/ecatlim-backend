@@ -1,48 +1,42 @@
 package org.scoutsdecanarias.ecatlim_backend.entity;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.enums.Role;
 
 import java.util.List;
 
 @Getter
 @Setter
 @Entity
-public class User {
+public class LessonBlock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String name;
-    private String surname;
 
-    private Role role;
+    private Integer lessonBlockId;
 
-    private String password;
+    @Column(length = 1000)
+    private String description;
 
-    private String nif;
-    private String email;
-    private String phone;
+    private Integer hours;
 
-    private String address;
-    private String city;
-    private String country;
-
-    private String census;
+    private boolean convalidable;
 
     @ManyToOne
-    private ScoutGroup scoutGroup;
+    @JoinColumn(name = "module_id")
+    private Module module;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UserLessonBlock> lessonBlocks;
-
-    private boolean deleted;
+    @OneToMany(mappedBy = "lessonBlock", cascade = CascadeType.ALL)
+    private List<UserLessonBlock> userLessonBlocks;
 }
