@@ -1,7 +1,10 @@
 package org.scoutsdecanarias.ecatlim_backend.entity;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,11 +24,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String surname;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false)
     private String password;
 
     private String nif;
@@ -36,7 +45,7 @@ public class User {
     private String city;
     private String country;
 
-    private String census;
+    private Integer census;
 
     @ManyToOne
     private ScoutGroup scoutGroup;
@@ -44,5 +53,5 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserLessonBlock> lessonBlocks;
 
-    private boolean deleted;
+    private boolean enabled = true;
 }

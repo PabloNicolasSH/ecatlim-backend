@@ -22,16 +22,19 @@ public class LessonBlock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private Integer lessonBlockId;
 
-    @Column(length = 1000)
+    @Column(length = 1000, nullable = false)
     private String description;
 
+    @Column(nullable = false)
     private Integer hours;
 
-    private boolean convalidable;
+    private boolean recognizable;
 
     @ManyToOne
     @JoinColumn(name = "module_id")

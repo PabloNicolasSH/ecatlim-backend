@@ -25,12 +25,14 @@ public class Module {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
     private String name;
 
-    @Column(length = 1000)
+    @Column(length = 1000, nullable = false)
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ModuleType type;
 
     private Integer learningHours;
