@@ -1,9 +1,11 @@
 package org.scoutsdecanarias.ecatlim_backend.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 
-public record UserProfileDto(String name, String surname, String email, String phone, Integer census, String nif, String Address, String city, String country, ScoutGroup scoutGroup) {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public record UserProfileDto(String name, String surname, String email, String phone, Integer census, String nif, String address, String city, String country, ScoutGroupDto scoutGroup) {
 
     public static UserProfileDto fromEntity(User user){
         return new UserProfileDto(
@@ -16,7 +18,11 @@ public record UserProfileDto(String name, String surname, String email, String p
                 user.getAddress(),
                 user.getCity(),
                 user.getCountry(),
-                user.getScoutGroup()
+                ScoutGroupDto.fromEntity(user.getScoutGroup())
         );
+    }
+
+    public static List<UserProfileDto> fromCollection(List<User> users){
+        return users.stream().map(UserProfileDto::fromEntity).collect(Collectors.toList());
     }
 }
