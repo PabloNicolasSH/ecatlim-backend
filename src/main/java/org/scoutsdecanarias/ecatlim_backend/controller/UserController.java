@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -28,6 +30,11 @@ public class UserController {
     @GetMapping("/me")
     public UserProfileDto getUserInfo(Principal principal) {
         return UserProfileDto.fromEntity(userService.getUserByEmail(principal.getName()));
+    }
+
+    @GetMapping("/admin/all")
+    public List<UserProfileDto> getUsers() {
+        return UserProfileDto.fromCollection(userService.getUsers());
     }
 
     @PostMapping("/admin/add")
