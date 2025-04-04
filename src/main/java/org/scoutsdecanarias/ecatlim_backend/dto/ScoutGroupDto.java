@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.dto;
 
 import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
