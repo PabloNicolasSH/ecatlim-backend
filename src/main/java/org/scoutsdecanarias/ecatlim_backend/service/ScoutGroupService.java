@@ -22,4 +22,8 @@ public class ScoutGroupService {
     public List<ScoutGroup> getScoutGroupsByProvinceId(int provinceId) {
         return scoutGroupRepository.findAllByProvinceId(provinceId);
     }
+
+    public ScoutGroup getScoutGroupById(int id) {
+        return scoutGroupRepository.findById(id).orElseThrow();
+    }
 }

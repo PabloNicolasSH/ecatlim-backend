@@ -1,11 +1,9 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserProfileDto;
-import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -46,13 +43,13 @@ public class UserController {
     }
 
     @PostMapping("/admin/add")
-    public UserProfileDto addUser(@RequestBody User user) {
+    public UserProfileDto addUser(@RequestBody UserFormDto user) {
         log.info("Adding user: {}", user);
         return UserProfileDto.fromEntity(userService.addUser(user));
     }
 
     @PutMapping("/admin/edit/{id}")
-    public UserProfileDto editUser(@PathVariable Integer id, @RequestBody User user) {
+    public UserProfileDto editUser(@PathVariable Integer id, @RequestBody UserFormDto user) {
         log.info("Updating user: {}", user);
         return UserProfileDto.fromEntity(userService.updateUser(id, user));
     }
