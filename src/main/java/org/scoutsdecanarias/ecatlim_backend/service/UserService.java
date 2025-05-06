@@ -1,19 +1,26 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
+import org.scoutsdecanarias.ecatlim_backend.auth.SecurityUtils;
+import org.scoutsdecanarias.ecatlim_backend.auth.password.ChangePasswordDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
+import org.scoutsdecanarias.ecatlim_backend.exception.EcatlimBadRequestException;
 import org.scoutsdecanarias.ecatlim_backend.exception.UserEmailExists;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class UserService implements UserDetailsService {
 
@@ -118,15 +126,34 @@ public class UserService implements UserDetailsService {
         return userRepository.save(updatedUser);
     }
 
+    public User updateUserMe(UserMeFormDto userMeFormDto) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User me = getUserByEmail(email);
+
+        userRepository.findByEmail(userMeFormDto.email()).ifPresent(foundUser -> {
+            if(!Objects.equals(foundUser.getId(), me.getId())) {
+                throw new UserEmailExists();
+            }
+        });
+
+        me.setName(userMeFormDto.name());
+        me.setSurname(userMeFormDto.surname());
+        me.setEmail(userMeFormDto.email());
+        me.setPhone(userMeFormDto.phone());
+        me.setNif(userMeFormDto.nif());
+        me.setCensus(userMeFormDto.census());
+        me.setAddress(userMeFormDto.address());
+        me.setCity(userMeFormDto.city());
+        me.setCountry(userMeFormDto.country());
+
+        return userRepository.save(me);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), user.isEnabled(),
+        User user = getUserByEmail(email);
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), user.isEnabled(),
                     true, true, true, this.buildAuthorities(user.getRole()));
-        }
-        return null;
     }
 
     private List<GrantedAuthority> buildAuthorities(Role userRole) {

@@ -58,16 +58,13 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/login", "/password/**").permitAll()
                         .requestMatchers("/event/**").hasAnyAuthority("ADMIN", "EVENT_DIRECTOR", "TRAINER")
                         .requestMatchers("/*/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/*/management/**").hasAnyAuthority("ADMIN", "MANAGEMENT")
-                        .anyRequest().authenticated()
+                        .anyRequest().hasAnyAuthority("ADMIN", "MANAGEMENT", "TRAINER", "EVENT_DIRECTOR", "STUDENT")
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                );
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
