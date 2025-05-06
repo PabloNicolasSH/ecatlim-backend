@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.service.PasswordResetService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,5 +33,11 @@ public class PasswordRequestController {
     public void resetPassword(@Valid @RequestBody ResetPasswordDto passwordDto) {
         log.info("METHOD resetPassword()");
         passwordResetService.resetPassword(passwordDto);
+    }
+
+    @PostMapping("/change-password")
+    public void changePassword(@RequestBody ChangePasswordDto changePasswordDto) {
+        log.info("METHOD changePassword() - Changing password of: {}", SecurityContextHolder.getContext().getAuthentication().getName());
+        passwordResetService.changePassword(changePasswordDto);
     }
 }
