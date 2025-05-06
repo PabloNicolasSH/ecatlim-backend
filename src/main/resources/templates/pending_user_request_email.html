@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Alta Recibida - ECATLIM</title>
+</head>
+<body style="font-family: Arial, sans-serif;background-color: #f7f9fc;color: #333;text-align: center;padding: 30px;margin: 0;">
+
+<div class="container" style="max-width: 600px;margin: 0 auto;background: #fff;border-radius: 8px;padding: 30px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <img src="" alt="logo">
+    <h2>¡Hemos recibido tu solicitud de alta en el Aula Virtual de la ECATLIM!</h2>
+
+    <p th:text="'Gracias por tu interés, ' + ${name} + '. Hemos recibido correctamente tu solicitud y estamos trabajando en ella.'"></p>
+
+    <div style="text-align: start; margin-top: 20px;">
+        <p><strong>Datos proporcionados:</strong></p>
+        <ul>
+            <li><b>Nombre:</b> <span th:text="${name}"></span></li>
+            <li><b>Email:</b> <span th:text="${email}"></span></li>
+        </ul>
+    </div>
+
+    <p style="margin-top: 20px;">En breve, nuestro equipo de formación revisará la solicitud y se pondrá en contacto contigo a través del correo electrónico proporcionado.</p>
+
+    <div class="info" style="margin-top: 30px; text-align: left;">
+        <div class="feature-item" style="display: flex;align-items: center;margin-bottom: 15px;">
+            <img src="" alt="Icono Proceso" style="width: 40px;height: 40px;margin-right: 15px;">
+            <div>
+                <strong>Proceso de verificación</strong><br>
+                Nuestro equipo validará tus datos y te dará acceso en cuanto sea posible.
+            </div>
+        </div>
+
+        <div class="feature-item" style="display: flex;align-items: center;margin-bottom: 15px;">
+            <img src="" alt="Icono Soporte" style="width: 40px;height: 40px;margin-right: 15px;">
+            <div>
+                <strong>¿Dudas o problemas?</strong><br>
+                Puedes escribirnos en cualquier momento si tienes alguna consulta.
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <p>Para cualquier duda puedes escribir al correo <b><a href="mailto:ecatlim@scoutsdecanarias.org">ecatlim@scoutsdecanarias.org</a></b></p>
+        </div>
+    </div>
+
+    <div class="footer" style="font-size: 12px;color: #7C9EC2;margin-top: 30px; text-align: start">
+        <p style="margin-bottom: 0">#ECATLIM</p>
+        <p style="margin-top: 0">#ESCUELA CANARIA de ANIMACIÓN en el TIEMPO LIBRE INSIGNIA de MADERA</p>
+    </div>
+</div>
+</body>
+</html>

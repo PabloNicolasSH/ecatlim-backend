@@ -47,6 +47,14 @@ public class EmailService {
         emailSender.send(message);
     }
 
+    public void sendPendingUserCreatedEmail(String to, String name) {
+        String html = emailTemplateService.loadPendingUserCreatedEmailTemplate(name, to);
+        MimeMessage message = this.createEmailWithHtml(to, "Aula Virtual ECATLIM - Solicitud de Alta Recibida", html);
+
+        assert message != null;
+        emailSender.send(message);
+    }
+
     private MimeMessage createSimpleEmail(String to, String subject, String body) {
         try {
             MimeMessage mimeMessage = emailSender.createMimeMessage();

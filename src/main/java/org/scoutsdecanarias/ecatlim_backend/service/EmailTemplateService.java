@@ -31,4 +31,12 @@ public class EmailTemplateService {
 
         return templateEngine.process("recover_password_email.html", context);
     }
+
+    public String loadPendingUserCreatedEmailTemplate(String name, String email) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("email", email);
+
+        return templateEngine.process("pending_user_request_email.html", context);
+    }
 }
