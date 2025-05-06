@@ -24,4 +24,11 @@ public class EmailTemplateService {
 
         return templateEngine.process("welcome_email.html", context);
     }
+
+    public String loadRecoverPasswordTemplate(String resetLink) {
+        Context context = new Context();
+        context.setVariable("resetLink", resetLink);
+
+        return templateEngine.process("recover_password_email.html", context);
+    }
 }

@@ -24,12 +24,43 @@ public class EmailService {
         this.emailTemplateService = emailTemplateService;
     }
 
+    public void sendEmail(String to, String subject, String body){
+        MimeMessage message = this.createSimpleEmail(to, subject, body);
+
+        assert message != null;
+        emailSender.send(message);
+    }
+
     public void sendWelcomeEmail(String to, String name, String email, String password) {
         String html = emailTemplateService.loadWelcomeEmailTemplate(name, email, password);
         MimeMessage message = this.createEmailWithHtml(to, "Bienvenida a la ECATLIM", html);
 
         assert message != null;
         emailSender.send(message);
+    }
+
+    public void sendRecoverPasswordEmail(String to, String resetLink) {
+        String html = emailTemplateService.loadRecoverPasswordTemplate(resetLink);
+        MimeMessage message = this.createEmailWithHtml(to, "Aula Virtual ECATLIM - Restablecer Contraseña", html);
+
+        assert message != null;
+        emailSender.send(message);
+    }
+
+    private MimeMessage createSimpleEmail(String to, String subject, String body) {
+        try {
+            MimeMessage mimeMessage = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body);
+
+            return mimeMessage;
+        } catch (MessagingException e) {
+            log.error(e.getMessage());
+        }
+        return null;
     }
 
     private MimeMessage createEmailWithHtml(String to, String subject, String htmlContent) {
