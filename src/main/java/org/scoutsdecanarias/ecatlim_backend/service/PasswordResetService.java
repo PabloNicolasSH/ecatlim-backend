@@ -51,7 +51,7 @@ public class PasswordResetService {
     }
 
     private void sendPasswordResetEmail(String email, String token) {
-        String resetLink = webPageLink + "/reset-password?token=" + token;
+        String resetLink = webPageLink + "/resetear-contraseña?token=" + token;
         emailService.sendRecoverPasswordEmail(email, resetLink);
     }
 

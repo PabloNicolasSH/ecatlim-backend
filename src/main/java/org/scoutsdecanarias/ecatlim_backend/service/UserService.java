@@ -4,14 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
-import org.scoutsdecanarias.ecatlim_backend.auth.SecurityUtils;
-import org.scoutsdecanarias.ecatlim_backend.auth.password.ChangePasswordDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.exception.EcatlimBadRequestException;
-import org.scoutsdecanarias.ecatlim_backend.exception.UserEmailExists;
+import org.scoutsdecanarias.ecatlim_backend.exception.UserEmailExistsException;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -72,7 +67,7 @@ public class UserService implements UserDetailsService {
     public User addUser(UserFormDto user) {
 
         if (userRepository.findByEmail(user.email()).isPresent()) {
-            throw new UserEmailExists();
+            throw new UserEmailExistsException();
         }
 
         User newUser = new User();
@@ -105,7 +100,7 @@ public class UserService implements UserDetailsService {
 
         if (userRepository.findByEmail(user.email())
                 .map(foundUser -> !Objects.equals(foundUser.getId(), id)).orElse(false)) {
-            throw new UserEmailExists();
+            throw new UserEmailExistsException();
         }
 
         updatedUser.setName(user.name());
@@ -132,7 +127,7 @@ public class UserService implements UserDetailsService {
 
         userRepository.findByEmail(userMeFormDto.email()).ifPresent(foundUser -> {
             if(!Objects.equals(foundUser.getId(), me.getId())) {
-                throw new UserEmailExists();
+                throw new UserEmailExistsException();
             }
         });
 

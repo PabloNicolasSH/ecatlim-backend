@@ -58,7 +58,7 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/auth/login", "/password/**").permitAll()
+                        .requestMatchers("/auth/login", "/password/**", "/scout-group/all", "/pending-user/request").permitAll()
                         .requestMatchers("/event/**").hasAnyAuthority("ADMIN", "EVENT_DIRECTOR", "TRAINER")
                         .requestMatchers("/*/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/*/management/**").hasAnyAuthority("ADMIN", "MANAGEMENT")
