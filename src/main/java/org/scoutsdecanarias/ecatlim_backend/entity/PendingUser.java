@@ -26,8 +26,9 @@ public class PendingUser {
     @Column(nullable = false)
     private String email;
 
+    @Column(nullable = false)
+    private String nif;
+
     @ManyToOne
     private ScoutGroup scoutGroup;
-
-    private boolean accepted = false;
 }

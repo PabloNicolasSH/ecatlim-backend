@@ -9,19 +9,21 @@
 
 <div class="container" style="max-width: 600px;margin: 0 auto;background: #fff;border-radius: 8px;padding: 30px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <img src="" alt="logo">
-    <h2>¡Hemos recibido tu solicitud de alta en el Aula Virtual de la ECATLIM!</h2>
+    <h2>¡Hemos recibido tu solicitud de alta en el <br> Aula Virtual de la ECATLIM!</h2>
 
     <p th:text="'Gracias por tu interés, ' + ${name} + '. Hemos recibido correctamente tu solicitud y estamos trabajando en ella.'"></p>
 
     <div style="text-align: start; margin-top: 20px;">
         <p><strong>Datos proporcionados:</strong></p>
         <ul>
-            <li><b>Nombre:</b> <span th:text="${name}"></span></li>
+            <li><b>Nombre:</b> <span th:text="${name} "></span> <span th:text="${surname}"></span></li>
+            <li><b>DNI/Documento de identificación:</b> <span th:text="${nif}"></span></li>
+            <li><b>Grupo Scout de procedencia:</b> <span th:text="${scoutGroup}"></span></li>
             <li><b>Email:</b> <span th:text="${email}"></span></li>
         </ul>
     </div>
 
-    <p style="margin-top: 20px;">En breve, nuestro equipo de formación revisará la solicitud y se pondrá en contacto contigo a través del correo electrónico proporcionado.</p>
+    <p style="margin-top: 20px;">En breve, nuestro equipo de formación revisará la solicitud y le llegará un correo electrónico con la decisión tomada sobre su solicitud.</p>
 
     <div class="info" style="margin-top: 30px; text-align: left;">
         <div class="feature-item" style="display: flex;align-items: center;margin-bottom: 15px;">

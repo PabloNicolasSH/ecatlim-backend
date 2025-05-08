@@ -3,6 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -47,8 +48,8 @@ public class EmailService {
         emailSender.send(message);
     }
 
-    public void sendPendingUserCreatedEmail(String to, String name) {
-        String html = emailTemplateService.loadPendingUserCreatedEmailTemplate(name, to);
+    public void sendPendingUserCreatedEmail(String to, String name, String surname, String nif, ScoutGroup scoutGroup) {
+        String html = emailTemplateService.loadPendingUserCreatedEmailTemplate(name, surname, nif, scoutGroup, to);
         MimeMessage message = this.createEmailWithHtml(to, "Aula Virtual ECATLIM - Solicitud de Alta Recibida", html);
 
         assert message != null;

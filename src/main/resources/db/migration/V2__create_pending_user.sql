@@ -4,8 +4,8 @@ CREATE TABLE pending_user
     name           VARCHAR(255) NOT NULL,
     surname        VARCHAR(255) NOT NULL,
     email          VARCHAR(255) NOT NULL,
+    nif            VARCHAR(255) NOT NULL,
     scout_group_id INT          NULL,
-    accepted       BIT(1)       NOT NULL,
     CONSTRAINT pk_pendinguser PRIMARY KEY (id)
 );
 

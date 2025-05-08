@@ -1,6 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -32,11 +33,18 @@ public class EmailTemplateService {
         return templateEngine.process("recover_password_email.html", context);
     }
 
-    public String loadPendingUserCreatedEmailTemplate(String name, String email) {
+    public String loadPendingUserCreatedEmailTemplate(String name, String surname, String nif, ScoutGroup scoutGroup, String email) {
         Context context = new Context();
         context.setVariable("name", name);
+        context.setVariable("surname", surname);
+        context.setVariable("nif", nif);
+        context.setVariable("scoutGroup", generateScoutGroupString(scoutGroup));
         context.setVariable("email", email);
 
         return templateEngine.process("pending_user_request_email.html", context);
+    }
+
+    private String generateScoutGroupString(ScoutGroup scoutGroup){
+        return scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
     }
 }
