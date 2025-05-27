@@ -9,26 +9,25 @@ import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
-public class UserLessonBlock {
+public class EducationSession {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    private LessonBlock lessonBlock;
+    private Integer hours;
+
+    private String title;
+
+    private String description;
 
     @ManyToOne
-    private User user;
+    private User educator;
 
-    private boolean completed;
-
-    private Date enrollmentDate;
-
-    @ManyToOne
-    private Event event;
+    @OneToMany
+    private List<Activity> activities;
 }

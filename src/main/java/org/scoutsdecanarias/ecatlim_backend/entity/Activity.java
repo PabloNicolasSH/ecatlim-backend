@@ -4,31 +4,23 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Date;
+import org.scoutsdecanarias.ecatlim_backend.enums.ActivityType;
 
 @Getter
 @Setter
 @Entity
-public class UserLessonBlock {
+public class Activity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    private LessonBlock lessonBlock;
+    private String title;
 
-    @ManyToOne
-    private User user;
+    private String description;
 
-    private boolean completed;
+    private ActivityType activityType;
 
-    private Date enrollmentDate;
-
-    @ManyToOne
-    private Event event;
+    private Boolean isOptional = false;
 }
