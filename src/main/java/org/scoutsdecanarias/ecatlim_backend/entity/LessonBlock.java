@@ -32,7 +32,10 @@ public class LessonBlock {
     private String description;
 
     @Column(nullable = false)
-    private Integer hours;
+    private Integer onlineHours;
+
+    @Column(nullable = false)
+    private Integer contactHours;
 
     private boolean recognizable;
 
