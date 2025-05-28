@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,15 @@ public class EducationStageService {
         return educationStageRepository.findEducationStageById(id);
     }
 
-    public EducationStage createEducationStage(EducationStage educationStage) {
+    public EducationStage createEducationStage(EducationStageFormDto educationStageFormDto) {
+
+        EducationStage educationStage = new EducationStage();
+        educationStage.setName(educationStageFormDto.name());
+        educationStage.setCode(educationStageFormDto.code());
+        educationStage.setDescription(educationStageFormDto.description());
+        educationStage.setPreviousStageRequired(educationStageFormDto.previousStageRequired());
+        educationStage.setPreviousStage(this.getEducationStage(educationStageFormDto.previousStageId()));
+
         return educationStageRepository.save(educationStage);
     }
 
