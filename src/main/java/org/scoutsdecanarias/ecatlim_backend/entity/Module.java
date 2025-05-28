@@ -35,7 +35,11 @@ public class Module {
     @Column(nullable = false)
     private ModuleType type;
 
-    private Integer learningHours;
+    @Column(nullable = false)
+    private Integer onlineHours;
+
+    @Column(nullable = false)
+    private Integer contactHours;
 
     @ManyToOne
     @JoinColumn(name = "education_stage_id")
