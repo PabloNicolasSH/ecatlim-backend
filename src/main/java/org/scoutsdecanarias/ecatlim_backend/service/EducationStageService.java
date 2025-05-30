@@ -30,6 +30,11 @@ public class EducationStageService {
         educationStage.setName(educationStageFormDto.name());
         educationStage.setCode(educationStageFormDto.code());
         educationStage.setDescription(educationStageFormDto.description());
+
+        educationStage.setOnlineHours(educationStageFormDto.onlineHours());
+        educationStage.setContactHours(educationStageFormDto.contactHours());
+        educationStage.setPracticalHours(educationStageFormDto.practicalHours());
+
         educationStage.setPreviousStageRequired(educationStageFormDto.previousStageRequired());
         educationStage.setPreviousStage(this.getEducationStage(educationStageFormDto.previousStageId()));
 
@@ -43,6 +48,13 @@ public class EducationStageService {
         educationStageToUpdate.setDescription(educationStage.getDescription());
         educationStageToUpdate.setCode(educationStage.getCode());
         educationStageToUpdate.setModules(educationStage.getModules());
+
+        educationStageToUpdate.setOnlineHours(educationStage.getOnlineHours());
+        educationStageToUpdate.setContactHours(educationStage.getContactHours());
+        educationStageToUpdate.setPracticalHours(educationStage.getPracticalHours());
+
+        educationStageToUpdate.setPreviousStageRequired(educationStage.isPreviousStageRequired());
+        educationStageToUpdate.setPreviousStage(this.getEducationStage(educationStage.getPreviousStage().getId()));
 
         return educationStageRepository.save(educationStageToUpdate);
     }

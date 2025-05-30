@@ -1,6 +1,5 @@
 package org.scoutsdecanarias.ecatlim_backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +11,7 @@ import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -31,8 +31,17 @@ public class EducationStage {
     @Column(length = 1000, nullable = false)
     private String description;
 
+    @Column(nullable = false)
+    private Integer onlineHours;
+
+    @Column(nullable = false)
+    private Integer contactHours;
+
+    @Column(nullable = false)
+    private Integer practicalHours;
+
     @OneToMany(mappedBy = "educationStage", cascade = CascadeType.ALL)
-    private List<Module> modules;
+    private List<Module> modules = new ArrayList<>();
 
     private boolean previousStageRequired;
 

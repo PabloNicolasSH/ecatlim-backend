@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -46,5 +47,5 @@ public class Module {
     private EducationStage educationStage;
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL)
-    private List<LessonBlock> lessonBlocks;
+    private List<LessonBlock> lessonBlocks = new ArrayList<>();
 }
