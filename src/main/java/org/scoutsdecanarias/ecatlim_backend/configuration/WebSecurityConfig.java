@@ -59,7 +59,7 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/auth/login", "/password/**", "/scout-group/all", "/pending-user/request").permitAll()
-                        .requestMatchers("/event/**").hasAnyAuthority("ADMIN", "EVENT_DIRECTOR", "TRAINER")
+                        .requestMatchers("/event/**").hasAnyAuthority("ADMIN", "MANAGEMENT", "EVENT_DIRECTOR")
                         .requestMatchers("/*/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/*/management/**").hasAnyAuthority("ADMIN", "MANAGEMENT")
                         .anyRequest().hasAnyAuthority("ADMIN", "MANAGEMENT", "TRAINER", "EVENT_DIRECTOR", "STUDENT")

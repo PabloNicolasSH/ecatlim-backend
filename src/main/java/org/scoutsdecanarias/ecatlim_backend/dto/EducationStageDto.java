@@ -4,7 +4,6 @@ import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.Module;
 import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
