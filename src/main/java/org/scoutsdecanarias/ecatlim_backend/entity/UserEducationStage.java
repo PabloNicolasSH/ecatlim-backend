@@ -5,7 +5,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,21 +13,18 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-public class UserLessonBlock {
+public class UserEducationStage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne
-    private LessonBlock lessonBlock;
-
-    @ManyToOne
     private User user;
 
-    private boolean completed = false;
+    @ManyToOne
+    private EducationStage educationStage;
 
     private Date enrollmentDate;
 
-    @ManyToOne
-    private Event event;
+    private boolean completed = false;
 }

@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,26 +10,28 @@ import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
-public class UserLessonBlock {
+public class EducationSession {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    private LessonBlock lessonBlock;
+    @Column(nullable = false)
+    private Integer hours;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private String description;
 
     @ManyToOne
-    private User user;
+    private User educator;
 
-    private boolean completed = false;
-
-    private Date enrollmentDate;
-
-    @ManyToOne
-    private Event event;
+    @OneToMany
+    private List<Activity> activities;
 }

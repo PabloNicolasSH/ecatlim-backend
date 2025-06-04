@@ -7,10 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -44,4 +46,7 @@ public class Event {
 
     @Column(nullable = false)
     private String organizer;
+
+    @OneToMany
+    private List<EducationSession> educationSessions;
 }

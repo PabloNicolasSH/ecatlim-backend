@@ -29,6 +29,9 @@ public class ScoutGroup {
     @Column(nullable = false)
     private int groupNumber;
 
+    @Column(nullable = false)
+    private String email;
+
     @OneToMany(mappedBy = "scoutGroup")
     private List<User> groupMembers;
 }

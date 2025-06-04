@@ -5,7 +5,7 @@ import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record ScoutGroupDto(Integer id, String name, int provinceId, int groupNumber) {
+public record ScoutGroupDto(Integer id, String name, int provinceId, int groupNumber, String email) {
 
     public static ScoutGroupDto fromEntity(ScoutGroup scoutGroup) {
         if (scoutGroup == null) return null;
@@ -13,7 +13,8 @@ public record ScoutGroupDto(Integer id, String name, int provinceId, int groupNu
                 scoutGroup.getId(),
                 scoutGroup.getName(),
                 scoutGroup.getProvinceId(),
-                scoutGroup.getGroupNumber()
+                scoutGroup.getGroupNumber(),
+                scoutGroup.getEmail()
         );
     }
 
