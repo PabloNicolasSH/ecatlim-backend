@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.security.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -26,5 +27,5 @@ public class ChatMessage {
 
     private String message;
 
-    private Timestamp timestamp;
+    private LocalDateTime timestamp;
 }
