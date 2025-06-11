@@ -4,12 +4,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.security.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Getter
 @Setter
@@ -23,9 +25,18 @@ public class ChatMessage {
     private User from;
 
     @ManyToOne
-    private User to;
+    @JoinColumn(name = "chat_id", nullable = false)
+    private Chat chat;
 
     private String message;
 
-    private LocalDateTime timestamp;
+    private ZonedDateTime timestamp;
+
+    private ZonedDateTime asReadAt;
+
+    private boolean isRead = false;
+
+    private boolean isDeleted = false;
+
+    private boolean isEdited = false;
 }
