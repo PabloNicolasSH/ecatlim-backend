@@ -60,6 +60,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/event/**").hasAnyAuthority("ADMIN", "MANAGEMENT", "EVENT_DIRECTOR")
                         .requestMatchers("/*/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/*/management/**").hasAnyAuthority("ADMIN", "MANAGEMENT")
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().hasAnyAuthority("ADMIN", "MANAGEMENT", "TRAINER", "EVENT_DIRECTOR", "STUDENT")
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

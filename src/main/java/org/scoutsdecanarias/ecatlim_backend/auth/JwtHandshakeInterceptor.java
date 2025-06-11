@@ -31,7 +31,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             }
         }
 
-        return true;
+        return false;
     }
 
     @Override
