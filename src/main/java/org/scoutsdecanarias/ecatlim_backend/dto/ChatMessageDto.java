@@ -10,7 +10,7 @@ public record ChatMessageDto(
         Integer chatId,
         String message,
         String timestamp,
-        boolean read
+        boolean isRead
 ) {
     public static ChatMessageDto fromEntity(ChatMessage chatMessage) {
         return new ChatMessageDto(

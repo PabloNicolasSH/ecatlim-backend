@@ -1,5 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
+import jakarta.transaction.Transactional;
+import org.scoutsdecanarias.ecatlim_backend.dto.ChatDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Chat;
 import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
@@ -14,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Date;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,9 +68,16 @@ public class ChatService {
         return chatMessageRepository.findByChat(chat, pageable);
     }
 
-    public List<Chat> getAllMyChats(){
+    public List<ChatDto> getAllMyChats(){
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return chatRepository.findAllByMemberEmail(email);
+        List<Chat> chats = chatRepository.findAllByMemberEmail(email);
+
+        return chats.stream()
+                .map(chat -> {
+                    ChatMessage lastMessage = chatMessageRepository.findTopByChatOrderByTimestampDesc(chat);
+                    return ChatDto.fromEntity(chat, lastMessage);
+                })
+                .toList();
     }
 
     public Chat getChatById(Integer id) {
@@ -88,16 +96,6 @@ public class ChatService {
         chatRepository.save(chat);
     }
 
-    public void updateChat(Chat chat){
-        Chat chatToUpdate = chatRepository.findById(chat.getId()).orElseThrow();
-
-        chatToUpdate.setChatDescription(chat.getChatDescription());
-        chatToUpdate.setChatName(chat.getChatName());
-        chatToUpdate.setChatMembers(chat.getChatMembers());
-
-        chatRepository.save(chat);
-    }
-
     public void deleteChat(Chat chat){
         chatRepository.delete(chat);
     }
@@ -109,5 +107,19 @@ public class ChatService {
                     "The user " + email + " doesn't belong to chat " + chatId
             );
         }
+    }
+
+    @Transactional
+    public void markChatAsRead(Integer chatId) {
+        User user = userService.getUserByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
+        Chat chat = chatRepository.findById(chatId).orElseThrow();
+
+        chatMessageRepository.markMessagesAsReadForUser(
+                chat,
+                user,
+                ZonedDateTime.now()
+        );
     }
 }

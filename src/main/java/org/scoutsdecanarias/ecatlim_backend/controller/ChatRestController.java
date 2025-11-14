@@ -53,21 +53,10 @@ public class ChatRestController {
         return ChatMessageDto.fromCollection(pageResult.getContent());
     }
 
-    @GetMapping("/{id}")
-    public void getChat(@PathVariable Integer id, Principal principal) {
-        String email = principal.getName();
-        log.info("METHOD getMessages() - User {} requests chat {}", email, id);
-
-        chatService.assertMember(id, email);
-
-        Chat chat = chatService.getChatById(id);
-        //return ChatMessageDto.fromCollection(chatService.getChatHistory(chat));
-    }
-
     @GetMapping("/allMyChats")
     public List<ChatDto> getAllMyChats(Principal principal) {
         log.info("Method getAllMyChats() - Getting all chats for {}", principal.getName());
-        return ChatDto.fromCollection(chatService.getAllMyChats());
+        return chatService.getAllMyChats();
     }
 
     @GetMapping("/unread-chats")
@@ -81,5 +70,11 @@ public class ChatRestController {
     public void addChat(@RequestBody Chat chat) {
         log.info("METHOD addChat() - Adding new chat");
         chatService.saveChat(chat);
+    }
+
+    @PostMapping("/{id}/mark-read")
+    public void markRead(@PathVariable Integer id) {
+        log.info("METHOD markRead() - Marking chat {} as read", id);
+        chatService.markChatAsRead(id);
     }
 }
