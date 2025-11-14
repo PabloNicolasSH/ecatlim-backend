@@ -43,7 +43,7 @@ public class AuthController {
         User user = userRepository.findByEmail(request.getUsername()).orElse(null);
 
         assert user != null;
-        return ResponseEntity.ok(new AuthResponse(token, user.getName(), user.getSurname(), user.getEmail(), user.getRole()));
+        return ResponseEntity.ok(new AuthResponse(token, user.getName(), user.getSurname(), user.getEmail(), user.getRole(), user.getId()));
     }
 
     @Data
@@ -54,5 +54,6 @@ public class AuthController {
         private String surname;
         private String email;
         private Role role;
+        private Integer id;
     }
 }
