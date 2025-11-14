@@ -4,17 +4,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.dto.ChatDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.ChatMessageDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Chat;
+import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.repository.ChatRepository;
 import org.scoutsdecanarias.ecatlim_backend.service.ChatService;
 import org.scoutsdecanarias.ecatlim_backend.service.UserService;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
@@ -36,18 +38,35 @@ public class ChatRestController {
         this.userService = userService;
     }
 
+
+    @GetMapping("/{id}/messages")
+    public List<ChatMessageDto> getChatMessages(
+            @PathVariable Integer id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size
+    ) {
+        log.info("METHOD getChatMessages() - chat {} page {} size {}", id, page, size);
+
+        Chat chat = chatRepository.getChatById(id);
+        Page<ChatMessage> pageResult = chatService.getChatHistoryPage(chat, page, size);
+
+        return ChatMessageDto.fromCollection(pageResult.getContent());
+    }
+
     @GetMapping("/{id}")
-    public List<ChatMessageDto> getChat(@PathVariable String id, Principal principal) {
-        log.info("METHOD getMessages() - All messages from or to {} got", principal.getName());
+    public void getChat(@PathVariable Integer id, Principal principal) {
+        String email = principal.getName();
+        log.info("METHOD getMessages() - User {} requests chat {}", email, id);
 
-        Chat chat = chatRepository.getChatById(Integer.valueOf(id));
+        chatService.assertMember(id, email);
 
-        return ChatMessageDto.fromCollection(chatService.getChatHistory(chat));
+        Chat chat = chatService.getChatById(id);
+        //return ChatMessageDto.fromCollection(chatService.getChatHistory(chat));
     }
 
     @GetMapping("/allMyChats")
-    public List<ChatDto> getAllMyChats() {
-        log.info("Method getAllMyChats() - Getting all chats");
+    public List<ChatDto> getAllMyChats(Principal principal) {
+        log.info("Method getAllMyChats() - Getting all chats for {}", principal.getName());
         return ChatDto.fromCollection(chatService.getAllMyChats());
     }
 

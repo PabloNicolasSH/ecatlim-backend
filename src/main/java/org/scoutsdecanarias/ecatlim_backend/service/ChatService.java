@@ -5,6 +5,10 @@ import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.repository.ChatMessageRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.ChatRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +32,19 @@ public class ChatService {
         this.userService = userService;
     }
 
-    public ChatMessage saveChatMessage(ChatMessage msg) {
+    public ChatMessage saveChatMessage(Integer chatId, String senderEmail, String content) {
+        User sender = userService.getUserByEmail(senderEmail);
+        assertMember(chatId, senderEmail);
+
+        Chat chat = getChatById(chatId);
+
+        ChatMessage msg = new ChatMessage();
+        msg.setChat(chat);
+        msg.setFrom(sender);
+        msg.setMessage(content);
         msg.setTimestamp(ZonedDateTime.now());
+        msg.setRead(false);
+
         return chatMessageRepository.save(msg);
     }
 
@@ -47,16 +62,18 @@ public class ChatService {
                 ));
     }
 
-    public List<ChatMessage> getChatHistory(Chat chat) {
-        return chatMessageRepository.findByChatOrderByTimestampAsc((chat));
+    public Page<ChatMessage> getChatHistoryPage(Chat chat, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "timestamp"));
+        return chatMessageRepository.findByChat(chat, pageable);
     }
 
     public List<Chat> getAllMyChats(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return chatRepository.findAllByMemberEmail(email);
+    }
 
-        List<User> users = new ArrayList<>();
-        users.add(userService.getUserByEmail(SecurityContextHolder.getContext().getAuthentication().getName()));
-
-        return chatRepository.findByChatMembersContains(users);
+    public Chat getChatById(Integer id) {
+        return chatRepository.findById(id).orElseThrow();
     }
 
     public void saveChat(Chat chat){
@@ -85,7 +102,12 @@ public class ChatService {
         chatRepository.delete(chat);
     }
 
-    public Chat getChatById(Integer id) {
-        return chatRepository.findById(id).orElseThrow();
+    public void assertMember(Integer chatId, String email) {
+        boolean member = chatRepository.existsByIdAndMemberEmail(chatId, email);
+        if (!member) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "The user " + email + " doesn't belong to chat " + chatId
+            );
+        }
     }
 }
