@@ -1,17 +1,15 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.dto.ChatMessageDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.Chat.ChatMessageDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.service.ChatService;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
 import java.util.Map;
 
 @Slf4j

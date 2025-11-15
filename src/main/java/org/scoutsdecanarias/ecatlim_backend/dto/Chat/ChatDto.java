@@ -1,5 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.Chat;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Chat;
 import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 
@@ -9,7 +10,7 @@ public record ChatDto(
         Integer id,
         String name,
         String description,
-        List<UserProfileDto> chatMembers,
+        List<SimpleUserDto> chatMembers,
         String lastMessagePreview,
         String lastMessageAt
 ) {
@@ -29,7 +30,7 @@ public record ChatDto(
                 chat.getId(),
                 chat.getChatName(),
                 chat.getChatDescription(),
-                UserProfileDto.fromCollection(chat.getChatMembers()),
+                SimpleUserDto.fromCollection(chat.getChatMembers()),
                 preview,
                 lastAt
         );

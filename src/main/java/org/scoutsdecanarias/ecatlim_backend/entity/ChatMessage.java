@@ -1,10 +1,12 @@
 package org.scoutsdecanarias.ecatlim_backend.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +30,7 @@ public class ChatMessage {
     @JoinColumn(name = "chat_id", nullable = false)
     private Chat chat;
 
+    @Column(length = 2000)
     private String message;
 
     private ZonedDateTime timestamp;

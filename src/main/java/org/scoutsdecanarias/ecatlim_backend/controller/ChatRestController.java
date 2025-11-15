@@ -1,8 +1,10 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.dto.ChatDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.ChatMessageDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.Chat.ChatDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.Chat.ChatMessageDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.Chat.NewChatFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Chat;
 import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
@@ -67,7 +69,7 @@ public class ChatRestController {
     }
 
     @PostMapping("/add")
-    public void addChat(@RequestBody Chat chat) {
+    public void addChat(@RequestBody @Valid NewChatFormDto chat) {
         log.info("METHOD addChat() - Adding new chat");
         chatService.saveChat(chat);
     }

@@ -1,12 +1,14 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
 import jakarta.transaction.Transactional;
-import org.scoutsdecanarias.ecatlim_backend.dto.ChatDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.Chat.ChatDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.Chat.NewChatFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Chat;
 import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.repository.ChatMessageRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.ChatRepository;
+import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,8 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,11 +28,13 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRepository chatRepository;
     private final UserService userService;
+    private final UserRepository userRepository;
 
-    public ChatService(ChatMessageRepository chatMessageRepository, ChatRepository chatRepository, UserService userService) {
+    public ChatService(ChatMessageRepository chatMessageRepository, ChatRepository chatRepository, UserService userService, UserRepository userRepository) {
         this.chatMessageRepository = chatMessageRepository;
         this.chatRepository = chatRepository;
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     public ChatMessage saveChatMessage(Integer chatId, String senderEmail, String content) {
@@ -84,14 +88,17 @@ public class ChatService {
         return chatRepository.findById(id).orElseThrow();
     }
 
-    public void saveChat(Chat chat){
-        List<User> chatMembers = chat.getChatMembers();
+    public void saveChat(NewChatFormDto chatDto){
+        Chat chat = new Chat();
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
+        List<User> chatMembers = userRepository.findAllById(chatDto.chatMembers());
         chatMembers.add(userService.getUserByEmail(userName));
 
-        chat.setCreationDate(Date.valueOf(ZonedDateTime.now().toLocalDate()));
         chat.setChatMembers(chatMembers);
+        chat.setCreationDate(Date.from(ZonedDateTime.now().toInstant()));
+        chat.setChatName(chatDto.name());
+        chat.setChatDescription(chatDto.description());
 
         chatRepository.save(chat);
     }

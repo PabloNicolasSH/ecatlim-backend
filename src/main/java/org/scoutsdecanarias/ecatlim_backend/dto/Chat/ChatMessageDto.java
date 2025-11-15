@@ -1,5 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.Chat;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.ChatMessage;
 
 import java.util.List;
