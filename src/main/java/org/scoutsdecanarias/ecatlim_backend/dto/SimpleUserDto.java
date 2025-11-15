@@ -7,12 +7,14 @@ import java.util.List;
 public record SimpleUserDto(
         Integer id,
         String name,
+        String surname,
         String email
 ) {
     public static SimpleUserDto fromEntity(User user) {
         return new SimpleUserDto(
                 user.getId(),
                 user.getName(),
+                user.getSurname(),
                 user.getEmail()
         );
     }

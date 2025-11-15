@@ -2,10 +2,12 @@ package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.auth.password.ChangePasswordDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.UserProfileDto;
 import org.scoutsdecanarias.ecatlim_backend.service.UserService;
+import org.springframework.boot.autoconfigure.task.TaskSchedulingProperties;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +42,11 @@ public class UserController {
     public UserProfileDto updateMyUserInfo(@RequestBody UserMeFormDto userMeFormDto) {
         log.info("METHOD updateMyUserInfo() - Update user info for principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
         return UserProfileDto.fromEntity(userService.updateUserMe(userMeFormDto));
+    }
+
+    @GetMapping("/simpleUsersInfo")
+    public List<SimpleUserDto> getSimpleUsersInfo() {
+        return SimpleUserDto.fromCollection(userService.getActiveUsers());
     }
 
     @GetMapping("/admin/allActives")
