@@ -4,89 +4,115 @@ Este repositorio contiene el backend de **ECATLIM**, un aula virtual desarrollad
 (Federación Scouts Exploradores de Canarias). La plataforma permite gestionar formaciones destinadas a scouters y personas interesadas en la educación 
 con infancia y juventud.
 
-## 🚀 Tecnologías utilizadas
+## 🚀 Stack Tecnológico
 
-- Java 17
-- Spring Boot
-- MySQL
-- JWT (Autenticación)
-- Docker y Docker Compose
-- Azure (para despliegue)
+- **Lenguaje:** Java 21
+- **Framework:** Spring Boot 3.4.3
+- **Gestor de Dependencias:** Maven
+- **Base de Datos:** MySQL 8.0
+- **Migraciones:** Flyway
+- **Seguridad:** Spring Security + JWT (JSON Web Token)
+- **Caché:** Caffeine
+- **Comunicación:** WebSockets
+- **Contenerización:** Docker & Docker Compose
+- **Despliegue:** Azure (Planificado)
 
-## 📁 Estructura del proyecto
-├── src <br>
-│ ├── main <br>
-│ │ ├── java/... # Código fuente <br>
-│ │ └── resources # Configuración y properties <br>
-├── docker-compose.yml # Contenedor con MySQL + backend <br>
-├── pom.xml #Control de librerías de Maven <br>
-└── README.md<br> 
+## 📋 Requisitos Previos
 
+- **Java 21** o superior.
+- **Maven** (o usar el wrapper `./mvnw` incluido).
+- **Docker & Docker Compose** (recomendado para la base de datos).
+- **MySQL 8.0** (si se opta por ejecución manual sin Docker).
 
-## ⚙️ Variables de entorno
+## ⚙️ Configuración y Variables de Entorno
 
-Asegúrate de configurar las siguientes variables de entorno en tu entorno local o servicio de despliegue (ej: `.env`, Azure App Configuration, etc.):
+Asegúrate de configurar las siguientes variables de entorno. Puedes definirlas en tu sistema, en un archivo `.env` (si usas Docker) o directamente en el servicio de despliegue.
 
-- DATABASE_URL=jdbc:mysql://localhost:3306/ecatlim
-- DATABASE_USERNAME=your_mysql_user
-- DATABASE_PASSWORD=your_mysql_password
-- JWT_SECRET=your_jwt_secret
-- ECATLIM_LINK=https://domain-name
-- NO_REPLY_EMAIL_USERNAME=no-reply@your_email.org
-- NO_REPLY_EMAIL_PASSWORD=your_email_password
+| Variable | Descripción | Valor por Defecto |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | URL de conexión a MySQL | `jdbc:mysql://localhost:3306/ecatlim` |
+| `DATABASE_USERNAME` | Usuario de la base de datos | `admin` |
+| `DATABASE_PASSWORD` | Contraseña de la base de datos | `password` |
+| `JWT_SECRET` | Secreto para firmar los tokens JWT | (Generado por defecto) |
+| `ECATLIM_LINK` | URL del frontend (para resets de password) | `http://localhost:4200` |
+| `NO_REPLY_EMAIL_USERNAME` | Usuario SMTP (Gmail) | **REQUERIDO** |
+| `NO_REPLY_EMAIL_PASSWORD` | Contraseña/Token SMTP | **REQUERIDO** |
 
-## 🐳 Uso con Docker
-Con Docker Compose puedes levantar la base de datos y la API en segundos.
+## 🚀 Guía de Inicio Rápido
 
-`docker-compose up --build`
+### Opción A: Con Docker (Recomendado)
 
-Esto inicia:
+Docker Compose levantará automáticamente la base de datos y la aplicación.
 
-- 📦 Un contenedor MySQL con la base de datos ecatlim
-- 🔧 Un contenedor con la aplicación Spring Boot
+```bash
+docker-compose up --build
+```
 
-| La base de datos se inicializa automáticamente si está configurado correctamente.
+### Opción B: Ejecución Manual
 
-## ▶️ Ejecución manual (sin Docker)
-1. Asegúrate de tener MySQL corriendo y una base de datos llamada ecatlim
-2. Configura las variables de entorno o application.properties
-3. Ejecuta:
-`./mvnw spring-boot:run`
+1. **Levantar solo la base de datos:**
+   ```bash
+   docker-compose up -d db
+   ```
+   *O asegúrate de tener una instancia de MySQL corriendo localmente con una base de datos llamada `ecatlim`.*
 
-## 🚧 CI/CD
-Este proyecto implementa GitFlow para control de versiones e integración continua. El despliegue 
-está planificado en Azure App Service o contenedor Docker en máquina virtual.
+2. **Ejecutar la aplicación:**
+   ```bash
+   ./mvnw spring-boot:run
+   ```
 
-# 🚀 ¿Comenzando a desarrollar ECATLIM - Backend?
+## 🛠️ Scripts y Comandos Maven
+
+- `mvn clean install`: Limpia y construye el proyecto generando el archivo JAR.
+- `mvn spring-boot:run`: Arranca la aplicación en modo desarrollo.
+- `mvn test`: Ejecuta la suite de pruebas unitarias e integración.
+- `mvn flyway:migrate`: Ejecuta manualmente las migraciones de base de datos (habitualmente automático al arrancar).
+
+## 🧪 Tests
+
+Para ejecutar los tests del proyecto:
+
+```bash
+./mvnw test
+```
+
+Los tests se encuentran en `src/test/java`. Actualmente incluye tests de carga de contexto y [TODO: añadir descripción de cobertura de tests adicionales].
+
+## 📁 Estructura del Proyecto
+
+```text
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── org.scoutsdecanarias.ecatlim_backend
+│   │   │       ├── auth          # Lógica de autenticación y JWT
+│   │   │       ├── configuration # Configuración de Spring (CORS, WS, Security)
+│   │   │       ├── controller    # Endpoints REST
+│   │   │       ├── dto           # Objetos de transferencia de datos
+│   │   │       ├── entity        # Entidades JPA (Modelo de base de datos)
+│   │   │       ├── repository    # Interfaces de acceso a datos
+│   │   │       └── service       # Lógica de negocio
+│   │   └── resources
+│   │       ├── db/migration      # Scripts de Flyway
+│   │       ├── templates         # Plantillas (Thymeleaf/Email)
+│   │       └── application.properties
+├── docker-compose.yml
+├── pom.xml
+└── README.md
+```
+
+## 🚧 CI/CD y Despliegue
+
+Este proyecto implementa GitFlow para el control de versiones. El despliegue está configurado/planificado para:
+- **Azure App Service**
+- **Contenedores Docker** en infraestructura cloud.
+
+---
 
 ### 📚 Documentación de referencia
 
-Para una mejor comprensión y personalización del proyecto, puedes consultar la documentación oficial de las herramientas utilizadas:
-
-- [Documentación oficial de Apache Maven](https://maven.apache.org/guides/index.html)
-- [Guía del plugin de Spring Boot para Maven](https://docs.spring.io/spring-boot/3.4.3/maven-plugin)
-- [Cómo crear una imagen OCI](https://docs.spring.io/spring-boot/3.4.3/maven-plugin/build-image.html)
-- [Spring Web (MVC y REST)](https://docs.spring.io/spring-boot/3.4.3/reference/web/servlet.html)
-- [Thymeleaf (motor de plantillas)](https://docs.spring.io/spring-boot/3.4.3/reference/web/servlet.html#web.servlet.spring-mvc.template-engines)
-- [Spring Security (seguridad y autenticación)](https://docs.spring.io/spring-boot/3.4.3/reference/web/spring-security.html)
-- [Spring Data JPA (acceso a datos)](https://docs.spring.io/spring-boot/3.4.3/reference/data/sql.html#data.sql.jpa-and-spring-data)
-- [Flyway para migración de base de datos](https://docs.spring.io/spring-boot/3.4.3/how-to/data-initialization.html#howto.data-initialization.migration-tool.flyway)
-
-### 🛠️ Guías útiles
-
-Estas guías te serán de ayuda para implementar funcionalidades concretas en el backend:
-
-- [Crear un servicio web RESTful](https://spring.io/guides/gs/rest-service/)
-- [Servir contenido web con Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-- [Construcción de servicios REST con Spring](https://spring.io/guides/tutorials/rest/)
-- [Manejo de formularios con Spring](https://spring.io/guides/gs/handling-form-submission/)
-- [Asegurar una aplicación web](https://spring.io/guides/gs/securing-web/)
-- [Spring Boot y OAuth2](https://spring.io/guides/tutorials/spring-boot-oauth2/)
-- [Autenticación de usuarios con LDAP](https://spring.io/guides/gs/authenticating-ldap/)
-- [Acceso a datos con Spring Data JPA](https://spring.io/guides/gs/accessing-data-jpa/)
-
-### 🔧 Recomendación sobre herencia en Maven
-
-Debido al diseño de Maven, los elementos del POM padre se heredan automáticamente al POM del proyecto. Aunque esto es útil en la mayoría de los casos, también puede implicar la herencia de elementos no deseados como `<license>` o `<developers>`.
-
-En este proyecto, se han añadido sobrescrituras vacías para evitar dicha herencia. Si decides usar un POM padre diferente y **sí deseas heredar esos elementos**, simplemente elimina las sobrescrituras vacías en el `pom.xml`.
+Para más detalles sobre las herramientas utilizadas:
+- [Spring Boot 3.4.3](https://docs.spring.io/spring-boot/index.html)
+- [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
+- [Spring Security](https://spring.io/projects/spring-security)
+- [Flyway Documentation](https://flywaydb.org/documentation/)
