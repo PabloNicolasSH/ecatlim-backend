@@ -57,8 +57,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserLessonBlock> lessonBlocks;
 
-    @ManyToMany
-    private List<EducationStage> educationStages;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<UserEducationStage> educationStages;
 
     private boolean enabled = true;
 }

@@ -27,8 +27,7 @@ public class UserLessonBlock {
 
     private boolean completed = false;
 
-    private Date enrollmentDate;
+    private Date completionDate;
 
-    @ManyToOne
-    private Event event;
+    private Date enrollmentDate;
 }

@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
+import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
 
 import java.util.List;
 
@@ -45,4 +46,25 @@ public class LessonBlock {
 
     @OneToMany(mappedBy = "lessonBlock", cascade = CascadeType.ALL)
     private List<UserLessonBlock> userLessonBlocks;
+
+    public String getCode() {
+        StringBuilder code = new StringBuilder("B");
+
+        if (this.module != null && this.module.getType() != null) {
+            if (this.module.getType().equals(ModuleType.THEORETICAL)) {
+                code.append("F");
+            } else {
+                code.append("P");
+            }
+        }
+
+        if (this.module != null && this.module.getEducationStage() != null) {
+            code.append(this.module.getEducationStage().getCode());
+        }
+
+        code.append("-");
+        code.append(this.lessonBlockId);
+
+        return code.toString();
+    }
 }

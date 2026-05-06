@@ -32,6 +32,9 @@ public class EducationSession {
     @ManyToOne
     private User educator;
 
+    @ManyToOne
+    private LessonBlock lessonBlock;
+
     @OneToMany
     private List<Activity> activities;
 }

@@ -1,19 +1,26 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
+import org.scoutsdecanarias.ecatlim_backend.entity.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
+import org.scoutsdecanarias.ecatlim_backend.repository.UserEducationStageRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EducationStageService {
 
     private final EducationStageRepository educationStageRepository;
+    private final UserEducationStageRepository userEducationStageRepository;
 
-    public EducationStageService(EducationStageRepository educationStageRepository) {
+    public EducationStageService(EducationStageRepository educationStageRepository, UserEducationStageRepository userEducationStageRepository) {
         this.educationStageRepository = educationStageRepository;
+        this.userEducationStageRepository = userEducationStageRepository;
     }
 
     public List<EducationStage> getEducationStages() {
@@ -41,21 +48,39 @@ public class EducationStageService {
         return educationStageRepository.save(educationStage);
     }
 
-    public EducationStage updateEducationStage(EducationStage educationStage, Integer id) {
-        EducationStage educationStageToUpdate = educationStageRepository.findEducationStageById(id);
+    public List<EducationStageCardDto> getEducationOfferForUser(String userEmail) {
+        List<EducationStage> educationStages = educationStageRepository.findAll();
+        List<UserEducationStage> userEnrollments = userEducationStageRepository.findByUser_Email(userEmail);
 
-        educationStageToUpdate.setName(educationStage.getName());
-        educationStageToUpdate.setDescription(educationStage.getDescription());
-        educationStageToUpdate.setCode(educationStage.getCode());
-        educationStageToUpdate.setModules(educationStage.getModules());
+        return educationStages.stream().map(stage -> {
+            Optional<UserEducationStage> enrollment = userEnrollments.stream()
+                    .filter(ue -> ue.getEducationStage().getId().equals(stage.getId()))
+                    .findFirst();
 
-        educationStageToUpdate.setOnlineHours(educationStage.getOnlineHours());
-        educationStageToUpdate.setContactHours(educationStage.getContactHours());
-        educationStageToUpdate.setPracticalHours(educationStage.getPracticalHours());
+            boolean isEnabled;
 
-        educationStageToUpdate.setPreviousStageRequired(educationStage.isPreviousStageRequired());
-        educationStageToUpdate.setPreviousStage(this.getEducationStage(educationStage.getPreviousStage().getId()));
+            if (stage.getPreviousStage() == null) {
+                isEnabled = true;
+            } else {
+                Integer previousId = stage.getPreviousStage().getId();
 
-        return educationStageRepository.save(educationStageToUpdate);
+                isEnabled = userEnrollments.stream()
+                        .anyMatch(ue -> ue.getEducationStage().getId().equals(previousId)
+                                && "COMPLETED".equals(ue.getStatus().toString()));
+            }
+
+            String status = enrollment.map(ue -> ue.getStatus().toString()).orElse(isEnabled ? "AVAILABLE" : "LOCKED");
+
+            if (enrollment.isPresent()) isEnabled = true;
+
+            return new EducationStageCardDto(
+                    stage.getId(),
+                    stage.getName(),
+                    stage.getDescription(),
+                    stage.getCode(),
+                    status,
+                    isEnabled
+            );
+        }).collect(Collectors.toList());
     }
 }
