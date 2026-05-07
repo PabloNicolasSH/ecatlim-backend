@@ -1,6 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.dto;
 
 import java.util.Date;
+import java.util.List;
 
 public record BlockDetailDto(
         String id,

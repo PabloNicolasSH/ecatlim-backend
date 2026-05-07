@@ -11,6 +11,7 @@ import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.entity.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
+import org.scoutsdecanarias.ecatlim_backend.repository.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
@@ -29,6 +30,7 @@ public class EnrollmentService {
     private final UserRepository userRepository;
     private final EducationStageRepository stageRepository;
     private final UserLessonBlockRepository userLessonBlockRepository;
+    private final LessonBlockRepository lessonBlockRepository;
 
     public List<UserEnrollmentDetailDto> getUserProgress(String email) {
         User user = userRepository.findByEmail(email)
@@ -49,7 +51,7 @@ public class EnrollmentService {
                                         block.getName(),
                                         progress.map(p -> p.isCompleted() ? "Superada" : "En Curso").orElse("Pendiente"),
                                         progress.map(UserLessonBlock::getCompletionDate).orElse(null),
-                                        // Aquí mapearías las actividades si tuvieras la relación
+                                        //TODO: Add activities with user story ECL-11
                                         Collections.emptyList()
                                 );
                             }).toList();
@@ -58,7 +60,7 @@ public class EnrollmentService {
                             enrollment.getId(),
                             stage.getName(),
                             "COMPLETED".equals(enrollment.getStatus().toString()),
-                            enrollment.getPercentage(),
+                            this.calculateProgress(user.getId(), stage.getId()),
                             blocks
                     );
                 }).toList();
@@ -98,6 +100,13 @@ public class EnrollmentService {
                 throw new SecurityException("Debes completar primero la etapa: " + stage.getPreviousStage().getName());
             }
         }
+    }
+
+    public int calculateProgress(Integer userId, Integer stageId) {
+        int total = lessonBlockRepository.countByStageId(stageId);
+        int completed = userLessonBlockRepository.countCompletedByUserIdAndStageId(userId, stageId);
+
+        return (total > 0) ? (completed * 100) / total : 0;
     }
 
     private EducationStageCardDto convertToCardDto(EducationStage stage, String status, boolean isEnabled) {
