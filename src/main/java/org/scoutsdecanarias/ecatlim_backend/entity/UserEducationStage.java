@@ -1,6 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,4 +29,13 @@ public class UserEducationStage {
     private Date enrollmentDate;
 
     private boolean completed = false;
+
+    private Date completionDate;
+
+    @Enumerated(EnumType.STRING)
+    private StageStatus status;
+
+    public enum StageStatus {
+        ENROLLED, IN_PROGRESS, COMPLETED, DROPPED;
+    }
 }
