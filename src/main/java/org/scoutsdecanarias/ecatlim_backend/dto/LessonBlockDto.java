@@ -13,7 +13,8 @@ public record LessonBlockDto(
         Integer onlineHours,
         Integer contactHours,
         boolean recognizable,
-        Integer moduleId
+        Integer moduleId,
+        String code
 ) {
     public static LessonBlockDto fromEntity(LessonBlock lessonBlock) {
         return new LessonBlockDto(
@@ -24,7 +25,8 @@ public record LessonBlockDto(
                 lessonBlock.getOnlineHours(),
                 lessonBlock.getContactHours(),
                 lessonBlock.isRecognizable(),
-                lessonBlock.getModule().getId()
+                lessonBlock.getModule().getId(),
+                lessonBlock.getCode()
         );
     }
 

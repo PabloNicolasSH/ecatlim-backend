@@ -14,7 +14,7 @@ public record TimelineItemDto(
         LocalDateTime endTime,
         String type,
         String lessonBlockTitle,
-        String trainerName
+        List<String> trainersName
 ) {
     public static TimelineItemDto fromEntity(TimelineItem item) {
         EducationSession session = item.getEducationSession();
@@ -24,7 +24,7 @@ public record TimelineItemDto(
                 item.getEndTime(),
                 session != null ? "FORMATIVE" : "BREAK",
                 session != null && session.getLessonBlock() != null ? session.getLessonBlock().getName() : "Descanso/Comida",
-                session != null && session.getEducator() != null ? session.getEducator().getName() : null
+                session != null && session.getFacilitators() != null ? session.getFacilitators().stream().map(User::getName).toList() : null
         );
     }
 

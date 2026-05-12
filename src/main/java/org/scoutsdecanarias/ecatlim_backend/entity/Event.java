@@ -80,4 +80,10 @@ public class Event {
         timelineItems.add(item);
         item.setEvent(this);
     }
+
+    public String getEducationStageCode() {
+        LessonBlock lessonBlock = lessonBlocks.iterator().next();
+        String code = lessonBlock.getCode();
+        return code.substring(2, code.indexOf("-"));
+    }
 }

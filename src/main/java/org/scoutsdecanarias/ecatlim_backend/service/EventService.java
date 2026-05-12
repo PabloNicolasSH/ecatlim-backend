@@ -2,7 +2,9 @@ package org.scoutsdecanarias.ecatlim_backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.dto.EventDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EventFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.EventUserCalendarDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationSession;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
@@ -10,6 +12,7 @@ import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.entity.TimelineItem;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.entity.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserEducationStageRepository;
@@ -44,6 +47,32 @@ public class EventService {
 
     public Event findById(Integer id) {
         return eventRepository.findById(id).orElseThrow(NoSuchElementException::new);
+    }
+
+    public List<EventUserCalendarDto> getEventsForUser(String userEmail) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        List<Event> allEvents = eventRepository.findAll();
+        return allEvents.stream()
+                .map(event -> {
+                    boolean isCurrentUserAttending = event.getAttendees().contains(user);
+                    boolean canParticipate = this.calculateParticipation(event, user);
+
+                    return new EventUserCalendarDto(
+                            event.getId(),
+                            event.getTitle(),
+                            event.getDescription(),
+                            event.getStartDate(),
+                            event.getEndDate(),
+                            event.getLocation(),
+                            event.getOrganizer(),
+                            event.getLessonBlocks().stream().map(LessonBlock::getCode).toList(),
+                            event.getAttendees().size(),
+                            event.getEducationStageCode(),
+                            isCurrentUserAttending,
+                            canParticipate
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     public Event save(EventFormDto form) {
@@ -157,6 +186,12 @@ public class EventService {
 
         event.getAttendees().add(user);
         return eventRepository.save(event);
+    }
+
+    private boolean calculateParticipation(Event event, User user) {
+        Set<LessonBlock> eventLessonBlocks = event.getLessonBlocks();
+        List<User> possibleAttendees = userLessonBlockRepository.findActiveAndEligibleUsers(eventLessonBlocks);
+        return possibleAttendees.contains(user);
     }
 
     private String formatDate(LocalDateTime date) {

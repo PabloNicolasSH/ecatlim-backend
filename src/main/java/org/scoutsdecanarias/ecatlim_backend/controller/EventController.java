@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import org.scoutsdecanarias.ecatlim_backend.dto.EventDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EventFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.EventUserCalendarDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.service.EventService;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,12 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<EventDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.findById(id)));
+    }
+
+    @GetMapping("/user-calendar")
+    public ResponseEntity<List<EventUserCalendarDto>> getUserCalendar() {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(eventService.getEventsForUser(userEmail));
     }
 
     @PostMapping("/admin/add")
