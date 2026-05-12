@@ -51,13 +51,7 @@ public class UserService implements UserDetailsService {
     }
 
     public List<User> getUsersByRole(Role role) {
-        List<User> users = new ArrayList<>();
-        for (User user : userRepository.findAll()) {
-            if (user.getRole() == role) {
-                users.add(user);
-            }
-        }
-        return users;
+        return userRepository.findAllByRole(role);
     }
 
     public User getUserByEmail(String email) {

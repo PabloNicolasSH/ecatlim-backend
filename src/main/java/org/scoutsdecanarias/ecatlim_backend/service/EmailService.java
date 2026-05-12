@@ -9,6 +9,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 public class EmailService {
@@ -17,8 +19,8 @@ public class EmailService {
 
     private final EmailTemplateService emailTemplateService;
 
-    @Value("${spring.mail.username}")
-    private String from;
+    @Value("${ecatlim.link}")
+    private String webPageLink;
 
     public EmailService(JavaMailSender emailSender, EmailTemplateService emailTemplateService) {
         this.emailSender = emailSender;
@@ -40,7 +42,8 @@ public class EmailService {
         emailSender.send(message);
     }
 
-    public void sendRecoverPasswordEmail(String to, String resetLink) {
+    public void sendRecoverPasswordEmail(String to, String token) {
+        String resetLink = webPageLink + "/resetear-contraseña?token=" + token;
         String html = emailTemplateService.loadRecoverPasswordTemplate(resetLink);
         MimeMessage message = this.createEmailWithHtml(to, "Aula Virtual ECATLIM - Restablecer Contraseña", html);
 
@@ -51,6 +54,16 @@ public class EmailService {
     public void sendPendingUserCreatedEmail(String to, String name, String surname, String nif, ScoutGroup scoutGroup) {
         String html = emailTemplateService.loadPendingUserCreatedEmailTemplate(name, surname, nif, scoutGroup, to);
         MimeMessage message = this.createEmailWithHtml(to, "Aula Virtual ECATLIM - Solicitud de Alta Recibida", html);
+
+        assert message != null;
+        emailSender.send(message);
+    }
+
+    public void sendEventRecommendationEmail(String to, String name, String eventTitle, String eventLocation, String eventDate, List<String> missingBlocks) {
+        String enrollLink = webPageLink + "/eventos/" + eventTitle;
+        String html = emailTemplateService.loadEventNotificationTemplate(name, eventTitle, eventLocation, eventDate, missingBlocks, enrollLink);
+
+        MimeMessage message = this.createEmailWithHtml(to, "Aula Virtual ECATLIM - Nueva Formación: " + eventTitle + " - ¡Completa tu etapa!", html);
 
         assert message != null;
         emailSender.send(message);

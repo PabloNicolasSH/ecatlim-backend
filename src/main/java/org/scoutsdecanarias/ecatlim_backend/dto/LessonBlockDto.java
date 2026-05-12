@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public record LessonBlockDto(
+        int id,
         String name,
         int lessonBlockId,
         String description,
@@ -16,6 +17,7 @@ public record LessonBlockDto(
 ) {
     public static LessonBlockDto fromEntity(LessonBlock lessonBlock) {
         return new LessonBlockDto(
+                lessonBlock.getId(),
                 lessonBlock.getName(),
                 lessonBlock.getLessonBlockId(),
                 lessonBlock.getDescription(),

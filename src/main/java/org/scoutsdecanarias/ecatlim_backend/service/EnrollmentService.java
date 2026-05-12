@@ -87,6 +87,20 @@ public class EnrollmentService {
 
         userStageRepository.save(enrollment);
 
+        List<UserLessonBlock> userBlocks = stage.getModules().stream()
+                .flatMap(module -> module.getLessonBlocks().stream())
+                .map(block -> {
+                    UserLessonBlock ulb = new UserLessonBlock();
+                    ulb.setUser(user);
+                    ulb.setLessonBlock(block);
+                    return ulb;
+                })
+                .toList();
+
+        if (!userBlocks.isEmpty()) {
+            userLessonBlockRepository.saveAll(userBlocks);
+        }
+
         return convertToCardDto(stage, "ENROLLED", true);
     }
 
