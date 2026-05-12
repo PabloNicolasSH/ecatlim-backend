@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -21,8 +23,13 @@ public class EducationSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    private User educator;
+    @ManyToMany
+    @JoinTable(
+            name = "education_session_facilitators",
+            joinColumns = @JoinColumn(name = "education_session_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> facilitators;
 
     @ManyToOne
     @JoinColumn(name = "lesson_block_id")
