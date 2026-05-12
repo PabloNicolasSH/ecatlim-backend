@@ -1,6 +1,5 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 import org.springframework.stereotype.Service;
