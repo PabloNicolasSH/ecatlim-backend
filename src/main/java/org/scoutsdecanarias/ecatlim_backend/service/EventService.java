@@ -2,22 +2,21 @@ package org.scoutsdecanarias.ecatlim_backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EventFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.EventHomeWidgetDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EventUserCalendarDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationSession;
-import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.entity.TimelineItem;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
-import org.scoutsdecanarias.ecatlim_backend.entity.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,11 +52,7 @@ public class EventService {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
         List<Event> allEvents = eventRepository.findAll();
         return allEvents.stream()
-                .map(event -> {
-                    boolean isCurrentUserAttending = event.getAttendees().contains(user);
-                    boolean canParticipate = this.calculateParticipation(event, user);
-
-                    return new EventUserCalendarDto(
+                .map(event ->  new EventUserCalendarDto(
                             event.getId(),
                             event.getTitle(),
                             event.getDescription(),
@@ -68,11 +63,34 @@ public class EventService {
                             event.getLessonBlocks().stream().map(LessonBlock::getCode).toList(),
                             event.getAttendees().size(),
                             event.getEducationStageCode(),
-                            isCurrentUserAttending,
-                            canParticipate
-                    );
-                })
-                .collect(Collectors.toList());
+                            event.getAttendees().contains(user),
+                            this.calculateParticipation(event, user)
+                    )
+                )
+                .toList();
+    }
+
+    public List<EventHomeWidgetDto> getUpcomingEventsForUser(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        List<Event> upcomingEvents = eventRepository.findUpcomingEvents(
+                LocalDateTime.now(),
+                PageRequest.of(0, 5)
+        );
+
+        return upcomingEvents.stream()
+                .filter(e -> this.calculateParticipation(e, user) || e.getAttendees().contains(user))
+                .map(event -> new EventHomeWidgetDto(
+                        event.getId(),
+                        event.getTitle(),
+                        event.getStartDate(),
+                        event.getLocation(),
+                        event.getEducationStageCode(),
+                        event.getAttendees().contains(user),
+                        this.calculateParticipation(event, user)
+                ))
+                .toList();
     }
 
     public Event save(EventFormDto form) {

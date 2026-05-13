@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import org.scoutsdecanarias.ecatlim_backend.dto.EventDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EventFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.EventHomeWidgetDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.EventUserCalendarDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.service.EventService;
@@ -42,6 +43,12 @@ public class EventController {
     public ResponseEntity<List<EventUserCalendarDto>> getUserCalendar() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(eventService.getEventsForUser(userEmail));
+    }
+
+    @GetMapping("/user-home")
+    public ResponseEntity<List<EventHomeWidgetDto>> getUserHome() {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(eventService.getUpcomingEventsForUser(userEmail));
     }
 
     @PostMapping("/admin/add")

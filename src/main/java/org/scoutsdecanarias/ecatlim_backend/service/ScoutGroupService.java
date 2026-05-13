@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.ScoutGroupDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 import org.scoutsdecanarias.ecatlim_backend.repository.ScoutGroupRepository;
 import org.springframework.stereotype.Service;
@@ -25,5 +26,27 @@ public class ScoutGroupService {
 
     public ScoutGroup getScoutGroupById(int id) {
         return scoutGroupRepository.findById(id).orElseThrow();
+    }
+
+    public ScoutGroup create(ScoutGroupDto scoutGroup) {
+        ScoutGroup scoutGroupEntity = new ScoutGroup();
+        scoutGroupEntity.setName(scoutGroup.name());
+        scoutGroupEntity.setProvinceId(scoutGroup.provinceId());
+        scoutGroupEntity.setGroupNumber(scoutGroup.groupNumber());
+        scoutGroupEntity.setEmail(scoutGroup.email());
+        return scoutGroupRepository.save(scoutGroupEntity);
+    }
+
+    public ScoutGroup update(Integer id, ScoutGroupDto scoutGroup) {
+        ScoutGroup scoutGroupEntity = getScoutGroupById(id);
+        scoutGroupEntity.setName(scoutGroup.name());
+        scoutGroupEntity.setProvinceId(scoutGroup.provinceId());
+        scoutGroupEntity.setGroupNumber(scoutGroup.groupNumber());
+        scoutGroupEntity.setEmail(scoutGroup.email());
+        return scoutGroupRepository.save(scoutGroupEntity);
+    }
+
+    public void delete(Integer id) {
+        scoutGroupRepository.deleteById(id);
     }
 }
