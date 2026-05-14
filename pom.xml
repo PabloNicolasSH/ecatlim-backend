@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.4.3</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>org.scoutsdecanarias</groupId>
 	<artifactId>ecatlim-backend</artifactId>
@@ -92,6 +92,7 @@
 			<version>1.6.3</version>
 		</dependency>
 
+		<!--JWT token dependencies-->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
@@ -110,6 +111,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!--Caché-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
@@ -120,6 +122,17 @@
 			<version>3.2.0</version>
 		</dependency>
 
+		<!--AZURE STORAGE BLOB AND IMAGE GENERATION-->
+		<dependency>
+			<groupId>com.azure</groupId>
+			<artifactId>azure-storage-blob</artifactId>
+			<version>12.32.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+			<version>0.4.21</version>
+		</dependency>
 	</dependencies>
 
 	<build>
