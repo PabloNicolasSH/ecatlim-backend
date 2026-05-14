@@ -1,5 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.education_stage;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.ModuleDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.Module;
 import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;

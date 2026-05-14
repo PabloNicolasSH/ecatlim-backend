@@ -1,5 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.event;
 
+import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ public record EventDto(
         String location,
         String organizer,
         Integer attendeesCount,
-        List<TimelineItemDto> timeline
+        List<TimelineItemFormDto> timeline
 ) {
     public static EventDto fromEntity(Event event) {
         return new EventDto(
@@ -25,7 +26,7 @@ public record EventDto(
                 event.getOrganizer(),
                 event.getAttendees().size(),
                 event.getTimelineItems().stream()
-                        .map(TimelineItemDto::fromEntity)
+                        .map(TimelineItemFormDto::fromEntity)
                         .toList()
         );
     }

@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.event;
 
 import java.time.LocalDateTime;
 import java.util.List;

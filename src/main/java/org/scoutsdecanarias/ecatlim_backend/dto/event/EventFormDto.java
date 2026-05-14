@@ -1,4 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.event;
+
+import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemFormDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,5 +15,5 @@ public record EventFormDto(
         String organizer,
         Integer directorId,
         List<Integer> lessonBlockIds,
-        List<TimelineItemDto> timeline
+        List<TimelineItemFormDto> timelineItems
 ) {}
