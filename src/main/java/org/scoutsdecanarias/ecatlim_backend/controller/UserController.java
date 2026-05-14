@@ -1,10 +1,9 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.auth.password.ChangePasswordDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserMeFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserProfileDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserMeFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserProfileDto;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.service.UserService;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 
 @Slf4j

@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageCardDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;

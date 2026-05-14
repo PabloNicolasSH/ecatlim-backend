@@ -1,11 +1,10 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageCardDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageFormDto;
 import org.scoutsdecanarias.ecatlim_backend.service.EducationStageService;
-import org.scoutsdecanarias.ecatlim_backend.service.EnrollmentService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,9 +1,9 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.EventDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventHomeWidgetDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventUserCalendarDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventHomeWidgetDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventUserCalendarDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.service.EventService;
 import org.springframework.http.ResponseEntity;
@@ -63,7 +63,7 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EventDto> update(@PathVariable Integer id, @RequestBody Event event) {
+    public ResponseEntity<EventDto> update(@PathVariable Integer id, @RequestBody EventFormDto event) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.update(id, event)));
     }
 

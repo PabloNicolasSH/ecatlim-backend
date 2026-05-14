@@ -2,10 +2,10 @@ package org.scoutsdecanarias.ecatlim_backend.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventHomeWidgetDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EventUserCalendarDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventHomeWidgetDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.event.EventUserCalendarDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationSession;
 import org.scoutsdecanarias.ecatlim_backend.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -95,50 +94,67 @@ public class EventService {
 
     public Event save(EventFormDto form) {
         Event event = new Event();
+        updateEventFromDto(event, form);
+
+        eventRepository.save(event);
+        this.sendEmailToPossibleAttendees(event);
+
+        return event;
+    }
+
+    public Event update(Integer id, EventFormDto form) {
+        Event existingEvent = eventRepository.findByIdWithTimeline(id)
+                .orElseThrow(() -> new EntityNotFoundException("Evento no encontrado"));
+
+        updateEventFromDto(existingEvent, form);
+
+        return eventRepository.save(existingEvent);
+    }
+
+    public void delete(Integer id) {
+        eventRepository.deleteById(id);
+    }
+
+    public Event enrollStudent(Integer id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Event event = eventRepository.findById(id).orElseThrow();
+
+        event.getAttendees().add(user);
+        return eventRepository.save(event);
+    }
+
+    private void updateEventFromDto(Event event, EventFormDto form) {
         event.setTitle(form.title());
         event.setDescription(form.description());
         event.setStartDate(form.startDate());
         event.setEndDate(form.endDate());
         event.setLocation(form.location());
         event.setOrganizer(form.organizer());
-        event.setDirector(userRepository.findById(form.directorId()).orElseThrow());
-        if (form.timeline() != null) {
-            event.setTimelineItems(TimelineItemDto.fromDtoCollection(form.timeline()));
-        }
+
+        event.setDirector(userRepository.findById(form.directorId())
+                .orElseThrow(() -> new EntityNotFoundException("Director no encontrado")));
 
         List<LessonBlock> blocks = lessonBlockRepository.findAllById(form.lessonBlockIds());
-        if (blocks.isEmpty()) throw new EntityNotFoundException("No se encontraron bloques de aprendizaje");
-        if (blocks.size() != form.lessonBlockIds().size()) throw new EntityNotFoundException("Algunos bloques de aprendizaje no existen");
+        if (blocks.size() != form.lessonBlockIds().size()) {
+            throw new EntityNotFoundException("Algunos bloques de aprendizaje no existen");
+        }
+
         event.setLessonBlocks(new HashSet<>(blocks));
-
-        int totalTheoreticalHours = blocks.stream()
-                .mapToInt(LessonBlock::getContactHours)
-                .sum();
-
-        int totalOnlineHours = blocks.stream()
-                .mapToInt(LessonBlock::getOnlineHours)
-                .sum();
-
-        event.setOnlineHours(totalOnlineHours);
-        event.setTheoreticalHours(totalTheoreticalHours);
+        event.setTheoreticalHours(blocks.stream().mapToInt(LessonBlock::getContactHours).sum());
+        event.setOnlineHours(blocks.stream().mapToInt(LessonBlock::getOnlineHours).sum());
 
         if (event.getTimelineItems() != null) {
-            event.getTimelineItems().forEach(item -> {
-                item.setEvent(event);
+            event.getTimelineItems().clear();
+        }
 
-                if (item.getEducationSession() != null) {
-                    EducationSession session = item.getEducationSession();
-                    session.setTimelineItem(item);
-
-                    //TODO: ECL-11 add activities and resources
+        if (form.timelineItems() != null) {
+            TimelineItemFormDto.fromDtoCollection(form.timelineItems()).forEach(item -> {
+                event.addTimelineItem(item);
+                if (item.isFormative() && item.getEducationSession() != null) {
+                    item.getEducationSession().setTimelineItem(item);
                 }
             });
         }
-        eventRepository.save(event);
-
-        this.sendEmailToPossibleAttendees(event);
-
-        return event;
     }
 
     private void sendEmailToPossibleAttendees(Event event) {
@@ -163,47 +179,6 @@ public class EventService {
                     missingBlockTitles
             );
         }
-    }
-
-    public Event update(Integer id, Event eventDetails) {
-        Event existingEvent = eventRepository.findByIdWithTimeline(id)
-                .orElseThrow(() -> new EntityNotFoundException("Evento no encontrado"));
-
-        existingEvent.setTitle(eventDetails.getTitle());
-        existingEvent.setStartDate(eventDetails.getStartDate());
-        existingEvent.setEndDate(eventDetails.getEndDate());
-        existingEvent.setLocation(eventDetails.getLocation());
-        existingEvent.setOrganizer(eventDetails.getOrganizer());
-
-        existingEvent.setLessonBlocks(eventDetails.getLessonBlocks());
-
-        existingEvent.getTimelineItems().clear();
-
-        if (eventDetails.getTimelineItems() != null) {
-            for (TimelineItem newItem : eventDetails.getTimelineItems()) {
-                existingEvent.addTimelineItem(newItem);
-
-                if (newItem.getEducationSession() != null) {
-                    EducationSession session = newItem.getEducationSession();
-                    session.setTimelineItem(newItem);
-                    //TODO: ECL-11 add activities and resources
-                }
-            }
-        }
-
-        return eventRepository.save(existingEvent);
-    }
-
-    public void delete(Integer id) {
-        eventRepository.deleteById(id);
-    }
-
-    public Event enrollStudent(Integer id, String userEmail) {
-        User user = userRepository.findByEmail(userEmail).orElseThrow();
-        Event event = eventRepository.findById(id).orElseThrow();
-
-        event.getAttendees().add(user);
-        return eventRepository.save(event);
     }
 
     private boolean calculateParticipation(Event event, User user) {
