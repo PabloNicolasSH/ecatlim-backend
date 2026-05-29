@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.education_stage;
 
 public record EducationStageFormDto(
         String name,

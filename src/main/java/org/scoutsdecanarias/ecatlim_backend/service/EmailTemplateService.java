@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.util.List;
+
 @Slf4j
 @Service
 public class EmailTemplateService {
-
 
     private final TemplateEngine templateEngine;
 
@@ -42,6 +43,18 @@ public class EmailTemplateService {
         context.setVariable("email", email);
 
         return templateEngine.process("pending_user_request_email.html", context);
+    }
+
+    public String loadEventNotificationTemplate(String name, String eventTitle, String eventLocation, String eventDate, List<String> missingBlocks, String enrollLink) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("eventTitle", eventTitle);
+        context.setVariable("eventLocation", eventLocation);
+        context.setVariable("eventDate", eventDate);
+        context.setVariable("missingBlocks", missingBlocks);
+        context.setVariable("enrollLink", enrollLink);
+
+        return templateEngine.process("event_notification_email.html", context);
     }
 
     private String generateScoutGroupString(ScoutGroup scoutGroup){

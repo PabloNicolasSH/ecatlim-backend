@@ -1,10 +1,10 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.auth.password.ChangePasswordDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserMeFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserProfileDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserMeFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserProfileDto;
+import org.scoutsdecanarias.ecatlim_backend.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.service.UserService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 
 @Slf4j
@@ -46,6 +45,13 @@ public class UserController {
     public List<UserProfileDto> getActiveUsers() {
         log.info("METHOD getActiveUsers() - Get active users by: {}", SecurityContextHolder.getContext().getAuthentication().getName());
         return UserProfileDto.fromCollection(userService.getActiveUsers());
+    }
+
+    @GetMapping("/admin/all/{role}")
+    public List<UserProfileDto> getUsersByRole(@PathVariable String role) {
+        log.info("METHOD getUsersByRole() - Get users by role: {}", role);
+        Role r = Role.valueOf(role);
+        return UserProfileDto.fromCollection(userService.getUsersByRole(r));
     }
 
     @GetMapping("/admin/allInactives")

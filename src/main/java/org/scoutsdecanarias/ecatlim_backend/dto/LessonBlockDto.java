@@ -6,23 +6,27 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public record LessonBlockDto(
+        int id,
         String name,
         int lessonBlockId,
         String description,
         Integer onlineHours,
         Integer contactHours,
         boolean recognizable,
-        Integer moduleId
+        Integer moduleId,
+        String code
 ) {
     public static LessonBlockDto fromEntity(LessonBlock lessonBlock) {
         return new LessonBlockDto(
+                lessonBlock.getId(),
                 lessonBlock.getName(),
                 lessonBlock.getLessonBlockId(),
                 lessonBlock.getDescription(),
                 lessonBlock.getOnlineHours(),
                 lessonBlock.getContactHours(),
                 lessonBlock.isRecognizable(),
-                lessonBlock.getModule().getId()
+                lessonBlock.getModule().getId(),
+                lessonBlock.getCode()
         );
     }
 

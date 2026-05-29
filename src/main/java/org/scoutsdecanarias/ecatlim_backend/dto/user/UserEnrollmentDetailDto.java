@@ -1,4 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.dto.user;
+
+import org.scoutsdecanarias.ecatlim_backend.dto.BlockDetailDto;
 
 import java.util.List;
 

@@ -27,7 +27,7 @@ public class PasswordResetService {
     private final EmailService emailService;
     private final UserRepository userRepository;
 
-    @Value("${ecatlim.reset.link}")
+    @Value("${ecatlim.link}")
     private String webPageLink;
 
     private static final String CACHE_NAME = "passwordResetCache";
@@ -51,8 +51,7 @@ public class PasswordResetService {
     }
 
     private void sendPasswordResetEmail(String email, String token) {
-        String resetLink = webPageLink + "/resetear-contraseña?token=" + token;
-        emailService.sendRecoverPasswordEmail(email, resetLink);
+        emailService.sendRecoverPasswordEmail(email, token);
     }
 
     public void resetPassword(ResetPasswordDto passwordDto) {

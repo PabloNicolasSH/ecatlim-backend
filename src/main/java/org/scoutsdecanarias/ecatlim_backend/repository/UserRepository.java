@@ -1,6 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.repository;
 
+import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -13,4 +15,5 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     Optional<User> findByEmail(String email);
     Optional<User> findByNif(String nif);
     List<User> findAllByEnabled(boolean enabled);
+    List<User> findAllByRole(Role role);
 }

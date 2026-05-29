@@ -4,8 +4,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.dto.BlockDetailDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageCardDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserEnrollmentDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserEnrollmentDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.entity.UserEducationStage;
@@ -86,6 +86,20 @@ public class EnrollmentService {
         enrollment.setEnrollmentDate(new Date());
 
         userStageRepository.save(enrollment);
+
+        List<UserLessonBlock> userBlocks = stage.getModules().stream()
+                .flatMap(module -> module.getLessonBlocks().stream())
+                .map(block -> {
+                    UserLessonBlock ulb = new UserLessonBlock();
+                    ulb.setUser(user);
+                    ulb.setLessonBlock(block);
+                    return ulb;
+                })
+                .toList();
+
+        if (!userBlocks.isEmpty()) {
+            userLessonBlockRepository.saveAll(userBlocks);
+        }
 
         return convertToCardDto(stage, "ENROLLED", true);
     }

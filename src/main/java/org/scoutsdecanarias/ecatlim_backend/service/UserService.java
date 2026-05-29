@@ -4,8 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserFormDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserMeFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.exception.UserEmailExistsException;
@@ -51,13 +51,7 @@ public class UserService implements UserDetailsService {
     }
 
     public List<User> getUsersByRole(Role role) {
-        List<User> users = new ArrayList<>();
-        for (User user : userRepository.findAll()) {
-            if (user.getRole() == role) {
-                users.add(user);
-            }
-        }
-        return users;
+        return userRepository.findAllByRole(role);
     }
 
     public User getUserByEmail(String email) {

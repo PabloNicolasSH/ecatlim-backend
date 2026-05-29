@@ -1,8 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.dto.PendingUserDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.PendingUserFormDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.PendingUserDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.service.PendingUserService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;

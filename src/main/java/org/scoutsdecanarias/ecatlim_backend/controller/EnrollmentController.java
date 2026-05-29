@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.controller;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.EducationStageCardDto;
-import org.scoutsdecanarias.ecatlim_backend.dto.UserEnrollmentDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.UserEnrollmentDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.service.EnrollmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
