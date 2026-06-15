@@ -9,9 +9,6 @@ public record DashboardDto(
         String nextEventName,
         LocalDateTime nextEventDate,
         Integer averageGrade,
-        String topModule,
-        Integer schoolCapacityPercentage,
-        String activeTrainersRatio,
         List<EventSummaryDto> upcomingEvents
 ) {
 }

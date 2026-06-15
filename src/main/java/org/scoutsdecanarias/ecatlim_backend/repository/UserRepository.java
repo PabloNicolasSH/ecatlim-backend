@@ -16,4 +16,8 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     Optional<User> findByNif(String nif);
     List<User> findAllByEnabled(boolean enabled);
     List<User> findAllByRole(Role role);
+
+    Integer countUsersByEnabled(boolean enabled);
+
+    Integer countUsersByEnabledAndRole(boolean enabled, Role role);
 }
