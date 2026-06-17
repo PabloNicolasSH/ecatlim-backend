@@ -67,4 +67,11 @@ public class LessonBlock {
 
         return code.toString();
     }
+
+    public Integer getEducationStageId() {
+        if (this.module != null && this.module.getEducationStage() != null) {
+            return this.module.getEducationStage().getId();
+        }
+        return null;
+    }
 }

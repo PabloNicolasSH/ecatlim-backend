@@ -38,9 +38,9 @@ public class EmailService {
         emailSenderService.sendEmail("Aula Virtual ECATLIM - Solicitud de Alta Recibida", html, to);
     }
 
-    public void sendEventRecommendationEmail(String to, String name, String eventTitle, String eventLocation, String eventDate, List<String> missingBlocks) {
+    public void sendEventRecommendationEmail(String to, String name, String eventTitle, String eventLocation, String eventDate, List<String> missingBlocks, List<String> allEventBlocks) {
         String enrollLink = webPageLink + "/eventos/" + eventTitle;
-        String html = emailTemplateService.loadEventNotificationTemplate(name, eventTitle, eventLocation, eventDate, missingBlocks, enrollLink);
+        String html = emailTemplateService.loadEventNotificationTemplate(name, eventTitle, eventLocation, eventDate, missingBlocks, allEventBlocks, enrollLink);
         emailSenderService.sendEmail("Aula VIrtual ECATLIM - Nueva Formación: " + eventTitle + " - ¡Completa tu etapa!", html, to);
     }
 }

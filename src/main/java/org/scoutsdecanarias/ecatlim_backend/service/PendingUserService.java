@@ -8,7 +8,7 @@ import org.scoutsdecanarias.ecatlim_backend.dto.user.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.PendingUser;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.exception.PendingUserExistsException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.PendingUserExistsException;
 import org.scoutsdecanarias.ecatlim_backend.repository.PendingUserRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;

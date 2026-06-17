@@ -1,6 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.LessonBlockDto;
+import org.scoutsdecanarias.ecatlim_backend.lesson_block.LessonBlockDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.repository.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.ModuleRepository;
