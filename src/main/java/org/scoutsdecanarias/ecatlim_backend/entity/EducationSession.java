@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.util.List;
 

@@ -1,22 +1,19 @@
-package org.scoutsdecanarias.ecatlim_backend.entity;
-
+package org.scoutsdecanarias.ecatlim_backend.features.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
-
-import java.util.List;
+import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
 
 @Getter
 @Setter
 @Entity
-public class ScoutGroup {
+public class PendingUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -25,14 +22,14 @@ public class ScoutGroup {
     private String name;
 
     @Column(nullable = false)
-    private int provinceId;
-
-    @Column(nullable = false)
-    private int groupNumber;
+    private String surname;
 
     @Column(nullable = false)
     private String email;
 
-    @OneToMany(mappedBy = "scoutGroup")
-    private List<User> groupMembers;
+    @Column(nullable = false)
+    private String nif;
+
+    @ManyToOne
+    private ScoutGroup scoutGroup;
 }

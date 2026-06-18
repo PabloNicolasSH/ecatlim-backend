@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.core.configuration;
 
 import org.scoutsdecanarias.ecatlim_backend.core.auth.JWTAuthFilter;
-import org.scoutsdecanarias.ecatlim_backend.service.UserService;
+import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

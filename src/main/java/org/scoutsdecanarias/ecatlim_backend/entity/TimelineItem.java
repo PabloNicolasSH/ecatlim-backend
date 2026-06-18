@@ -14,7 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 
 import java.time.LocalDateTime;
 

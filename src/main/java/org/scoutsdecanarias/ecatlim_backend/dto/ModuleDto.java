@@ -2,7 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.dto;
 
 import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.entity.Module;
-import org.scoutsdecanarias.ecatlim_backend.lesson_block.LessonBlockDto;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
 
 import java.util.List;
 import java.util.stream.Collectors;

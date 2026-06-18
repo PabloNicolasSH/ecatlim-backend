@@ -3,9 +3,9 @@ package org.scoutsdecanarias.ecatlim_backend.service;
 import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
-import org.scoutsdecanarias.ecatlim_backend.entity.UserEducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
-import org.scoutsdecanarias.ecatlim_backend.repository.UserEducationStageRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
