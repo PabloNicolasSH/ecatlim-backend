@@ -1,27 +1,46 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.ScoutGroupDto;
+import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record UserProfileDto(Integer id, String name, String surname, String email, String phone, Integer census, String role, String nif, String address, String city, String country, ScoutGroupDto scoutGroup) {
+public record UserProfileDto(
+        Integer id,
+        String name,
+        String surname,
+        String email,
+        String phone,
+        Integer census,
+        String role,
+        String nif,
+        String address,
+        String city,
+        String country,
+        ScoutGroupDto scoutGroup,
+        String avatarUrl
+) {
 
     public static UserProfileDto fromEntity(User user){
+        boolean hasProfile = user.getProfile() != null;
+
         return new UserProfileDto(
                 user.getId(),
-                user.getName(),
-                user.getSurname(),
+                hasProfile ? user.getProfile().getName() : "Administrador",
+                hasProfile ? user.getProfile().getSurname() : "Global",
                 user.getEmail(),
-                user.getPhone(),
-                user.getCensus(),
+                hasProfile ? user.getProfile().getPhone() : null,
+                hasProfile ? user.getProfile().getCensus() : 0,
                 user.getRole().name(),
-                user.getNif(),
-                user.getAddress(),
-                user.getCity(),
-                user.getCountry(),
-                ScoutGroupDto.fromEntity(user.getScoutGroup())
+                hasProfile ? user.getProfile().getNif() : null,
+                hasProfile ? user.getProfile().getAddress() : null,
+                hasProfile ? user.getProfile().getCity() : null,
+                hasProfile ? user.getProfile().getCountry() : null,
+                (hasProfile && user.getProfile().getScoutGroup() != null)
+                        ? ScoutGroupDto.fromEntity(user.getProfile().getScoutGroup())
+                        : null,
+                hasProfile ? user.getProfile().getProfilePictureUrl() : null
         );
     }
 
