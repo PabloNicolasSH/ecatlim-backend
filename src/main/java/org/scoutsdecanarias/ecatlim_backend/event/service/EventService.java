@@ -2,11 +2,9 @@ package org.scoutsdecanarias.ecatlim_backend.event.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.dto.user.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventConfigDto;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventFormDto;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventHomeWidgetDto;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventUserCalendarDto;
+import org.scoutsdecanarias.ecatlim_backend.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
@@ -50,24 +48,49 @@ public class EventService {
 
     public List<EventUserCalendarDto> getEventsForUser(String userEmail) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
-        List<Event> allEvents = eventRepository.findAll();
+        List<Event> allEvents = eventRepository.findAllByStatus(EventStatus.PUBLISHED);
         return allEvents.stream()
                 .map(event ->  new EventUserCalendarDto(
-                            event.getId(),
-                            event.getTitle(),
-                            event.getShortname(),
-                            event.getDescription(),
-                            event.getContents(),
-                            event.getStartDate(),
-                            event.getEndDate(),
-                            event.getLocation(),
-                            event.getOrganizer(),
-                            event.getLessonBlocks().stream().map(LessonBlockCalendarSummaryDto::fromEntity).toList(),
-                            event.getAttendees().size(),
-                            event.getEducationStageCode(),
-                            event.getAttendees().contains(user),
-                            this.calculateParticipation(event, user),
-                            event.getStatus().toString()
+                                event.getId(),
+                                event.getTitle(),
+                                event.getShortname(),
+                                event.getDescription(),
+                                event.getContents(),
+                                event.getStartDate(),
+                                event.getEndDate(),
+                                event.getLocation(),
+                                event.getOrganizer(),
+                                event.getLessonBlocks().stream().map(LessonBlockCalendarSummaryDto::fromEntity).toList(),
+                                event.getAttendees().size(),
+                                event.getEducationStageCode(),
+                                event.getAttendees().contains(user),
+                                this.calculateParticipation(event, user),
+                                event.isClosed(),
+                                event.getStatus().toString()
+                        )
+                )
+                .toList();
+    }
+
+    public List<EventAdminCalendarDto> getEventsForAdmin(String userEmail) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        List<Event> allEvents = eventRepository.findAll();
+        return allEvents.stream()
+                .map(event ->  new EventAdminCalendarDto(
+                        event.getId(),
+                        event.getTitle(),
+                        event.getShortname(),
+                        event.getDescription(),
+                        event.getContents(),
+                        event.getStartDate(),
+                        event.getEndDate(),
+                        event.getLocation(),
+                        event.getOrganizer(),
+                        event.getLessonBlocks().stream().map(LessonBlockCalendarSummaryDto::fromEntity).toList(),
+                        SimpleUserDto.fromEntity(event.getDirector()),
+                        EnrolledUserDto.fromCollection(event.getAttendees()),
+                        event.getStatus().toString(),
+                        EventConfigDto.fromEntity(event.getEventConfiguration())
                     )
                 )
                 .toList();
@@ -128,6 +151,14 @@ public class EventService {
         return eventRepository.save(existingEvent);
     }
 
+    public Event updateStatus(Integer id, String status) {
+        Event existingEvent = eventRepository.findByIdWithTimeline(id)
+                .orElseThrow(() -> new EntityNotFoundException("Evento no encontrado"));
+
+        existingEvent.setStatus(EventStatus.valueOf(status));
+        return eventRepository.save(existingEvent);
+    }
+
     public void delete(Integer id) {
         eventRepository.deleteById(id);
     }
@@ -137,6 +168,14 @@ public class EventService {
         Event event = eventRepository.findById(id).orElseThrow();
 
         event.getAttendees().add(user);
+        return eventRepository.save(event);
+    }
+
+    public Event unenrollStudent(Integer id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Event event = eventRepository.findById(id).orElseThrow();
+
+        event.getAttendees().remove(user);
         return eventRepository.save(event);
     }
 

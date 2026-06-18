@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.event.repository;
 
 import org.scoutsdecanarias.ecatlim_backend.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.event.enums.EventStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Integer> {
+    List<Event> findAllByStatus(EventStatus eventStatus);
+
     @Query("SELECT e FROM Event e LEFT JOIN FETCH e.timelineItems WHERE e.id = :id")
     Optional<Event> findByIdWithTimeline(Integer id);
 

@@ -127,4 +127,11 @@ public class Event {
 
         return code.substring(2, code.indexOf("-"));
     }
+
+    public boolean isClosed() {
+        if (eventConfiguration == null) return false;
+        LocalDateTime today = LocalDateTime.now();
+
+        return today.isAfter(eventConfiguration.getDateCloseInscription());
+    }
 }

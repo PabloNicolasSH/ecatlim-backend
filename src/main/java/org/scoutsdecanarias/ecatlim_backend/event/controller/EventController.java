@@ -1,9 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.event.controller;
 
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventDto;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventFormDto;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventHomeWidgetDto;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.EventUserCalendarDto;
+import org.scoutsdecanarias.ecatlim_backend.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.event.service.EventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,15 +30,21 @@ public class EventController {
         return ResponseEntity.ok(eventService.findAll().stream().map(EventDto::fromEntity).toList());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<EventDto> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(EventDto.fromEntity(eventService.findById(id)));
+    @GetMapping("/edit/{id}")
+    public ResponseEntity<EventFormDto> getById(@PathVariable Integer id) {
+        return ResponseEntity.ok(EventFormDto.fromEntity(eventService.findById(id)));
     }
 
     @GetMapping("/user-calendar")
     public ResponseEntity<List<EventUserCalendarDto>> getUserCalendar() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(eventService.getEventsForUser(userEmail));
+    }
+
+    @GetMapping("/admin/calendar")
+    public ResponseEntity<List<EventAdminCalendarDto>> getAdminCalendar() {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(eventService.getEventsForAdmin(userEmail));
     }
 
     @GetMapping("/user-home")
@@ -61,9 +64,20 @@ public class EventController {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.enrollStudent(id, userEmail)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/unenroll")
+    public ResponseEntity<EventDto> unenroll(@PathVariable Integer id) {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(EventDto.fromEntity(eventService.unenrollStudent(id, userEmail)));
+    }
+
+    @PutMapping("/admin/{id}")
     public ResponseEntity<EventDto> update(@PathVariable Integer id, @RequestBody EventFormDto event) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.update(id, event)));
+    }
+
+    @PutMapping("/admin/update-status/{id}")
+    public ResponseEntity<EventDto> updateStatus(@PathVariable Integer id, @RequestBody String status) {
+        return ResponseEntity.ok(EventDto.fromEntity(eventService.updateStatus(id, status)));
     }
 
     @DeleteMapping("/{id}")
