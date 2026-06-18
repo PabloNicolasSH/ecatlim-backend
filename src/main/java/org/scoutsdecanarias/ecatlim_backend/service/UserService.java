@@ -8,7 +8,7 @@ import org.scoutsdecanarias.ecatlim_backend.dto.user.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.dto.user.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.exception.UserEmailExistsException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.UserEmailExistsException;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.GrantedAuthority;

@@ -45,7 +45,7 @@ public class EmailTemplateService {
         return templateEngine.process("pending_user_request_email.html", context);
     }
 
-    public String loadEventNotificationTemplate(String name, String eventTitle, String eventLocation, String eventDate, List<String> missingBlocks, String enrollLink) {
+    public String loadEventNotificationTemplate(String name, String eventTitle, String eventLocation, String eventDate, List<String> missingBlocks, List<String> allEventBlocks, String enrollLink) {
         Context context = new Context();
         context.setVariable("name", name);
         context.setVariable("eventTitle", eventTitle);
@@ -53,6 +53,7 @@ public class EmailTemplateService {
         context.setVariable("eventDate", eventDate);
         context.setVariable("missingBlocks", missingBlocks);
         context.setVariable("enrollLink", enrollLink);
+        context.setVariable("allEventBlocks", allEventBlocks);
 
         return templateEngine.process("event_notification_email.html", context);
     }

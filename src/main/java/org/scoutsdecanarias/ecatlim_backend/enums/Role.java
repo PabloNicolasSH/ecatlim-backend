@@ -5,5 +5,6 @@ public enum Role {
     MANAGEMENT,
     EVENT_DIRECTOR,
     TRAINER,
-    STUDENT
+    STUDENT,
+    HEAD_OF_EDUCATION
 }

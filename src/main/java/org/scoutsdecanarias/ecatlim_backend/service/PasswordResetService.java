@@ -1,11 +1,11 @@
 package org.scoutsdecanarias.ecatlim_backend.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.auth.SecurityUtils;
-import org.scoutsdecanarias.ecatlim_backend.auth.password.ChangePasswordDto;
-import org.scoutsdecanarias.ecatlim_backend.auth.password.ResetPasswordDto;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.SecurityUtils;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.password.ChangePasswordDto;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.password.ResetPasswordDto;
 import org.scoutsdecanarias.ecatlim_backend.entity.User;
-import org.scoutsdecanarias.ecatlim_backend.exception.EcatlimBadRequestException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimBadRequestException;
 import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
