@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.shared.email;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
+import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +22,8 @@ public class EmailService {
         this.emailSenderService = emailSenderService;
     }
 
-    public void sendWelcomeEmail(String to, String name, String email, String password) {
-        String html = emailTemplateService.loadWelcomeEmailTemplate(name, email, password);
+    public void sendWelcomeEmail(String to, String name, String password) {
+        String html = emailTemplateService.loadWelcomeEmailTemplate(to, password);
         emailSenderService.sendEmail("Bienvenida a la ECATLIM", html, to);
     }
 

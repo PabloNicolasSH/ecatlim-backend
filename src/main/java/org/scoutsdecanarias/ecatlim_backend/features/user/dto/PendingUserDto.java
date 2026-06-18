@@ -1,6 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.ScoutGroupDto;
+import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.PendingUser;
 
 import java.util.List;

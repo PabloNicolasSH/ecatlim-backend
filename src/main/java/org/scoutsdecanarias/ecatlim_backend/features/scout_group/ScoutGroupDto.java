@@ -1,6 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
-
-import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
+package org.scoutsdecanarias.ecatlim_backend.features.scout_group;
 
 import java.util.List;
 import java.util.stream.Collectors;

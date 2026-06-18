@@ -1,18 +1,10 @@
-package org.scoutsdecanarias.ecatlim_backend.entity;
+package org.scoutsdecanarias.ecatlim_backend.features.lesson_block;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.scoutsdecanarias.ecatlim_backend.entity.Module;
 import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserLessonBlock;
 
 import java.util.List;
 

@@ -1,33 +1,34 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.controller;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.features.user.Role;
+import org.scoutsdecanarias.ecatlim_backend.dto.UploadResponse;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserProfileDto;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
+import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobDirectory;
+import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
+@AllArgsConstructor
 @RequestMapping("/user")
 public class UserController {
 
     private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/me")
     public UserProfileDto getUserInfo() {

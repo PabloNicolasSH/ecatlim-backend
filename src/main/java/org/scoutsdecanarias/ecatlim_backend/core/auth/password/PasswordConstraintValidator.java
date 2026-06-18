@@ -2,13 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.core.auth.password;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.passay.CharacterRule;
-import org.passay.EnglishCharacterData;
-import org.passay.LengthRule;
-import org.passay.PasswordData;
-import org.passay.PasswordValidator;
-import org.passay.RuleResult;
-import org.passay.WhitespaceRule;
+import org.passay.*;
 
 import java.util.Arrays;
 

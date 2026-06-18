@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.shared.email;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
+import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -18,9 +18,8 @@ public class EmailTemplateService {
         this.templateEngine = templateEngine;
     }
 
-    public String loadWelcomeEmailTemplate(String name, String email, String password) {
+    public String loadWelcomeEmailTemplate(String email, String password) {
         Context context = new Context();
-        context.setVariable("name", name);
         context.setVariable("email", email);
         context.setVariable("password", password);
 

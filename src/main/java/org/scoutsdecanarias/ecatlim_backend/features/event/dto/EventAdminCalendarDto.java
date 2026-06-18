@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.features.event.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
+import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
 
 import java.time.LocalDateTime;
 import java.util.List;

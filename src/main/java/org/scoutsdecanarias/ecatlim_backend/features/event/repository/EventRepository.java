@@ -1,8 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.event.repository;
 
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

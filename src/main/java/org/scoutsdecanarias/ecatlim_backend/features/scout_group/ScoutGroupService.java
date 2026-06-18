@@ -1,8 +1,5 @@
-package org.scoutsdecanarias.ecatlim_backend.service;
+package org.scoutsdecanarias.ecatlim_backend.features.scout_group;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.ScoutGroupDto;
-import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;
-import org.scoutsdecanarias.ecatlim_backend.repository.ScoutGroupRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

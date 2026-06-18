@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
-import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.entity.TimelineItem;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

@@ -2,23 +2,22 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
-import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
-import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
-import org.scoutsdecanarias.ecatlim_backend.features.user.Role;
-import org.scoutsdecanarias.ecatlim_backend.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemFormDto;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
-import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventConfiguration;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.NotificationTarget;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
+import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
-import org.scoutsdecanarias.ecatlim_backend.repository.*;
+import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -35,6 +34,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final ScoutGroupRepository scoutGroupRepository;
     private final LessonBlockRepository lessonBlockRepository;
     private final EducationStageRepository educationStageRepository;
     private final UserLessonBlockRepository userLessonBlockRepository;
@@ -241,7 +241,7 @@ public class EventService {
         Set<User> recipients = new HashSet<>();
 
         if (notificationTargets.contains(NotificationTarget.HEAD_OF_EDUCATION)) {
-            List<User> headsOfEducation = userRepository.findAllByRole(Role.HEAD_OF_EDUCATION);
+            List<User> headsOfEducation = scoutGroupRepository.findAllHeadsOfEducation();
             recipients.addAll(headsOfEducation);
         }
 
@@ -274,7 +274,7 @@ public class EventService {
 
             emailService.sendEventRecommendationEmail(
                     user.getEmail(),
-                    user.getName(),
+                    user.getProfile().getName(),
                     event.getTitle(),
                     event.getLocation(),
                     this.formatDate(event.getStartDate()),

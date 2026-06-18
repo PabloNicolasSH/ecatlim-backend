@@ -1,6 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 
 public record LessonBlockCalendarSummaryDto(
         String name,

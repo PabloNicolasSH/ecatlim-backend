@@ -1,6 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.features.user.Role;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 
 public record UserFormDto(
         String name,

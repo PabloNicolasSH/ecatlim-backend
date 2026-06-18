@@ -10,7 +10,7 @@ public record SimpleUserDto(
     public static SimpleUserDto fromEntity(User user) {
         return new SimpleUserDto(
                 user.getId(),
-                user.getName(),
+                user.getProfile().getName(),
                 user.getEmail()
         );
     }

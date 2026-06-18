@@ -1,8 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.repository;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserLessonBlock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

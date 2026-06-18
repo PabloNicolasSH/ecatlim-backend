@@ -2,8 +2,8 @@ package org.scoutsdecanarias.ecatlim_backend.core.auth.password;
 
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.core.auth.SecurityUtils;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimBadRequestException;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.beans.factory.annotation.Value;
