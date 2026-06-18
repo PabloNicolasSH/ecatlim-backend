@@ -29,7 +29,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final ScoutGroupService scoutGroupService;
@@ -165,27 +165,6 @@ public class UserService implements UserDetailsService {
         }
 
         return userRepository.save(me);
-    }
-
-    @Transactional
-    public void updateMyAvatar(User user, String avatarUrl) {
-        UserProfile profile = user.getProfile() != null ? user.getProfile() : new UserProfile();
-        profile.setProfilePictureUrl(avatarUrl);
-        user.setProfile(profile);
-        userRepository.save(user);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = getUserByEmail(email);
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), user.isEnabled(),
-                true, true, true, this.buildAuthorities(user.getRole()));
-    }
-
-    private List<GrantedAuthority> buildAuthorities(Role userRole) {
-        Set<GrantedAuthority> authorities = new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority(userRole.name()));
-        return new ArrayList<>(authorities);
     }
 
     public User activateUser(Integer id) {

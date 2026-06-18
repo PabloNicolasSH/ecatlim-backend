@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.core.configuration;
 
+import org.scoutsdecanarias.ecatlim_backend.core.UserDetailsServiceImpl;
 import org.scoutsdecanarias.ecatlim_backend.core.auth.JWTAuthFilter;
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
 import org.springframework.context.annotation.Bean;
@@ -30,12 +31,13 @@ import java.util.Collections;
 @EnableMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig {
 
-    private final UserService userService;
 
     private final JWTAuthFilter jwtAuthFilter;
 
-    public WebSecurityConfig(UserService userService, JWTAuthFilter jwtAuthFilter) {
-        this.userService = userService;
+    private final UserDetailsServiceImpl userDetailsService;
+
+    public WebSecurityConfig(JWTAuthFilter jwtAuthFilter, UserDetailsServiceImpl userDetailsService) {
+        this.userDetailsService = userDetailsService;
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
@@ -70,7 +72,7 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userService);
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
