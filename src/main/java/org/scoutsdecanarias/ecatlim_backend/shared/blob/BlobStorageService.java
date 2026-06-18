@@ -1,18 +1,16 @@
-package org.scoutsdecanarias.ecatlim_backend.service;
+package org.scoutsdecanarias.ecatlim_backend.shared.blob;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.tomcat.util.http.fileupload.ByteArrayOutputStream;
 import org.scoutsdecanarias.ecatlim_backend.dto.UploadResponse;
-import org.scoutsdecanarias.ecatlim_backend.enums.BlobDirectory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Objects;
 
 @Service
 public class BlobStorageService {

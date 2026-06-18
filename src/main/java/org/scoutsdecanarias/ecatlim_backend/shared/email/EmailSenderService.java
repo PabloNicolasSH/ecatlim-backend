@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.service;
+package org.scoutsdecanarias.ecatlim_backend.shared.email;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

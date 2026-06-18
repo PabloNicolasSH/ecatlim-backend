@@ -19,7 +19,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBloc
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.repository.*;
-import org.scoutsdecanarias.ecatlim_backend.service.EmailService;
+import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

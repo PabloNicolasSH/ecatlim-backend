@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.service;
+package org.scoutsdecanarias.ecatlim_backend.shared.email;
 
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.entity.ScoutGroup;

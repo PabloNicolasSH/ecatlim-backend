@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.enums;
+package org.scoutsdecanarias.ecatlim_backend.shared.blob;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

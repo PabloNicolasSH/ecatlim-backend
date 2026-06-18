@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
-import org.scoutsdecanarias.ecatlim_backend.service.EmailService;
+import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.scoutsdecanarias.ecatlim_backend.service.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.PendingUser;
