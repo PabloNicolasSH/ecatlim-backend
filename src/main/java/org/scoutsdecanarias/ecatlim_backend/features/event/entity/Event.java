@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -71,13 +72,8 @@ public class Event {
     )
     private Set<User> staff = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "event_enrollments",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<User> attendees = new HashSet<>();
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<EventEnrollment> enrollments = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "education_stage_id")
@@ -102,6 +98,16 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventStatus status;
+
+    public Set<User> getEnrolledUsers() {
+        if (this.enrollments == null) {
+            return new HashSet<>();
+        }
+
+        return this.enrollments.stream()
+                .map(EventEnrollment::getUser)
+                .collect(Collectors.toSet());
+    }
 
     public void addTimelineItem(TimelineItem item) {
         timelineItems.add(item);

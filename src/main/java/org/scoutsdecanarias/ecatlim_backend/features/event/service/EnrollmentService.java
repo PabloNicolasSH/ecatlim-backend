@@ -3,10 +3,15 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
+import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.BlockDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserEnrollmentDetailDto;
@@ -31,6 +36,8 @@ public class EnrollmentService {
     private final EducationStageRepository stageRepository;
     private final UserLessonBlockRepository userLessonBlockRepository;
     private final LessonBlockRepository lessonBlockRepository;
+    private final EventEnrollmentRepository eventEnrollmentRepository;
+    private final EventRepository eventRepository;
 
     public List<UserEnrollmentDetailDto> getUserProgress(String email) {
         User user = userRepository.findByEmail(email)
@@ -102,6 +109,46 @@ public class EnrollmentService {
         }
 
         return convertToCardDto(stage, "ENROLLED", true);
+    }
+
+    public Event enrollStudent(Integer id, String userEmail, List<Integer> lessonBlockIds) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Event event = eventRepository.findById(id).orElseThrow();
+
+        for (Integer lessonBlockId : lessonBlockIds) {
+            LessonBlock lessonBlock = lessonBlockRepository.findById(lessonBlockId).orElseThrow();
+
+            boolean alreadyEnrolled = eventEnrollmentRepository
+                    .existsByUserIdAndEventIdAndLessonBlockId(user.getId(), event.getId(), lessonBlockId);
+
+            if (!alreadyEnrolled) {
+                EventEnrollment enrollment = new EventEnrollment();
+                enrollment.setUser(user);
+                enrollment.setLessonBlock(lessonBlock);
+                enrollment.setEvent(event);
+
+                event.getEnrollments().add(enrollment);
+            }
+        }
+
+        return eventRepository.save(event);
+    }
+
+    @Transactional
+    public Event unenrollStudent(Integer id, String userEmail, List<Integer> lessonBlockIds) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Event event = eventRepository.findById(id).orElseThrow();
+
+        for (Integer blockId : lessonBlockIds) {
+            eventEnrollmentRepository.deleteByUserIdAndEventIdAndLessonBlockId(user.getId(), event.getId(), blockId);
+        }
+
+        event.getEnrollments().removeIf(enrollment ->
+                enrollment.getUser().getId().equals(user.getId()) &&
+                        lessonBlockIds.contains(enrollment.getLessonBlock().getId())
+        );
+
+        return eventRepository.save(event);
     }
 
     private void validateHierarchyRequirements(User user, EducationStage stage) {

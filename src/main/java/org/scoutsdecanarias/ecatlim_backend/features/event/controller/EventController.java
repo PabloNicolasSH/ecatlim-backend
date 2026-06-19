@@ -51,18 +51,6 @@ public class EventController {
         return EventDto.fromEntity(eventService.save(event));
     }
 
-    @PutMapping("/{id}/enroll")
-    public ResponseEntity<EventDto> enroll(@PathVariable Integer id) {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(EventDto.fromEntity(eventService.enrollStudent(id, userEmail)));
-    }
-
-    @PutMapping("/{id}/unenroll")
-    public ResponseEntity<EventDto> unenroll(@PathVariable Integer id) {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(EventDto.fromEntity(eventService.unenrollStudent(id, userEmail)));
-    }
-
     @PutMapping("/admin/{id}")
     public ResponseEntity<EventDto> update(@PathVariable Integer id, @RequestBody EventFormDto event) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.update(id, event)));
