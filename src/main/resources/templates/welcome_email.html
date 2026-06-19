@@ -11,7 +11,8 @@
     <img src="" alt="logo">
     <h2>¡Esta es tu bienvenida al <br>Aula Virtual de la ECATLIM!</h2>
 
-    <p th:text="'Para comenzar a usar el aula virtual, ' + ${name} + ', es necesario que inicies sesión con las siguientes credenciales:'"></p>
+    <p th:if="${name != null}" th:text="'Para comenzar a usar el aula virtual, ' + ${name} + ', es necesario que inicies sesión con las siguientes credenciales:'"></p>
+    <p th:if="${name == null}">Para comenzar a usar el aula virtual, es necesario que inicies sesión con las siguientes credenciales:</p>
 
     <div>
         <ul style="text-align: start">

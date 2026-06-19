@@ -1,8 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.core.auth;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.entity.User;
-import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

@@ -3,9 +3,10 @@ package org.scoutsdecanarias.ecatlim_backend.core.auth;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.entity.User;
-import org.scoutsdecanarias.ecatlim_backend.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserProfileMinDto;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
+import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -42,17 +43,27 @@ public class AuthController {
         String token = jwtUtil.generateToken((UserDetails) authentication.getPrincipal());
         User user = userRepository.findByEmail(request.getUsername()).orElse(null);
 
+        UserProfileMinDto profileMinDto = null;
+
         assert user != null;
-        return ResponseEntity.ok(new AuthResponse(token, user.getName(), user.getSurname(), user.getEmail(), user.getRole()));
+
+        if (user.getProfile() != null) {
+            profileMinDto = new UserProfileMinDto(
+                    user.getProfile().getName(),
+                    user.getProfile().getSurname()
+            );
+        }
+
+        return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getRole(), profileMinDto));
     }
 
     @Data
     @AllArgsConstructor
+    static
     class AuthResponse {
         private String token;
-        private String name;
-        private String surname;
         private String email;
         private Role role;
+        private UserProfileMinDto profile;
     }
 }

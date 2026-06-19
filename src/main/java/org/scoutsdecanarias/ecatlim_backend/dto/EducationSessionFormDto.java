@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.dto;
 
 import org.scoutsdecanarias.ecatlim_backend.entity.EducationSession;
-import org.scoutsdecanarias.ecatlim_backend.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.util.List;
 
