@@ -55,30 +55,37 @@ public class EventService {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
         List<Event> allEvents = eventRepository.findAllByStatus(EventStatus.PUBLISHED);
         return allEvents.stream()
-                .map(event ->  new EventUserCalendarDto(
-                                event.getId(),
-                                event.getTitle(),
-                                event.getShortname(),
-                                event.getDescription(),
-                                event.getContents(),
-                                event.getStartDate(),
-                                event.getEndDate(),
-                                event.getLocation(),
-                                event.getOrganizer(),
-                                event.getLessonBlocks().stream().map(LessonBlockCalendarSummaryDto::fromEntity).toList(),
-                                event.getEnrolledUsers().size(),
-                                event.getEducationStageCode(),
-                                event.getEnrolledUsers().contains(user),
-                                this.calculateParticipation(event, user),
-                                event.isClosed(),
-                                event.getStatus().toString()
-                        )
-                )
+                .map(event -> {
+
+                    List<String> enrolledBlockCodes = event.getEnrollments().stream()
+                            .filter(eventEnrollment -> eventEnrollment.getUser().equals(user))
+                            .map(eventEnrollment -> eventEnrollment.getLessonBlock().getCode())
+                            .toList();
+
+                    return new EventUserCalendarDto(
+                            event.getId(),
+                            event.getTitle(),
+                            event.getShortname(),
+                            event.getDescription(),
+                            event.getContents(),
+                            event.getStartDate(),
+                            event.getEndDate(),
+                            event.getLocation(),
+                            event.getOrganizer(),
+                            event.getLessonBlocks().stream().map(LessonBlockCalendarSummaryDto::fromEntity).toList(),
+                            event.getEnrolledUsers().size(),
+                            event.getEducationStageCode(),
+                            event.getEnrolledUsers().contains(user),
+                            this.calculateParticipation(event, user),
+                            event.isClosed(),
+                            enrolledBlockCodes,
+                            event.getStatus().toString()
+                    );
+                })
                 .toList();
     }
 
-    public List<EventAdminCalendarDto> getEventsForAdmin(String userEmail) {
-        User user = userRepository.findByEmail(userEmail).orElseThrow();
+    public List<EventAdminCalendarDto> getEventsForAdmin() {
         List<Event> allEvents = eventRepository.findAll();
         return allEvents.stream()
                 .map(event ->  new EventAdminCalendarDto(

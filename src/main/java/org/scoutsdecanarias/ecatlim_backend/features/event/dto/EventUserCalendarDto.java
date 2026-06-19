@@ -21,6 +21,7 @@ public record EventUserCalendarDto(
         boolean isCurrentUserAttending,
         boolean canParticipate,
         boolean isEventClosed,
+        List<String> enrolledBlockCodes,
         String status
 ) {
 }

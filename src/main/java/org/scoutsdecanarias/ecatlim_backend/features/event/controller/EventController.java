@@ -36,8 +36,7 @@ public class EventController {
 
     @GetMapping("/admin/calendar")
     public ResponseEntity<List<EventAdminCalendarDto>> getAdminCalendar() {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(eventService.getEventsForAdmin(userEmail));
+        return ResponseEntity.ok(eventService.getEventsForAdmin());
     }
 
     @GetMapping("/user-home")

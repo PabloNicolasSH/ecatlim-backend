@@ -28,7 +28,7 @@ public class EventEnrollment {
     private LessonBlock lessonBlock;
 
     @Enumerated(EnumType.STRING)
-    private PaymentStatus paymentState = PaymentStatus.PENDING;
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     private boolean hasAttended = false;
 }
