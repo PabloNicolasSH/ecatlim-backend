@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class BlobStorageService {
@@ -40,7 +42,9 @@ public class BlobStorageService {
             thumbnailUrl = uploadThumbnail(file, directory, fileName);
         }
 
-        return new UploadResponse(originalClient.getBlobUrl(), thumbnailUrl, fileName);
+        String cleanOriginalUrl = URLDecoder.decode(originalClient.getBlobUrl(), StandardCharsets.UTF_8);
+
+        return new UploadResponse(cleanOriginalUrl, thumbnailUrl, fileName);
     }
 
     public void delete(String fileName, BlobDirectory directory) {
@@ -53,7 +57,18 @@ public class BlobStorageService {
         }
     }
 
-    public byte[] download(String fullPath) {
+    public byte[] download(String fileName, BlobDirectory directory) {
+        String originalPath = directory.getPath() + "/" + fileName;
+
+        return container
+                .getBlobClient(originalPath)
+                .downloadContent()
+                .toBytes();
+    }
+
+    public byte[] downloadThumbnail(String fileName, BlobDirectory directory) {
+        String fullPath = directory.getThumbnailPath() + "/" + fileName;
+
         return container
                 .getBlobClient(fullPath)
                 .downloadContent()
@@ -72,7 +87,7 @@ public class BlobStorageService {
         try (var is = new ByteArrayInputStream(bytes)) {
             BlobClient thumbClient = container.getBlobClient(thumbPath);
             thumbClient.upload(is, (long) bytes.length, true);
-            return thumbClient.getBlobUrl();
+            return URLDecoder.decode(thumbClient.getBlobUrl(), StandardCharsets.UTF_8);
         }
     }
 }

@@ -25,6 +25,11 @@ public record UserProfileDto(
     public static UserProfileDto fromEntity(User user){
         boolean hasProfile = user.getProfile() != null;
 
+        String avatarUrl = null;
+        if (hasProfile && user.getProfile().getProfilePicture() != null) {
+            avatarUrl = "/users/me/files/" + user.getProfile().getProfilePicture().getId();
+        }
+
         return new UserProfileDto(
                 user.getId(),
                 hasProfile ? user.getProfile().getName() : "Administrador",
@@ -40,7 +45,7 @@ public record UserProfileDto(
                 (hasProfile && user.getProfile().getScoutGroup() != null)
                         ? ScoutGroupDto.fromEntity(user.getProfile().getScoutGroup())
                         : null,
-                hasProfile ? user.getProfile().getProfilePictureUrl() : null
+                avatarUrl
         );
     }
 

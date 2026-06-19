@@ -6,22 +6,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Getter
 public enum BlobDirectory {
-    PROFILE_PHOTOS("user/photos", "user/photos/thumbnails", 200),;
+    PROFILE_PHOTOS("user/photos", "user/photos/thumbnails", 200),
+    EDUCATION_DOCUMENTS("user/education-documents"),
+    ACTIVITY_ATTACHMENTS("user/activities");
 
     private final String path;
     private final String thumbnailPath;
     private final int thumbnailSize;
 
-    BlobDirectory(String path, String thumbnailPath, int thumbnailSize){
-        this.path = path;
-        this.thumbnailPath = thumbnailPath;
-        this.thumbnailSize = thumbnailSize;
-    }
-
     BlobDirectory(String path){
         this.path = path;
         this.thumbnailPath = null;
         this.thumbnailSize = 0;
+    }
+
+    BlobDirectory(String path, String thumbnailPath, int thumbnailSize){
+        this.path = path;
+        this.thumbnailPath = thumbnailPath;
+        this.thumbnailSize = thumbnailSize;
     }
 
     public boolean hasThumbnail() {

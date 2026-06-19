@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
+import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFile;
 
 @Getter
 @Setter
@@ -24,7 +25,9 @@ public class UserProfile {
     @Column(nullable = false)
     private String surname;
 
-    private String profilePictureUrl;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "profile_picture_id", referencedColumnName = "id")
+    private UserFile profilePicture;
 
     private String nif;
     private String phone;
