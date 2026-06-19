@@ -1,6 +1,5 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.features.module;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.Module;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
 

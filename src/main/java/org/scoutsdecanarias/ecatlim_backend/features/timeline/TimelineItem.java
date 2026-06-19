@@ -1,8 +1,9 @@
-package org.scoutsdecanarias.ecatlim_backend.entity;
+package org.scoutsdecanarias.ecatlim_backend.features.timeline;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.scoutsdecanarias.ecatlim_backend.features.education_session.EducationSession;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 
 import java.time.LocalDateTime;

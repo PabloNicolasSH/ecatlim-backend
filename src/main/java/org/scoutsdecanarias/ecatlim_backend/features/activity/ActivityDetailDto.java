@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.features.activity;
 
 public record ActivityDetailDto(
         String name,

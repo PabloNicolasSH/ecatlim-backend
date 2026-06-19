@@ -1,6 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.event.controller;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.education_stage.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserEnrollmentDetailDto;
 import org.springframework.http.ResponseEntity;

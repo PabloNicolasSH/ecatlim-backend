@@ -1,6 +1,5 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.features.education_session;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.EducationSession;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.util.List;

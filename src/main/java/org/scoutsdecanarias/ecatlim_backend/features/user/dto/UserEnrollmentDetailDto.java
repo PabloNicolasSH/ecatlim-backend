@@ -1,6 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.BlockDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.BlockDetailDto;
 
 import java.util.List;
 

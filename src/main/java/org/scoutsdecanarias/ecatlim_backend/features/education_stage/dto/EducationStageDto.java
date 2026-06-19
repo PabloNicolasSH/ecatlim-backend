@@ -1,9 +1,9 @@
-package org.scoutsdecanarias.ecatlim_backend.dto.education_stage;
+package org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.ModuleDto;
-import org.scoutsdecanarias.ecatlim_backend.entity.EducationStage;
-import org.scoutsdecanarias.ecatlim_backend.entity.Module;
-import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
+import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleDto;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.module.Module;
+import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleType;
 
 import java.util.List;
 import java.util.stream.Collectors;

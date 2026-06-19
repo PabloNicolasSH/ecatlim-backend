@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.features.lesson_block;
 
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
-import org.scoutsdecanarias.ecatlim_backend.service.LessonBlockService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 

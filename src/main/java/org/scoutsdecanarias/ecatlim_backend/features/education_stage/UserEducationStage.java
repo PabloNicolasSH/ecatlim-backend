@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.entity;
+package org.scoutsdecanarias.ecatlim_backend.features.education_stage;
 
 import jakarta.persistence.*;
 import lombok.Getter;

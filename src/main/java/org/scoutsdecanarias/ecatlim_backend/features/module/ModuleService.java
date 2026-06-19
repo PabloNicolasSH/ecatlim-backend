@@ -1,10 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.service;
+package org.scoutsdecanarias.ecatlim_backend.features.module;
 
-import org.scoutsdecanarias.ecatlim_backend.dto.ModuleDto;
-import org.scoutsdecanarias.ecatlim_backend.entity.Module;
-import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
-import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
-import org.scoutsdecanarias.ecatlim_backend.repository.ModuleRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

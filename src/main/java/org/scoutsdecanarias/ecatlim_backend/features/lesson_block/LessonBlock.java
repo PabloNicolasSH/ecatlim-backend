@@ -3,8 +3,8 @@ package org.scoutsdecanarias.ecatlim_backend.features.lesson_block;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.entity.Module;
-import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
+import org.scoutsdecanarias.ecatlim_backend.features.module.Module;
+import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleType;
 
 import java.util.List;
 

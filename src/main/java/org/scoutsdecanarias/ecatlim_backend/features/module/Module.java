@@ -1,9 +1,9 @@
-package org.scoutsdecanarias.ecatlim_backend.entity;
+package org.scoutsdecanarias.ecatlim_backend.features.module;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.enums.ModuleType;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 
 import java.util.ArrayList;

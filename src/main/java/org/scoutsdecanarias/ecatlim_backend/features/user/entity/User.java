@@ -3,7 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.user.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.entity.UserEducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 

@@ -1,6 +1,5 @@
-package org.scoutsdecanarias.ecatlim_backend.repository;
+package org.scoutsdecanarias.ecatlim_backend.features.module;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.Module;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

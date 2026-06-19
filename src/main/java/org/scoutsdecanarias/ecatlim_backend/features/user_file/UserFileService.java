@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.features.user_file;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.dto.UploadResponse;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;

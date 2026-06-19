@@ -1,8 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.controller;
+package org.scoutsdecanarias.ecatlim_backend.features.module;
 
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.dto.ModuleDto;
-import org.scoutsdecanarias.ecatlim_backend.service.ModuleService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 

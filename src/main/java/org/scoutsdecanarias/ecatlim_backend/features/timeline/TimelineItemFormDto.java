@@ -1,7 +1,7 @@
-package org.scoutsdecanarias.ecatlim_backend.dto;
+package org.scoutsdecanarias.ecatlim_backend.features.timeline;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.EducationSession;
-import org.scoutsdecanarias.ecatlim_backend.entity.TimelineItem;
+import org.scoutsdecanarias.ecatlim_backend.features.education_session.EducationSession;
+import org.scoutsdecanarias.ecatlim_backend.features.education_session.EducationSessionFormDto;
 
 import java.time.LocalDateTime;
 import java.util.List;

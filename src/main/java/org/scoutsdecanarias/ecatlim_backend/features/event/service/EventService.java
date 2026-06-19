@@ -2,7 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.dto.TimelineItemFormDto;
+import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventConfiguration;
@@ -17,7 +17,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
-import org.scoutsdecanarias.ecatlim_backend.repository.EducationStageRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
