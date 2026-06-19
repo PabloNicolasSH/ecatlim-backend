@@ -24,7 +24,7 @@ public record EventDto(
                 event.getEndDate(),
                 event.getLocation(),
                 event.getOrganizer(),
-                event.getAttendees().size(),
+                event.getEnrolledUsers().size(),
                 event.getTimelineItems().stream()
                         .map(TimelineItemFormDto::fromEntity)
                         .toList()

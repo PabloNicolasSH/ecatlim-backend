@@ -21,7 +21,4 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
     @Query("SELECT e FROM Event e WHERE e.startDate > :now ORDER BY e.startDate ASC")
     List<Event> findUpcomingEvents(LocalDateTime now, Pageable pageable);
-
-    @Query("SELECT e FROM Event e WHERE e.startDate > :now AND :user MEMBER OF e.attendees")
-    List<Event> findUpcomingEventsByUser(LocalDateTime now, User user, Pageable pageable);
 }

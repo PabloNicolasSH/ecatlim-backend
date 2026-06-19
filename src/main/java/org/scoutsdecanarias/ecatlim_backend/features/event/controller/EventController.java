@@ -36,8 +36,7 @@ public class EventController {
 
     @GetMapping("/admin/calendar")
     public ResponseEntity<List<EventAdminCalendarDto>> getAdminCalendar() {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(eventService.getEventsForAdmin(userEmail));
+        return ResponseEntity.ok(eventService.getEventsForAdmin());
     }
 
     @GetMapping("/user-home")
@@ -49,18 +48,6 @@ public class EventController {
     @PostMapping("/admin/add")
     public EventDto create(@RequestBody EventFormDto event) {
         return EventDto.fromEntity(eventService.save(event));
-    }
-
-    @PutMapping("/{id}/enroll")
-    public ResponseEntity<EventDto> enroll(@PathVariable Integer id) {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(EventDto.fromEntity(eventService.enrollStudent(id, userEmail)));
-    }
-
-    @PutMapping("/{id}/unenroll")
-    public ResponseEntity<EventDto> unenroll(@PathVariable Integer id) {
-        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(EventDto.fromEntity(eventService.unenrollStudent(id, userEmail)));
     }
 
     @PutMapping("/admin/{id}")
