@@ -4,13 +4,15 @@ package org.scoutsdecanarias.ecatlim_backend.features.activity.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
-import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ForumPublicationDto;
-import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.SurveyResponseDto;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.*;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.ActivityType;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.EvaluationMethod;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.ProgressStatus;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.SurveyResponseType;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.*;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -30,10 +32,55 @@ public class ActivityService {
     private final SurveyResponseRepository surveyResponseRepository;
     private final FileSubmissionRepository fileRepository;
     private final ActivityProgressRepository progressRepository;
-
+    private final EventRepository eventRepository;
+    private final SurveyOptionRepository surveyOptionRepository;
+    private final SurveyQuestionRepository surveyQuestionRepository;
 
     public List<Activity> getActivitiesByEvent(Integer eventId) {
         return activityRepository.findByEventId(eventId);
+    }
+
+    public Activity createActivity(Integer eventId, ActivityCreationDto dto) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: " + eventId));
+
+        Activity activity = new Activity();
+        ActivityType activityType = ActivityType.valueOf(dto.activityType());
+
+        activity.setEvent(event);
+        activity.setActivityType(activityType);
+        activity.setEvaluationMethod(EvaluationMethod.valueOf(dto.evaluationMethod()));
+        activity.setAvailableAt(dto.availableAt());
+        activity.setDueDate(dto.dueDate());
+        activity.setCreatedAt(LocalDateTime.now());
+
+        activity.setIsGradable(dto.isGradable() != null ? dto.isGradable() : false);
+        activity.setMaxAttempts(dto.maxAttempts());
+        activity.setPassingScore(dto.passingScore());
+
+        Activity savedActivity = activityRepository.save(activity);
+
+        if (activityType == ActivityType.SURVEY && dto.questions() != null) {
+            for (QuestionCreationDto qDto : dto.questions()) {
+                SurveyQuestion question = new SurveyQuestion();
+                question.setActivity(savedActivity);
+                question.setQuestionText(qDto.questionText());
+                question.setResponseType(SurveyResponseType.valueOf(qDto.responseType()));
+                SurveyQuestion savedQuestion = surveyQuestionRepository.save(question);
+
+                if (qDto.options() != null) {
+                    for (OptionCreationDto oDto : qDto.options()) {
+                        SurveyOption option = new SurveyOption();
+                        option.setQuestion(savedQuestion);
+                        option.setOptionText(oDto.optionText());
+                        option.setCorrect(oDto.isCorrect() != null ? oDto.isCorrect() : false);
+                        surveyOptionRepository.save(option);
+                    }
+                }
+            }
+        }
+
+        return savedActivity;
     }
 
     public ForumPublication createForumPublication(Integer activityId, Integer studentId, ForumPublicationDto dto) {
@@ -62,15 +109,55 @@ public class ActivityService {
 
         Optional<User> user = userRepository.findById(studentId);
 
+        ActivityProgress progress = progressRepository.findByActivityIdAndStudentId(activityId, studentId)
+                .orElse(new ActivityProgress());
+
+        if (Boolean.TRUE.equals(activity.getIsGradable()) && activity.getMaxAttempts() != null
+                && progress.getAttemptsCount() >= activity.getMaxAttempts()) {
+            throw new IllegalStateException("You have reached the maximum number of attempts for this exam");
+        }
+
+        int correctAnswersCount = 0;
+        int totalGradableQuestions = 0;
+
         for (SurveyResponseDto dto : responsesDto) {
+            SurveyQuestion question = surveyQuestionRepository.findById(dto.id())
+                    .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
+
             SurveyResponse response = new SurveyResponse();
             user.ifPresent(response::setStudent);
+            response.setQuestion(question);
             response.setTextValue(dto.textValue());
             response.setNumValue(dto.numValue());
             surveyResponseRepository.save(response);
+
+            if (Boolean.TRUE.equals(activity.getIsGradable()) && activity.getMaxAttempts() != null){
+                totalGradableQuestions++;
+                boolean isCorrectChoice = question.getOptions().stream()
+                        .filter(SurveyOption::isCorrect)
+                        .anyMatch(option -> option.getOptionText().equals(dto.textValue()));
+
+                if (isCorrectChoice) {correctAnswersCount++;}
+            }
         }
 
-        this.completeActivity(activityId, studentId);
+        progress.setAttemptsCount(progress.getAttemptsCount() + 1);
+        progress.setUpdatedAt(LocalDateTime.now());
+
+        if (Boolean.TRUE.equals(activity.getIsGradable()) && totalGradableQuestions > 0) {
+            double finalScore = ((double) correctAnswersCount / totalGradableQuestions) * 10.0;
+            progress.setScore(finalScore);
+
+            if (finalScore >= activity.getPassingScore()) {
+                progress.setStatus(ProgressStatus.COMPLETED);
+            } else {
+                progress.setStatus(ProgressStatus.PENDING);
+            }
+        } else {
+            progress.setStatus(ProgressStatus.COMPLETED);
+        }
+
+        progressRepository.save(progress);
     }
 
     public FileSubmission submitFile(Integer activityId, Integer studentId, String fileUrl, String comment) {
