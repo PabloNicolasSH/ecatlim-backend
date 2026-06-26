@@ -23,7 +23,7 @@ public class EmailService {
     }
 
     public void sendWelcomeEmail(String to, String name, String password) {
-        String html = emailTemplateService.loadWelcomeEmailTemplate(to, password);
+        String html = emailTemplateService.loadWelcomeEmailTemplate(to, password, webPageLink);
         emailSenderService.sendEmail("Bienvenida a la ECATLIM", html, to);
     }
 
