@@ -9,7 +9,7 @@ public record UserProfileDto(
         Integer id,
         String email,
         String role,
-        ProfileDto profileDto
+        ProfileDto profile
 ) {
 
     public static UserProfileDto fromEntity(User user){
