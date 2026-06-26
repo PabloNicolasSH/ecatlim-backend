@@ -18,10 +18,11 @@ public class EmailTemplateService {
         this.templateEngine = templateEngine;
     }
 
-    public String loadWelcomeEmailTemplate(String email, String password) {
+    public String loadWelcomeEmailTemplate(String email, String password, String webPageLink) {
         Context context = new Context();
         context.setVariable("email", email);
         context.setVariable("password", password);
+        context.setVariable("webPageLink", webPageLink);
 
         return templateEngine.process("welcome_email.html", context);
     }
