@@ -13,7 +13,8 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-public class Activity {
+@Inheritance(strategy = InheritanceType.JOINED)
+public abstract class Activity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -25,7 +26,7 @@ public class Activity {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private ActivityType activityType;
 
     @Enumerated(EnumType.STRING)
@@ -33,12 +34,6 @@ public class Activity {
     private EvaluationMethod evaluationMethod = EvaluationMethod.AUTOMATIC;
 
     private Boolean isOptional = false;
-
-    private Boolean isGradable = false;
-
-    private Integer maxAttempts;
-
-    private Double passingScore;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -51,13 +46,4 @@ public class Activity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
-
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
-    private List<ForumPublication> publications;
-
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
-    private List<SurveyQuestion> surveyQuestions;
-
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
-    private List<FileSubmission> fileSubmissions;
 }

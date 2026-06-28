@@ -44,26 +44,38 @@ public class ActivityService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: " + eventId));
 
-        Activity activity = new Activity();
+        Activity activity;
         ActivityType activityType = ActivityType.valueOf(dto.activityType());
 
+        switch (activityType) {
+            case FORUM, GLOSSARY -> activity = new ForumActivity();
+            case FILE_UPLOAD ->  activity = new FileUploadActivity();
+            case SURVEY -> {
+                SurveyActivity surveyActivity = new SurveyActivity();
+                surveyActivity.setIsGradable(dto.isGradable());
+                surveyActivity.setMaxAttempts(dto.maxAttempts());
+                surveyActivity.setPassingScore(dto.passingScore());
+                activity = surveyActivity;
+            }
+            default ->  throw new IllegalArgumentException("Invalid activity type");
+        }
+
         activity.setEvent(event);
+        activity.setTitle(dto.title());
+        activity.setDescription(dto.description());
         activity.setActivityType(activityType);
         activity.setEvaluationMethod(EvaluationMethod.valueOf(dto.evaluationMethod()));
         activity.setAvailableAt(dto.availableAt());
         activity.setDueDate(dto.dueDate());
         activity.setCreatedAt(LocalDateTime.now());
-
-        activity.setIsGradable(dto.isGradable() != null ? dto.isGradable() : false);
-        activity.setMaxAttempts(dto.maxAttempts());
-        activity.setPassingScore(dto.passingScore());
+        activity.setIsOptional(dto.isOptional() != null ? dto.isOptional() : false);
 
         Activity savedActivity = activityRepository.save(activity);
 
-        if (activityType == ActivityType.SURVEY && dto.questions() != null) {
+        if (activityType == ActivityType.SURVEY && dto.questions() != null && savedActivity instanceof SurveyActivity surveyActivity) {
             for (QuestionCreationDto qDto : dto.questions()) {
                 SurveyQuestion question = new SurveyQuestion();
-                question.setActivity(savedActivity);
+                question.setActivity(surveyActivity);
                 question.setQuestionText(qDto.questionText());
                 question.setResponseType(SurveyResponseType.valueOf(qDto.responseType()));
                 SurveyQuestion savedQuestion = surveyQuestionRepository.save(question);
@@ -87,10 +99,14 @@ public class ActivityService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
+        if (!(activity instanceof ForumActivity forumActivity)) {
+            throw new IllegalArgumentException("This activity is not a Forum or Glossary");
+        }
+
         Optional<User> user = userRepository.findById(studentId);
 
         ForumPublication publication = new ForumPublication();
-        publication.setActivity(activity);
+        publication.setActivity(forumActivity);
         user.ifPresent(publication::setAuthor);
         publication.setTitle(dto.title());
         publication.setBody(dto.body());
@@ -107,13 +123,23 @@ public class ActivityService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
+        if (!(activity instanceof SurveyActivity surveyActivity)) {
+            throw new IllegalArgumentException("This activity is not a Survey/Exam");
+        }
+
         Optional<User> user = userRepository.findById(studentId);
 
         ActivityProgress progress = progressRepository.findByActivityIdAndStudentId(activityId, studentId)
                 .orElse(new ActivityProgress());
 
-        if (Boolean.TRUE.equals(activity.getIsGradable()) && activity.getMaxAttempts() != null
-                && progress.getAttemptsCount() >= activity.getMaxAttempts()) {
+        if (progress.getId() == null) {
+            progress.setActivity(surveyActivity);
+            user.ifPresent(u -> progress.setStudentId(studentId));
+            progress.setAttemptsCount(0);
+        }
+
+        if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null
+                && progress.getAttemptsCount() >= surveyActivity.getMaxAttempts()) {
             throw new IllegalStateException("You have reached the maximum number of attempts for this exam");
         }
 
@@ -131,24 +157,26 @@ public class ActivityService {
             response.setNumValue(dto.numValue());
             surveyResponseRepository.save(response);
 
-            if (Boolean.TRUE.equals(activity.getIsGradable()) && activity.getMaxAttempts() != null){
+            if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null) {
                 totalGradableQuestions++;
                 boolean isCorrectChoice = question.getOptions().stream()
                         .filter(SurveyOption::isCorrect)
                         .anyMatch(option -> option.getOptionText().equals(dto.textValue()));
 
-                if (isCorrectChoice) {correctAnswersCount++;}
+                if (isCorrectChoice) {
+                    correctAnswersCount++;
+                }
             }
         }
 
         progress.setAttemptsCount(progress.getAttemptsCount() + 1);
         progress.setUpdatedAt(LocalDateTime.now());
 
-        if (Boolean.TRUE.equals(activity.getIsGradable()) && totalGradableQuestions > 0) {
+        if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && totalGradableQuestions > 0) {
             double finalScore = ((double) correctAnswersCount / totalGradableQuestions) * 10.0;
             progress.setScore(finalScore);
 
-            if (finalScore >= activity.getPassingScore()) {
+            if (finalScore >= surveyActivity.getPassingScore()) {
                 progress.setStatus(ProgressStatus.COMPLETED);
             } else {
                 progress.setStatus(ProgressStatus.PENDING);
@@ -164,16 +192,20 @@ public class ActivityService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
+        if (!(activity instanceof FileUploadActivity fileUploadActivity)) {
+            throw new IllegalArgumentException("This activity does not accept file submissions");
+        }
+
         Optional<User> user = userRepository.findById(studentId);
 
         FileSubmission submission = new FileSubmission();
-        submission.setActivity(activity);
+        submission.setActivity(fileUploadActivity);
         user.ifPresent(submission::setStudent);
         submission.setFileUrl(fileUrl);
         submission.setComment(comment);
         FileSubmission saved = fileRepository.save(submission);
 
-        if (activity.getEvaluationMethod() == EvaluationMethod.AUTOMATIC) {
+        if (fileUploadActivity.getEvaluationMethod() == EvaluationMethod.AUTOMATIC) {
             saved.setIsApproved(true);
             this.completeActivity(activityId, studentId);
         }
@@ -185,6 +217,10 @@ public class ActivityService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
+        if (!(activity instanceof ForumActivity)) {
+            throw new IllegalArgumentException("This activity is not a Forum/Glossary");
+        }
+
         if (activity.getActivityType() == ActivityType.GLOSSARY) {
             return forumRepository.findByActivityIdOrderByTitleAsc(activityId);
         } else {
@@ -194,9 +230,7 @@ public class ActivityService {
 
     private void completeActivity(Integer activityId, Integer studentId) {
         ActivityProgress progress = progressRepository.findByActivityIdAndStudentId(activityId, studentId)
-                .orElse(null);
-
-        assert progress != null;
+                .orElseThrow(() -> new ResourceNotFoundException("Progress record not found"));
 
         progress.setStatus(ProgressStatus.COMPLETED);
         progress.setUpdatedAt(LocalDateTime.now());
