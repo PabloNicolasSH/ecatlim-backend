@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ActivityDto(
+        Integer id,
         String title,
         String description,
         String activityType,
@@ -15,6 +16,7 @@ public record ActivityDto(
         Boolean isOptional) {
     public static ActivityDto fromEntity(Activity activity) {
         return new ActivityDto(
+                activity.getId(),
                 activity.getTitle(),
                 activity.getDescription(),
                 activity.getActivityType().name(),

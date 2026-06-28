@@ -42,21 +42,13 @@ public class ActivityController {
     }
 
     @PostMapping("/{activityId}/forum-publications")
-    public ResponseEntity<ForumPublication> publishInForum(
-            @PathVariable Integer activityId,
-            @RequestParam Integer studentId,
-            @Valid @RequestBody ForumPublicationDto dto) {
-
-        ForumPublication publication = activityService.createForumPublication(activityId, studentId, dto);
+    public ResponseEntity<ForumPublication> publishInForum(@PathVariable Integer activityId, @Valid @RequestBody ForumPublicationDto dto) {
+        ForumPublication publication = activityService.createForumPublication(activityId, dto.studentId(), dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(publication);
     }
 
     @PostMapping("/{activityId}/survey-responses")
-    public ResponseEntity<Void> submitSurvey(
-            @PathVariable Integer activityId,
-            @RequestParam Integer studentId,
-            @Valid @RequestBody List<SurveyResponseDto> responses) {
-
+    public ResponseEntity<Void> submitSurvey(@PathVariable Integer activityId, @RequestParam Integer studentId, @Valid @RequestBody List<SurveyResponseDto> responses) {
         activityService.submitSurveyResponses(activityId, studentId, responses);
         return ResponseEntity.noContent().build();
     }
