@@ -28,7 +28,4 @@ public class ActivityProgress {
     private LocalDateTime updatedAt;
 
     private Double score;
-
-    @Transient
-    private Integer attemptsCount = 0;
 }
