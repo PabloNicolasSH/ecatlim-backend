@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ActivityRepository extends JpaRepository<Activity, Integer> {
     List<Activity> findByEventId(Integer eventId);
+
+    List<Activity> findByEventIdAndLessonBlockId(Integer eventId, Integer lessonBlockId);
 }

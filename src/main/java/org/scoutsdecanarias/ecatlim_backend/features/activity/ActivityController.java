@@ -13,6 +13,7 @@ import org.scoutsdecanarias.ecatlim_backend.shared.blob.UploadResponse;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +34,8 @@ public class ActivityController {
 
     @PostMapping("/event/{eventId}")
     public ResponseEntity<ActivityDto> createActivity(@PathVariable Integer eventId, @Valid @RequestBody ActivityCreationDto activity) {
-        return ResponseEntity.ok(ActivityDto.fromEntity(activityService.createActivity(eventId, activity)));
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(ActivityDto.fromEntity(activityService.createActivity(eventId, activity, currentUserEmail)));
     }
 
     @GetMapping("/{activityId}/publications")

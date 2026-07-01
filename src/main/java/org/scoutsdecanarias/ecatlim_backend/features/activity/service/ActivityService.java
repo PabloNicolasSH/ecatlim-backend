@@ -11,10 +11,15 @@ import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.EvaluationMe
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.ProgressStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.SurveyResponseType;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.*;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,14 +40,20 @@ public class ActivityService {
     private final EventRepository eventRepository;
     private final SurveyOptionRepository surveyOptionRepository;
     private final SurveyQuestionRepository surveyQuestionRepository;
+    private final LessonBlockRepository lessonBlockRepository;
+    private final EventEnrollmentRepository eventEnrollmentRepository;
 
     public List<Activity> getActivitiesByEvent(Integer eventId) {
         return activityRepository.findByEventId(eventId);
     }
 
-    public Activity createActivity(Integer eventId, ActivityCreationDto dto) {
+    public Activity createActivity(Integer eventId, ActivityCreationDto dto, String userEmail) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: " + eventId));
+
+        User creator = userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
+
+        LessonBlock lessonBlock = lessonBlockRepository.findById(dto.lessonBlockId()).orElseThrow(() -> new ResourceNotFoundException("Lesson Block not found with id: " + dto.lessonBlockId()));
 
         Activity activity;
         ActivityType activityType = ActivityType.valueOf(dto.activityType());
@@ -61,6 +72,9 @@ public class ActivityService {
         }
 
         activity.setEvent(event);
+        activity.setCreator(creator);
+        activity.setLessonBlock(lessonBlock);
+
         activity.setTitle(dto.title());
         activity.setDescription(dto.description());
         activity.setActivityType(activityType);
@@ -92,7 +106,26 @@ public class ActivityService {
             }
         }
 
+        generateInitialProgressForActivity(savedActivity, eventId);
+
         return savedActivity;
+    }
+
+    private void generateInitialProgressForActivity(Activity activity, Integer eventId) {
+        List<Integer> targetStudentIds = eventEnrollmentRepository.findStudentIdsByEventAndLessonBlock(
+                eventId,
+                activity.getLessonBlock().getId()
+        );
+
+        List<ActivityProgress> initialProgresses = targetStudentIds.stream().map(studentId -> {
+            ActivityProgress progress = new ActivityProgress();
+            progress.setActivity(activity);
+            progress.setStudentId(studentId);
+            progress.setStatus(ProgressStatus.PENDING);
+            return progress;
+        }).toList();
+
+        progressRepository.saveAll(initialProgresses);
     }
 
     public ForumPublication createForumPublication(Integer activityId, Integer studentId, ForumPublicationDto dto) {
@@ -132,10 +165,16 @@ public class ActivityService {
         ActivityProgress progress = progressRepository.findByActivityIdAndStudentId(activityId, studentId)
                 .orElse(new ActivityProgress());
 
+        if (!surveyActivity.getSurveyQuestions().isEmpty()) {
+            Integer firstQuestionId = surveyActivity.getSurveyQuestions().getFirst().getId();
+            Integer realAttempts = surveyResponseRepository.findMaxAttemptByStudentAndQuestion(studentId, firstQuestionId);
+
+            progress.setAttemptsCount(realAttempts);
+        }
+
         if (progress.getId() == null) {
             progress.setActivity(surveyActivity);
             user.ifPresent(u -> progress.setStudentId(studentId));
-            progress.setAttemptsCount(0);
         }
 
         if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null
@@ -146,6 +185,8 @@ public class ActivityService {
         int correctAnswersCount = 0;
         int totalGradableQuestions = 0;
 
+        LocalDateTime responsedTime = LocalDateTime.now();
+
         for (SurveyResponseDto dto : responsesDto) {
             SurveyQuestion question = surveyQuestionRepository.findById(dto.id())
                     .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
@@ -153,15 +194,16 @@ public class ActivityService {
             SurveyResponse response = new SurveyResponse();
             user.ifPresent(response::setStudent);
             response.setQuestion(question);
-            response.setTextValue(dto.textValue());
-            response.setNumValue(dto.numValue());
+            response.setResponseValue(dto.responseValue());
+            response.setSubmittedAt(responsedTime);
+            response.setAttemptNumber(progress.getAttemptsCount() + 1);
             surveyResponseRepository.save(response);
 
             if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null) {
                 totalGradableQuestions++;
                 boolean isCorrectChoice = question.getOptions().stream()
                         .filter(SurveyOption::isCorrect)
-                        .anyMatch(option -> option.getOptionText().equals(dto.textValue()));
+                        .anyMatch(option -> option.getOptionText().equals(dto.responseValue()));
 
                 if (isCorrectChoice) {
                     correctAnswersCount++;
@@ -169,7 +211,6 @@ public class ActivityService {
             }
         }
 
-        progress.setAttemptsCount(progress.getAttemptsCount() + 1);
         progress.setUpdatedAt(LocalDateTime.now());
 
         if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && totalGradableQuestions > 0) {
@@ -211,6 +252,25 @@ public class ActivityService {
         }
 
         return saved;
+    }
+
+    @EventListener
+    @Transactional
+    public void handleStudentEnrolled(StudentEnrolledEvent event) {
+        List<Activity> blockActivities = activityRepository.findByEventIdAndLessonBlockId(
+                event.eventId(),
+                event.lessonBlockId()
+        );
+
+        List<ActivityProgress> progressesForNewStudent = blockActivities.stream().map(activity -> {
+            ActivityProgress progress = new ActivityProgress();
+            progress.setActivity(activity);
+            progress.setStudentId(event.studentId());
+            progress.setStatus(ProgressStatus.PENDING);
+            return progress;
+        }).toList();
+
+        progressRepository.saveAll(progressesForNewStudent);
     }
 
     public List<ForumPublication> getPublicationsSorted(Integer activityId) {

@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
 import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
@@ -129,6 +130,11 @@ public class EventService {
                         this.calculateParticipation(event, user)
                 ))
                 .toList();
+    }
+
+    public List<LessonBlock> getEventLessonBlocks(Integer id) {
+        Event event = eventRepository.findById(id).orElseThrow(NoSuchElementException::new);
+        return event.getLessonBlocks().stream().toList();
     }
 
     public Event save(EventFormDto form) {
