@@ -23,7 +23,9 @@ public class SurveyResponse {
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
-    private String textValue;
-    private Integer numValue;
+    private String responseValue;
+
+    private Integer attemptNumber;
+
     private LocalDateTime submittedAt = LocalDateTime.now();
 }

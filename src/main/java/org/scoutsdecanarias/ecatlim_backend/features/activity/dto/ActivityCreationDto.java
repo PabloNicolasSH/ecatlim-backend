@@ -11,6 +11,7 @@ public record ActivityCreationDto(
         LocalDateTime availableAt,
         LocalDateTime dueDate,
         Boolean isOptional,
+        Integer lessonBlockId,
         Boolean isGradable,
         Integer maxAttempts,
         Double passingScore,

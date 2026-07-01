@@ -15,7 +15,7 @@ public class ActivityProgress {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "activity_id")
     private Activity activity;
 
@@ -29,5 +29,6 @@ public class ActivityProgress {
 
     private Double score;
 
+    @Transient
     private Integer attemptsCount = 0;
 }
