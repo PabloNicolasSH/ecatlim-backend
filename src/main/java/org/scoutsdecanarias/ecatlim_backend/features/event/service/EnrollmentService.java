@@ -3,6 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
@@ -20,6 +21,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducati
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -38,6 +40,7 @@ public class EnrollmentService {
     private final LessonBlockRepository lessonBlockRepository;
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final EventRepository eventRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<UserEnrollmentDetailDto> getUserProgress(String email) {
         User user = userRepository.findByEmail(email)
@@ -111,6 +114,7 @@ public class EnrollmentService {
         return convertToCardDto(stage, "ENROLLED", true);
     }
 
+    @Transactional
     public Event enrollStudent(Integer id, String userEmail, List<Integer> lessonBlockIds) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
         Event event = eventRepository.findById(id).orElseThrow();
@@ -128,6 +132,8 @@ public class EnrollmentService {
                 enrollment.setEvent(event);
 
                 event.getEnrollments().add(enrollment);
+
+                eventPublisher.publishEvent(new StudentEnrolledEvent(event.getId(), user.getId(), lessonBlockId));
             }
         }
 
