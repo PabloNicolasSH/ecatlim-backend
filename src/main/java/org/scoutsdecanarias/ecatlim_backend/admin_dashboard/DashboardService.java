@@ -1,13 +1,12 @@
 package org.scoutsdecanarias.ecatlim_backend.admin_dashboard;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.admin_dashboard.dto.DashboardDto;
 import org.scoutsdecanarias.ecatlim_backend.admin_dashboard.dto.EventSummaryDto;
-import org.scoutsdecanarias.ecatlim_backend.entity.Event;
-import org.scoutsdecanarias.ecatlim_backend.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.repository.EventRepository;
-import org.scoutsdecanarias.ecatlim_backend.repository.UserRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
+import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 

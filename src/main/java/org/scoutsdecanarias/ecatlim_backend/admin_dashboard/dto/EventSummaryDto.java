@@ -1,6 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.admin_dashboard.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.entity.Event;
+
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,7 +23,7 @@ public record EventSummaryDto(
         return new EventSummaryDto(
                 event.getTitle(),
                 calculateDateRange(event.getStartDate(), event.getEndDate()),
-                event.getAttendees() != null ? event.getAttendees().size() : 0
+                event.getEnrolledUsers() != null ? event.getEnrolledUsers().size() : 0
         );
     }
 
