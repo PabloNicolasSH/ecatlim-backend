@@ -3,6 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.learning_resource.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
+import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.ResourceType;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.dto.LearningResourceUploadDto;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.entity.LearningResource;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.entity.Tag;
@@ -34,15 +35,30 @@ public class LearningResourceService {
     }
 
     public LearningResource create(LearningResourceUploadDto dto, MultipartFile file) throws IOException {
-        var response = blobStorageService.upload(file, BlobDirectory.RESOURCES, file.getOriginalFilename());
+        String finalPath;
+        String mimeType;
+
+        boolean isLinkOrVideo = dto.type() == ResourceType.LINK || dto.type() == ResourceType.VIDEO_LINK;
+
+        if (isLinkOrVideo) {
+            finalPath = dto.blobPath();
+            mimeType = "text/uri-list";
+        } else {
+            if (file == null || file.isEmpty()) {
+                throw new IllegalArgumentException("El archivo es obligatorio para este tipo de recurso.");
+            }
+            var response = blobStorageService.upload(file, BlobDirectory.RESOURCES, file.getOriginalFilename());
+            finalPath = response.fileName();
+            mimeType = file.getContentType();
+        }
 
         Set<Tag> tags = new HashSet<>(tagRepository.findByNameIn(dto.tagNames()));
 
         LearningResource resource = new LearningResource();
         resource.setName(dto.name());
         resource.setDescription(dto.description());
-        resource.setBlobPath(response.url());
-        resource.setMimeType(file.getContentType());
+        resource.setBlobPath(finalPath);
+        resource.setMimeType(mimeType);
         resource.setResourceType(dto.type());
         resource.setTags(tags);
 
@@ -50,7 +66,8 @@ public class LearningResourceService {
     }
 
     public ResponseEntity<byte[]> downloadResource(Integer id) {
-        LearningResource resource = learningResourceRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Learning Resource not found"));
+        LearningResource resource = learningResourceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recurso no encontrado"));
         byte[] fileBytes = blobStorageService.download(resource.getBlobPath(), BlobDirectory.RESOURCES);
         return new FileTransferDto(fileBytes, resource.getName(), resource.getMimeType()).asResponseEntity();
     }

@@ -7,6 +7,7 @@ import java.util.List;
 public record LearningResourceUploadDto(
         String name,
         String description,
+        String blobPath,
         ResourceType type,
         List<String> tagNames
 ) {

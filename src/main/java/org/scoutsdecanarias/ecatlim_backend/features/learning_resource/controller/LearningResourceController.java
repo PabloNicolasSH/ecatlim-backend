@@ -31,7 +31,7 @@ public class LearningResourceController {
     }
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<LearningResource> upload(@RequestPart(value = "file") MultipartFile file, @RequestPart("data") LearningResourceUploadDto data) throws IOException {
+    public ResponseEntity<LearningResource> upload(@RequestPart(value = "file", required = false) MultipartFile file, @RequestPart("data") LearningResourceUploadDto data) throws IOException {
         return ResponseEntity.ok(learningResourceService.create(data, file));
     }
 }

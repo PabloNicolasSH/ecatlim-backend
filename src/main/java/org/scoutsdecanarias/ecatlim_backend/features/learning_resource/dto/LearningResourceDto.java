@@ -10,6 +10,7 @@ public record LearningResourceDto(
         String name,
         String description,
         String type,
+        String blobPath,
         List<TagDto> tags
 ) {
 
@@ -19,6 +20,7 @@ public record LearningResourceDto(
                 entity.getName(),
                 entity.getDescription(),
                 entity.getResourceType().toString(),
+                entity.getBlobPath(),
                 TagDto.fromCollection(entity.getTags())
         );
     }
