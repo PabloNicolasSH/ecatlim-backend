@@ -165,11 +165,10 @@ public class ActivityService {
         ActivityProgress progress = progressRepository.findByActivityIdAndStudentId(activityId, studentId)
                 .orElse(new ActivityProgress());
 
+        Integer attempts = 0;
         if (!surveyActivity.getSurveyQuestions().isEmpty()) {
             Integer firstQuestionId = surveyActivity.getSurveyQuestions().getFirst().getId();
-            Integer realAttempts = surveyResponseRepository.findMaxAttemptByStudentAndQuestion(studentId, firstQuestionId);
-
-            progress.setAttemptsCount(realAttempts);
+            attempts = surveyResponseRepository.findMaxAttemptByStudentAndQuestion(studentId, firstQuestionId);
         }
 
         if (progress.getId() == null) {
@@ -178,7 +177,7 @@ public class ActivityService {
         }
 
         if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null
-                && progress.getAttemptsCount() >= surveyActivity.getMaxAttempts()) {
+                && attempts >= surveyActivity.getMaxAttempts()) {
             throw new IllegalStateException("You have reached the maximum number of attempts for this exam");
         }
 
@@ -196,7 +195,7 @@ public class ActivityService {
             response.setQuestion(question);
             response.setResponseValue(dto.responseValue());
             response.setSubmittedAt(responsedTime);
-            response.setAttemptNumber(progress.getAttemptsCount() + 1);
+            response.setAttemptNumber(attempts + 1);
             surveyResponseRepository.save(response);
 
             if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null) {
