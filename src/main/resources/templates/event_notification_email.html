@@ -23,11 +23,21 @@
         <p style="margin-top: 5px;">📅 <b>Fecha:</b> <span th:text="${eventDate}">Fecha del evento</span></p>
     </div>
 
-    <div style="text-align: left; margin-top: 20px;">
+    <div th:if="${missingBlocks != null and !missingBlocks.isEmpty()}" style="text-align: left; margin-top: 20px;">
         <p><b>Bloques incluidos que te faltan por cursar:</b></p>
         <ul style="list-style-type: none; padding-left: 0;">
             <li th:each="block : ${missingBlocks}" style="margin-bottom: 8px; display: flex; align-items: center;">
                 <span style="color: #aa642a; margin-right: 10px;">✔</span>
+                <span th:text="${block}">Nombre del bloque</span>
+            </li>
+        </ul>
+    </div>
+
+    <div th:unless="${missingBlocks != null and !missingBlocks.isEmpty()}" style="text-align: left; margin-top: 20px;">
+        <p><b>Bloques que se impartirán en este evento:</b></p>
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li th:each="block : ${allEventBlocks}" style="margin-bottom: 8px; display: flex; align-items: center;">
+                <span style="color: #0f766e; margin-right: 10px;">•</span>
                 <span th:text="${block}">Nombre del bloque</span>
             </li>
         </ul>
