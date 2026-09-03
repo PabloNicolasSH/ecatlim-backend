@@ -6,9 +6,9 @@ import java.util.Date;
 import java.util.List;
 
 public record BlockDetailDto(
-        String id,
+        String code,
         String name,
         String status,
-        Date date,
+        Date completionDate,
         List<ActivityDetailDto> activities) {
 }

@@ -20,6 +20,9 @@ public class Module {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private Integer moduleId;
+
     @Column(length = 1000, nullable = false)
     private String description;
 
@@ -39,4 +42,23 @@ public class Module {
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL)
     private List<LessonBlock> lessonBlocks = new ArrayList<>();
+
+    public String getCode() {
+        StringBuilder code = new StringBuilder("M");
+
+        if (type.equals(ModuleType.THEORETICAL)) {
+            code.append("F");
+        } else {
+            code.append("P");
+        }
+
+        if (educationStage != null) {
+            code.append(educationStage.getCode());
+        }
+
+        code.append("-");
+        code.append(moduleId);
+
+        return code.toString();
+    }
 }

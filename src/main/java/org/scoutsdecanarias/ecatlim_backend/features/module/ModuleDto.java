@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public record ModuleDto(
         Integer id,
         String name,
+        Integer moduleId,
         String description,
         String type,
         int onlineHours,
@@ -30,6 +31,7 @@ public record ModuleDto(
         return new ModuleDto(
                 module.getId(),
                 module.getName(),
+                module.getModuleId(),
                 module.getDescription(),
                 module.getType().name(),
                 module.getOnlineHours(),
