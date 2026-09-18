@@ -3,6 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
@@ -14,12 +15,14 @@ import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducati
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
-import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserEnrollmentDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.features.enrollment.UserEnrollmentDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -38,6 +41,7 @@ public class EnrollmentService {
     private final LessonBlockRepository lessonBlockRepository;
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final EventRepository eventRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<UserEnrollmentDetailDto> getUserProgress(String email) {
         User user = userRepository.findByEmail(email)
@@ -47,19 +51,27 @@ public class EnrollmentService {
                 .map(enrollment -> {
                     EducationStage stage = enrollment.getEducationStage();
 
-                    List<BlockDetailDto> blocks = stage.getModules().stream()
-                            .flatMap(m -> m.getLessonBlocks().stream())
-                            .map(block -> {
-                                Optional<UserLessonBlock> progress = userLessonBlockRepository
-                                        .findByUserIdAndLessonBlockId(user.getId(), block.getId());
+                    List<ModuleDetailDto> modules = stage.getModules().stream()
+                            .map(module -> {
+                                List<BlockDetailDto> blocks = module.getLessonBlocks().stream()
+                                        .map(block -> {
+                                            Optional<UserLessonBlock> progress = userLessonBlockRepository
+                                                    .findByUserIdAndLessonBlockId(user.getId(), block.getId());
 
-                                return new BlockDetailDto(
-                                        block.getCode(),
-                                        block.getName(),
-                                        progress.map(p -> p.isCompleted() ? "Superada" : "En Curso").orElse("Pendiente"),
-                                        progress.map(UserLessonBlock::getCompletionDate).orElse(null),
-                                        //TODO: Add activities with user story ECL-11
-                                        Collections.emptyList()
+                                            return new BlockDetailDto(
+                                                    block.getCode(),
+                                                    block.getName(),
+                                                    progress.map(p -> p.isCompleted() ? "Superada" : "En Curso").orElse("Pendiente"),
+                                                    progress.map(UserLessonBlock::getCompletionDate).orElse(null),
+                                                    // TODO: Add activities
+                                                    Collections.emptyList()
+                                            );
+                                        }).toList();
+
+                                return new ModuleDetailDto(
+                                        module.getName(),
+                                        module.getCode(),
+                                        blocks
                                 );
                             }).toList();
 
@@ -68,7 +80,7 @@ public class EnrollmentService {
                             stage.getName(),
                             "COMPLETED".equals(enrollment.getStatus().toString()),
                             this.calculateProgress(user.getId(), stage.getId()),
-                            blocks
+                            modules
                     );
                 }).toList();
     }
@@ -111,6 +123,7 @@ public class EnrollmentService {
         return convertToCardDto(stage, "ENROLLED", true);
     }
 
+    @Transactional
     public Event enrollStudent(Integer id, String userEmail, List<Integer> lessonBlockIds) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
         Event event = eventRepository.findById(id).orElseThrow();
@@ -128,6 +141,8 @@ public class EnrollmentService {
                 enrollment.setEvent(event);
 
                 event.getEnrollments().add(enrollment);
+
+                eventPublisher.publishEvent(new StudentEnrolledEvent(event.getId(), user.getId(), lessonBlockId));
             }
         }
 

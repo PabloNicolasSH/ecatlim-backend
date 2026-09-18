@@ -8,9 +8,12 @@ public record SimpleUserDto(
         String email
 ) {
     public static SimpleUserDto fromEntity(User user) {
+
+        boolean hasProfile  = user.getProfile() != null;
+
         return new SimpleUserDto(
                 user.getId(),
-                user.getProfile().getName(),
+                hasProfile ? user.getProfile().getName() : null,
                 user.getEmail()
         );
     }

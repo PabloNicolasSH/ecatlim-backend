@@ -1,13 +1,9 @@
-package org.scoutsdecanarias.ecatlim_backend.features.event.controller;
+package org.scoutsdecanarias.ecatlim_backend.features.enrollment;
 
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.EventDto;
-import org.scoutsdecanarias.ecatlim_backend.features.event.dto.EventFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
-import org.scoutsdecanarias.ecatlim_backend.features.event.service.EventService;
-import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserEnrollmentDetailDto;
-import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;

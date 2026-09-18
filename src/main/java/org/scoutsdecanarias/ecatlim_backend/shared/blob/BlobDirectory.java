@@ -8,7 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 public enum BlobDirectory {
     PROFILE_PHOTOS("user/photos", "user/photos/thumbnails", 200),
     EDUCATION_DOCUMENTS("user/education-documents"),
-    ACTIVITY_ATTACHMENTS("user/activities");
+    ACTIVITY_ATTACHMENTS("user/activities"),
+    RESOURCES("resources");
 
     private final String path;
     private final String thumbnailPath;

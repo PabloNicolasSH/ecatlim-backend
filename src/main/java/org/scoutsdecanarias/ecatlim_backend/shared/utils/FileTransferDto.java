@@ -20,12 +20,6 @@ public class FileTransferDto {
     private MediaType mediaType;
     private ContentDisposition.Builder contentDisposition = ContentDisposition.inline();
 
-    public FileTransferDto(byte[] file, String fileName, MediaType mediaType) {
-        this.file = file;
-        this.fileName = fileName;
-        this.mediaType = mediaType;
-    }
-
     public FileTransferDto(byte[] file, String fileName, String mediaType) {
         this.file = file;
         this.fileName = fileName;

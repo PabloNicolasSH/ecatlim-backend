@@ -1,6 +1,5 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user_file;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

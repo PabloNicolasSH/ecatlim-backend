@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.controller;
 
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EventService;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +44,11 @@ public class EventController {
     public ResponseEntity<List<EventHomeWidgetDto>> getUserHome() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(eventService.getUpcomingEventsForUser(userEmail));
+    }
+
+    @GetMapping("/{id}/lesson-blocks")
+    public ResponseEntity<List<LessonBlockDto>> getLessonBlocks(@PathVariable Integer id) {
+        return ResponseEntity.ok(LessonBlockDto.fromCollections(eventService.getEventLessonBlocks(id)));
     }
 
     @PostMapping("/admin/add")
