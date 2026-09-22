@@ -14,9 +14,6 @@ ALTER TABLE activity ADD lesson_block_id INT;
 ALTER TABLE activity MODIFY creator_id INT NOT NULL;
 ALTER TABLE activity MODIFY lesson_block_id INT NOT NULL;
 
-UPDATE activity SET creator_id = 1 WHERE creator_id IS NULL;
-UPDATE activity SET lesson_block_id = 1 WHERE lesson_block_id IS NULL;
-
 ALTER TABLE activity ADD CONSTRAINT FK_ACTIVITY_ON_CREATOR FOREIGN KEY (creator_id) REFERENCES user (id);
 ALTER TABLE activity ADD CONSTRAINT FK_ACTIVITY_ON_LESSON_BLOCK FOREIGN KEY (lesson_block_id) REFERENCES lesson_block (id);
 
@@ -24,12 +21,6 @@ ALTER TABLE activity_correctors ADD CONSTRAINT fk_actcor_on_activity FOREIGN KEY
 ALTER TABLE activity_correctors ADD CONSTRAINT fk_actcor_on_user FOREIGN KEY (user_id) REFERENCES user (id);
 
 ALTER TABLE activity_progress DROP COLUMN attempts_count;
-
-ALTER TABLE activity DROP COLUMN is_gradable;
-
-ALTER TABLE activity DROP COLUMN max_attempts;
-
-ALTER TABLE activity DROP COLUMN passing_score;
 
 ALTER TABLE survey_response DROP COLUMN num_value;
 ALTER TABLE survey_response DROP COLUMN text_value;
