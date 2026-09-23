@@ -29,15 +29,17 @@ public class DashboardService {
                 LocalDateTime.now(),
                 PageRequest.of(0, 4)
         );
-
-        Event nextEvent = upcomingEvents.getFirst();
-        upcomingEvents.remove(nextEvent);
+        Event nextEvent = null;
+        if (!upcomingEvents.isEmpty()){
+             nextEvent = upcomingEvents.getFirst();
+            upcomingEvents.remove(nextEvent);
+        }
 
         return new DashboardDto(
                 activeStudents,
                 12,
-                nextEvent.getTitle(),
-                nextEvent.getStartDate(),
+                nextEvent != null ? nextEvent.getTitle() : "No hay eventos",
+                nextEvent != null ? nextEvent.getStartDate() : null,
                 7,
                 EventSummaryDto.fromCollection(upcomingEvents)
         );
