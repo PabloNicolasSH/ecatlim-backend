@@ -74,7 +74,7 @@ public class PendingUserService {
 
         User newUser = new User();
         newUser.setEmail(pendingUser.getEmail());
-        newUser.setRole(Role.STUDENT);
+        newUser.getRoles().add(Role.STUDENT);
 
         PasswordGenerator passwordGenerator = new PasswordGenerator();
         String password = passwordGenerator.generatePassword(12, new CharacterRule(EnglishCharacterData.Alphabetical, 7), new CharacterRule(EnglishCharacterData.Digit, 3));

@@ -2,6 +2,8 @@ package org.scoutsdecanarias.ecatlim_backend.features.user.dto;
 
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 
+import java.util.Set;
+
 public record UserFormDto(
         String name,
         String surname,
@@ -12,6 +14,6 @@ public record UserFormDto(
         String address,
         String city,
         String country,
-        Role role,
+        Set<Role> roles,
         Integer scoutGroupId) {
 }
