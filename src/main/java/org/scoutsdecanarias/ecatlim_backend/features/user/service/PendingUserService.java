@@ -6,6 +6,7 @@ import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.PendingUserExistsException;
+import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.PendingUser;
@@ -35,6 +36,14 @@ public class PendingUserService {
 
     public List<PendingUser> getAllPendingUsers() {
         return pendingUserRepository.findAll();
+    }
+
+    public List<PendingUser> getAllByHeadEducation(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        ScoutGroup scoutGroup = user.getProfile().getScoutGroup();
+        if (scoutGroup == null) {return List.of();}
+
+        return pendingUserRepository.findAllByScoutGroup(scoutGroup);
     }
 
     public void addPendingUser(PendingUserFormDto pendingUser) {
@@ -74,7 +83,7 @@ public class PendingUserService {
 
         User newUser = new User();
         newUser.setEmail(pendingUser.getEmail());
-        newUser.setRole(Role.STUDENT);
+        newUser.getRoles().add(Role.STUDENT);
 
         PasswordGenerator passwordGenerator = new PasswordGenerator();
         String password = passwordGenerator.generatePassword(12, new CharacterRule(EnglishCharacterData.Alphabetical, 7), new CharacterRule(EnglishCharacterData.Digit, 3));

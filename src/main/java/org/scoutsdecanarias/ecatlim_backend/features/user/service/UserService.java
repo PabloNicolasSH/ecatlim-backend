@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.UserEmailExistsException;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserFormDto;
@@ -14,11 +15,8 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,7 +43,7 @@ public class UserService {
     }
 
     public List<User> getUsersByRole(Role role) {
-        return userRepository.findAllByRole(role);
+        return userRepository.findAllByRolesContaining(role);
     }
 
     public User getUserByEmail(String email) {
@@ -61,7 +59,7 @@ public class UserService {
 
         User newUser = new User();
         newUser.setEmail(user.email());
-        newUser.setRole(user.role());
+        newUser.setRoles(user.roles());
 
         PasswordGenerator passwordGenerator = new PasswordGenerator();
         String password = passwordGenerator.generatePassword(12,
@@ -71,7 +69,7 @@ public class UserService {
 
         String emailNameParam = null;
 
-        if (user.role() != Role.ADMIN) {
+        if (!user.roles().contains(Role.ADMIN)) {
             UserProfile profile = new UserProfile();
             profile.setUser(newUser);
             profile.setName(user.name());
@@ -105,10 +103,12 @@ public class UserService {
             throw new UserEmailExistsException();
         }
 
-        updatedUser.setEmail(user.email());
-        updatedUser.setRole(user.role());
+        validateHeadOfEducation(user);
 
-        if (user.role() != Role.ADMIN) {
+        updatedUser.setEmail(user.email());
+        updatedUser.setRoles(user.roles());
+
+        if (!user.roles().contains(Role.ADMIN)) {
             UserProfile profile = updatedUser.getProfile() != null ? updatedUser.getProfile() : new UserProfile();
 
             profile.setUser(updatedUser);
@@ -148,7 +148,7 @@ public class UserService {
 
         me.setEmail(userMeFormDto.email());
 
-        if (me.getRole() != Role.ADMIN) {
+        if (!me.getRoles().contains(Role.ADMIN)) {
             UserProfile profile = me.getProfile() != null ? me.getProfile() : new UserProfile();
 
             profile.setUser(me);
@@ -177,5 +177,11 @@ public class UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
         user.setEnabled(false);
         return userRepository.save(user);
+    }
+
+    private void validateHeadOfEducation(UserFormDto user) {
+        if (user.roles().contains(Role.HEAD_OF_EDUCATION) && user.scoutGroupId() == null) {
+            throw new EcatlimException("El usuario debe pertenecer a una entidad para ser su Responsable de Formación", HttpStatus.BAD_REQUEST);
+        }
     }
 }
