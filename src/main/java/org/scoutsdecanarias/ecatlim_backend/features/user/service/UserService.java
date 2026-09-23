@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.UserEmailExistsException;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserFormDto;
@@ -14,6 +15,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,7 +43,7 @@ public class UserService {
     }
 
     public List<User> getUsersByRole(Role role) {
-        return userRepository.findAllByRole(role);
+        return userRepository.findAllByRolesContaining(role);
     }
 
     public User getUserByEmail(String email) {
@@ -100,6 +102,8 @@ public class UserService {
                 .map(foundUser -> !Objects.equals(foundUser.getId(), id)).orElse(false)) {
             throw new UserEmailExistsException();
         }
+
+        validateHeadOfEducation(user);
 
         updatedUser.setEmail(user.email());
         updatedUser.setRoles(user.roles());
@@ -173,5 +177,11 @@ public class UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
         user.setEnabled(false);
         return userRepository.save(user);
+    }
+
+    private void validateHeadOfEducation(UserFormDto user) {
+        if (user.roles().contains(Role.HEAD_OF_EDUCATION) && user.scoutGroupId() == null) {
+            throw new EcatlimException("El usuario debe pertenecer a una entidad para ser su Responsable de Formación", HttpStatus.BAD_REQUEST);
+        }
     }
 }

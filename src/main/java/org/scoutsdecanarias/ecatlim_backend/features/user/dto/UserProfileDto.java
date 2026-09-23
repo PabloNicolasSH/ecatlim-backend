@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public record UserProfileDto(
         Integer id,
         String email,
-        Set<String> role,
+        Set<String> roles,
         ProfileDto profile
 ) {
 

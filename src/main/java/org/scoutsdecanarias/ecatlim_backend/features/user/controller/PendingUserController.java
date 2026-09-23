@@ -26,6 +26,12 @@ public class PendingUserController {
         this.pendingUserService.addPendingUser(pendingUserFormDto);
     }
 
+    @GetMapping("/head-education/my-scout-group")
+    public List<PendingUserDto> getPendingUsersByHeadEducation() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return PendingUserDto.fromCollection(this.pendingUserService.getAllByHeadEducation(email));
+    }
+
     @GetMapping("/admin/all")
     public List<PendingUserDto> getAllPendingUsers() {
         log.info("METHOD getAllPendingUsers() - {} request all pending users", SecurityContextHolder.getContext().getAuthentication().getName());
