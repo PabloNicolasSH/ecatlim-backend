@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.PendingUserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,18 +33,21 @@ public class PendingUserController {
         return PendingUserDto.fromCollection(this.pendingUserService.getAllByHeadEducation(email));
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/admin/all")
     public List<PendingUserDto> getAllPendingUsers() {
         log.info("METHOD getAllPendingUsers() - {} request all pending users", SecurityContextHolder.getContext().getAuthentication().getName());
         return PendingUserDto.fromCollection(this.pendingUserService.getAllPendingUsers());
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/admin/create-user")
     public void createUserFromPendingUser(@RequestBody PendingUserFormDto pendingUserFormDto) {
         log.info("METHOD createUserFromPendingUser() - {} created a user from pending user request by {}", SecurityContextHolder.getContext().getAuthentication().getName(), pendingUserFormDto.email());
         this.pendingUserService.createUserFromRequest(pendingUserFormDto);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/admin/delete")
     public void deletePendingUser(@RequestBody PendingUserFormDto pendingUserFormDto) {
         log.info("METHOD deletePendingUser() - {} have declined the request of {}", SecurityContextHolder.getContext().getAuthentication().getName(), pendingUserFormDto.email());

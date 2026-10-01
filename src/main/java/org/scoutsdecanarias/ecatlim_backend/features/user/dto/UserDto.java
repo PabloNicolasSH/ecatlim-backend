@@ -7,17 +7,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public record UserProfileDto(
+public record UserDto(
         Integer id,
         String email,
         Set<String> roles,
         ProfileDto profile
 ) {
 
-    public static UserProfileDto fromEntity(User user){
+    public static UserDto fromEntity(User user){
         boolean hasProfile = user.getProfile() != null;
 
-        return new UserProfileDto(
+        return new UserDto(
                 user.getId(),
                 user.getEmail(),
                 user.getRoles().stream()
@@ -27,7 +27,7 @@ public record UserProfileDto(
         );
     }
 
-    public static List<UserProfileDto> fromCollection(List<User> users){
-        return users.stream().map(UserProfileDto::fromEntity).collect(Collectors.toList());
+    public static List<UserDto> fromCollection(List<User> users){
+        return users.stream().map(UserDto::fromEntity).collect(Collectors.toList());
     }
 }

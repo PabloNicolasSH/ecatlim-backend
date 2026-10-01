@@ -7,8 +7,7 @@ import org.springframework.http.HttpStatus;
 @Setter
 @Getter
 public class EcatlimException extends RuntimeException {
-
-    private HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+    private final HttpStatus status;
 
     public EcatlimException(String message, HttpStatus status) {
         super(message);
@@ -17,5 +16,6 @@ public class EcatlimException extends RuntimeException {
 
     public EcatlimException(String message) {
         super(message);
+        this.status = HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

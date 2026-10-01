@@ -2,13 +2,14 @@ package org.scoutsdecanarias.ecatlim_backend.core.auth.password;
 
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.core.auth.SecurityUtils;
-import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimBadRequestException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -65,7 +66,7 @@ public class PasswordResetService {
 
         String email = (String) wrapper.get();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+            .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         user.setPassword(passwordEncoder.encode(passwordDto.newPassword()));
         userRepository.save(user);
@@ -76,18 +77,18 @@ public class PasswordResetService {
     public void changePassword(ChangePasswordDto changePasswordDto) {
         User user = userRepository.findByEmail(SecurityUtils.getLoggedUsername()).orElseThrow(() -> new UsernameNotFoundException(SecurityUtils.getLoggedUsername()));
 
-        if (!changePasswordDto.newPassword().equals(changePasswordDto.newPasswordRepeat())){
+        if (!changePasswordDto.newPassword().equals(changePasswordDto.newPasswordRepeat())) {
             log.warn("Passwords do not match");
-            throw new EcatlimBadRequestException("Las contraseñas no coinciden");
+            throw new EcatlimException("Las contraseñas no coinciden", HttpStatus.CONFLICT);
         }
 
         if (changePasswordDto.newPassword().equals(FAKE_PASSWORD)) {
             log.warn("New password is not valid");
-            throw new EcatlimBadRequestException("La nueva contraseña no es válida");
+            throw new EcatlimException("La nueva contraseña no es válida", HttpStatus.CONFLICT);
         }
         if (!BCrypt.checkpw(changePasswordDto.currentPassword(), user.getPassword())) {
             log.warn("Current password is not valid");
-            throw new EcatlimBadRequestException("La contraseña actual no es válida");
+            throw new EcatlimException("La contraseña actual no es válida", HttpStatus.CONFLICT);
         }
         user.setPassword(passwordEncoder.encode(changePasswordDto.newPassword()));
         userRepository.save(user);
