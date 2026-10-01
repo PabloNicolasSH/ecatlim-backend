@@ -58,7 +58,10 @@ public class EmailTemplateService {
         return templateEngine.process("event_notification_email.html", context);
     }
 
-    private String generateScoutGroupString(ScoutGroup scoutGroup){
+    private String generateScoutGroupString(ScoutGroup scoutGroup) {
+        if (scoutGroup == null) {
+            return "Sin Entidad de Procedencia";
+        }
         return scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
     }
 }
