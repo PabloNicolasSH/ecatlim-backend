@@ -6,7 +6,6 @@ import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
-import org.scoutsdecanarias.ecatlim_backend.core.exception.UserEmailExistsException;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserMeFormDto;
@@ -22,7 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -54,7 +54,7 @@ public class UserService {
     public User addUser(UserFormDto user) {
 
         if (userRepository.findByEmail(user.email()).isPresent()) {
-            throw new UserEmailExistsException();
+            throw new EcatlimException("Este email ya está siendo usado", HttpStatus.CONFLICT);
         }
 
         User newUser = new User();
@@ -63,8 +63,8 @@ public class UserService {
 
         PasswordGenerator passwordGenerator = new PasswordGenerator();
         String password = passwordGenerator.generatePassword(12,
-                new CharacterRule(EnglishCharacterData.Alphabetical, 7),
-                new CharacterRule(EnglishCharacterData.Digit, 3));
+            new CharacterRule(EnglishCharacterData.Alphabetical, 7),
+            new CharacterRule(EnglishCharacterData.Digit, 3));
         newUser.setPassword(passwordEncoder.encode(password));
 
         String emailNameParam = null;
@@ -99,8 +99,8 @@ public class UserService {
         User updatedUser = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
 
         if (userRepository.findByEmail(user.email())
-                .map(foundUser -> !Objects.equals(foundUser.getId(), id)).orElse(false)) {
-            throw new UserEmailExistsException();
+            .map(foundUser -> !Objects.equals(foundUser.getId(), id)).orElse(false)) {
+            throw new EcatlimException("Este email ya está siendo usado", HttpStatus.CONFLICT);
         }
 
         validateHeadOfEducation(user);
@@ -141,8 +141,8 @@ public class UserService {
         User me = getUserByEmail(email);
 
         userRepository.findByEmail(userMeFormDto.email()).ifPresent(foundUser -> {
-            if(!Objects.equals(foundUser.getId(), me.getId())) {
-                throw new UserEmailExistsException();
+            if (!Objects.equals(foundUser.getId(), me.getId())) {
+                throw new EcatlimException("Este email ya está siendo usado", HttpStatus.CONFLICT);
             }
         });
 

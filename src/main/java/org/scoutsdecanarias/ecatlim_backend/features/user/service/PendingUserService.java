@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
-import org.scoutsdecanarias.ecatlim_backend.core.exception.PendingUserExistsException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserFormDto;
@@ -17,6 +17,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.repository.PendingUser
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserProfileRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,9 @@ public class PendingUserService {
     public List<PendingUser> getAllByHeadEducation(String email) {
         User user = userRepository.findByEmail(email).orElseThrow();
         ScoutGroup scoutGroup = user.getProfile().getScoutGroup();
-        if (scoutGroup == null) {return List.of();}
+        if (scoutGroup == null) {
+            return List.of();
+        }
 
         return pendingUserRepository.findAllByScoutGroup(scoutGroup);
     }
@@ -49,15 +52,15 @@ public class PendingUserService {
     public void addPendingUser(PendingUserFormDto pendingUser) {
 
         if (userRepository.findByEmail(pendingUser.email()).isPresent()) {
-            throw new PendingUserExistsException("Email already registered as user");
+            throw new EcatlimException("Con este email ya se ha solicitado que se le dé de alta en el sistema", HttpStatus.CONFLICT);
         }
 
         if (pendingUserRepository.findByEmail(pendingUser.email()).isPresent()) {
-            throw new PendingUserExistsException("Email already in pending requests");
+            throw new EcatlimException("Con este email ya se ha solicitado que se le dé de alta en el sistema", HttpStatus.CONFLICT);
         }
 
         if (userProfileRepository.findByNif(pendingUser.nif()).isPresent()) {
-            throw new PendingUserExistsException("Nif already registered as a user");
+            throw new EcatlimException("Este NIF ya está de alta en el sistema", HttpStatus.CONFLICT);
         }
 
         PendingUser newPendingUser = new PendingUser();
@@ -76,7 +79,7 @@ public class PendingUserService {
 
     public void createUserFromRequest(PendingUserFormDto pendingUserFormDto) {
         if (userRepository.findByEmail(pendingUserFormDto.email()).isPresent()) {
-            throw new PendingUserExistsException("Email already registered as user");
+            throw new EcatlimException("Con este email ya se ha solicitado que se le dé de alta en el sistema", HttpStatus.CONFLICT);
         }
 
         PendingUser pendingUser = pendingUserRepository.findByEmail(pendingUserFormDto.email()).get();
@@ -89,7 +92,7 @@ public class PendingUserService {
         String password = passwordGenerator.generatePassword(12, new CharacterRule(EnglishCharacterData.Alphabetical, 7), new CharacterRule(EnglishCharacterData.Digit, 3));
         newUser.setPassword(passwordEncoder.encode(password));
 
-        UserProfile  newUserProfile = new UserProfile();
+        UserProfile newUserProfile = new UserProfile();
         newUserProfile.setUser(newUser);
         newUserProfile.setName(pendingUser.getName());
         newUserProfile.setSurname(pendingUser.getSurname());
