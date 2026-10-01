@@ -140,14 +140,6 @@ public class UserService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User me = getUserByEmail(email);
 
-        userRepository.findByEmail(userMeFormDto.email()).ifPresent(foundUser -> {
-            if (!Objects.equals(foundUser.getId(), me.getId())) {
-                throw new EcatlimException("Este email ya está siendo usado", HttpStatus.CONFLICT);
-            }
-        });
-
-        me.setEmail(userMeFormDto.email());
-
         if (!me.getRoles().contains(Role.ADMIN)) {
             UserProfile profile = me.getProfile() != null ? me.getProfile() : new UserProfile();
 
