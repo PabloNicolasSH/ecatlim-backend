@@ -23,7 +23,7 @@ public class DashboardService {
 
     public DashboardDto getDashboardSummary() {
 
-        Integer activeStudents = userRepository.countUsersByEnabledAndRole(true, Role.STUDENT);
+        Integer activeStudents = userRepository.countUsersByEnabledAndRolesContaining(true, Role.STUDENT);
 
         List<Event> upcomingEvents = eventRepository.findUpcomingEvents(
                 LocalDateTime.now(),

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Set;
+
 @Slf4j
 @RestController
 @RequestMapping("/auth")
@@ -54,7 +56,7 @@ public class AuthController {
             );
         }
 
-        return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getRole(), profileMinDto));
+        return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getRoles(), profileMinDto));
     }
 
     @Data
@@ -63,7 +65,7 @@ public class AuthController {
     class AuthResponse {
         private String token;
         private String email;
-        private Role role;
+        private Set<Role> roles;
         private UserProfileMinDto profile;
     }
 }
