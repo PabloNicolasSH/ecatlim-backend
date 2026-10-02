@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.repository;
 
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +14,9 @@ import java.util.Optional;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Integer> {
     List<Event> findAllByStatus(EventStatus eventStatus);
+
+    @Query("SELECT e.location FROM Event e GROUP BY e.location ORDER BY MAX(e.startDate) DESC")
+    List<String> findDistinctLocations();
 
     @Query("SELECT e FROM Event e LEFT JOIN FETCH e.timelineItems WHERE e.id = :id")
     Optional<Event> findByIdWithTimeline(Integer id);

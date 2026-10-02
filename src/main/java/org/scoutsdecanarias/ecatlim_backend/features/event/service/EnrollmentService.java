@@ -3,32 +3,40 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.features.enrollment.EnrollmentDocumentType;
+import org.scoutsdecanarias.ecatlim_backend.features.enrollment.EnrollmentDocumentsDto;
+import org.scoutsdecanarias.ecatlim_backend.features.enrollment.UserEnrollmentDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.AttendedEventDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.BlockDetailDto;
-import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
-import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
-import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
-import org.scoutsdecanarias.ecatlim_backend.features.enrollment.UserEnrollmentDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
 import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
-import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFile;
+import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileService;
+import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileType;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +50,7 @@ public class EnrollmentService {
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserFileService userFileService;
 
     public List<UserEnrollmentDetailDto> getUserProgress(String email) {
         User user = userRepository.findByEmail(email)
@@ -80,7 +89,8 @@ public class EnrollmentService {
                             stage.getName(),
                             "COMPLETED".equals(enrollment.getStatus().toString()),
                             this.calculateProgress(user.getId(), stage.getId()),
-                            modules
+                            modules,
+                            EnrollmentDocumentsDto.fromEnrollment(enrollment)
                     );
                 }).toList();
     }
@@ -164,6 +174,54 @@ public class EnrollmentService {
         );
 
         return eventRepository.save(event);
+    }
+
+    @Transactional
+    public List<AttendedEventDto> getAttendedEvents(String userEmail, Integer stageId) {
+        Map<Event, List<EventEnrollment>> byEvent = eventEnrollmentRepository
+                .findAttendedByUserEmailAndStageId(userEmail, stageId).stream()
+                .collect(Collectors.groupingBy(EventEnrollment::getEvent, LinkedHashMap::new, Collectors.toList()));
+
+        return byEvent.entrySet().stream()
+                .map(entry -> {
+                    Event event = entry.getKey();
+                    List<LessonBlockCalendarSummaryDto> blocks = entry.getValue().stream()
+                            .map(ee -> LessonBlockCalendarSummaryDto.fromEntity(ee.getLessonBlock()))
+                            .sorted(Comparator.comparing(LessonBlockCalendarSummaryDto::code))
+                            .toList();
+                    return new AttendedEventDto(event.getId(), event.getTitle(), event.getStartDate(),
+                            event.getEndDate(), event.getLocation(), blocks);
+                })
+                .toList();
+    }
+
+    @Transactional
+    public EnrollmentDocumentsDto uploadDocument(String userEmail, Integer enrollmentId, EnrollmentDocumentType type, MultipartFile file) {
+        UserEducationStage enrollment = userStageRepository.findById(enrollmentId)
+                .orElseThrow(() -> new EntityNotFoundException("Inscripción no encontrada"));
+        if (!enrollment.getUser().getEmail().equals(userEmail)) {
+            throw new EcatlimException("No puedes modificar esta inscripción", HttpStatus.FORBIDDEN);
+        }
+
+        String lowerName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        if (file.isEmpty() || !(lowerName.endsWith(".pdf") || lowerName.endsWith(".doc") || lowerName.endsWith(".docx"))) {
+            throw new EcatlimException("El archivo debe ser un PDF o un documento Word", HttpStatus.BAD_REQUEST);
+        }
+
+        UserFile previous = type == EnrollmentDocumentType.PERSONAL_PLAN ? enrollment.getPersonalPlan() : enrollment.getEntityApproval();
+        UserFile stored = userFileService.storeFile(file, UserFileType.USER_EDUCATION_STAGE, type.name().toLowerCase());
+
+        if (type == EnrollmentDocumentType.PERSONAL_PLAN) {
+            enrollment.setPersonalPlan(stored);
+        } else {
+            enrollment.setEntityApproval(stored);
+        }
+        userStageRepository.save(enrollment);
+
+        if (previous != null) {
+            userFileService.deleteStoredFile(previous);
+        }
+        return EnrollmentDocumentsDto.fromEnrollment(enrollment);
     }
 
     private void validateHierarchyRequirements(User user, EducationStage stage) {

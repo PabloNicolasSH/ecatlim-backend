@@ -24,7 +24,7 @@ public class LessonBlockController {
         return LessonBlockDto.fromCollections(lessonBlockService.getLessonBlocks());
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/admin/add")
     public void createLessonBlocks(@RequestBody List<LessonBlockDto> lessonBlocks) {
         log.info("METHOD createLessonBlocks() - Creating lesson blocks by {}", SecurityContextHolder.getContext().getAuthentication().getName());

@@ -1,6 +1,6 @@
-package org.scoutsdecanarias.ecatlim_backend.admin_dashboard;
+package org.scoutsdecanarias.ecatlim_backend.features.admin_dashboard;
 
-import org.scoutsdecanarias.ecatlim_backend.admin_dashboard.dto.DashboardDto;
+import org.scoutsdecanarias.ecatlim_backend.features.admin_dashboard.dto.DashboardDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

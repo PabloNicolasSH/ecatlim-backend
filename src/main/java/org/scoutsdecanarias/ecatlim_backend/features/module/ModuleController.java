@@ -18,7 +18,7 @@ public class ModuleController {
         this.moduleService = moduleService;
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
     @GetMapping("/admin/all")
     public List<ModuleDto> getAllModules() {
         log.info("METHOD getAllModules() - Get all modules by {}",
@@ -26,7 +26,7 @@ public class ModuleController {
         return ModuleDto.fromCollection(this.moduleService.getAll());
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/admin/create-modules")
     public void addModules(@RequestBody List<ModuleDto> modules) {
         log.info("METHOD addModule() - Adding new modules by {}",

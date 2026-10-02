@@ -2,15 +2,16 @@ package org.scoutsdecanarias.ecatlim_backend.features.activity;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.*;
-import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.Activity;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ActivityCreationDto;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ActivityDto;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ForumPublicationDto;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.SurveyResponseDto;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.FileSubmission;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.ForumPublication;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.service.ActivityService;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobDirectory;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.UploadResponse;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +30,8 @@ public class ActivityController {
 
     @GetMapping("/event/{eventId}")
     public ResponseEntity<List<ActivityDto>> getActivitiesByEvent(@PathVariable Integer eventId) {
-        return ResponseEntity.ok(ActivityDto.fromCollection(activityService.getActivitiesByEvent(eventId)));
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(activityService.getActivitiesByEventForUser(eventId, currentUserEmail));
     }
 
     @PostMapping("/event/{eventId}")

@@ -21,7 +21,7 @@ public class EducationStageController {
         this.educationStageService = educationStageService;
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
     @GetMapping("/admin/all")
     public List<EducationStageDto> getAllEducationStages() {
         log.info("METHOD getAllEducationStages() - Get all the education stages by {}",
@@ -29,13 +29,21 @@ public class EducationStageController {
         return EducationStageDto.fromCollection(educationStageService.getEducationStages());
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/admin/add")
     public EducationStageDto addEducationStage(@RequestBody EducationStageFormDto educationStage) {
         log.info("METHOD addEducationStage() - Add education stage by {}, the education stage is {}",
                 SecurityContextHolder.getContext().getAuthentication().getName(),
                 educationStage.name());
         return EducationStageDto.fromEntity(educationStageService.createEducationStage(educationStage));
+    }
+
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
+    @PutMapping("/admin/{id}")
+    public EducationStageDto updateEducationStage(@PathVariable int id, @RequestBody EducationStageFormDto educationStage) {
+        log.info("METHOD updateEducationStage() - Update education stage {} by {}", id,
+                SecurityContextHolder.getContext().getAuthentication().getName());
+        return EducationStageDto.fromEntity(educationStageService.updateEducationStage(id, educationStage));
     }
 
     @GetMapping("/{id}")

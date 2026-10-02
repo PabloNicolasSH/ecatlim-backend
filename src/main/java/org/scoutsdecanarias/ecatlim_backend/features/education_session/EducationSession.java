@@ -3,9 +3,9 @@ package org.scoutsdecanarias.ecatlim_backend.features.education_session;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItem;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.Activity;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItem;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.util.List;

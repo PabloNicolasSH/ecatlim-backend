@@ -1,7 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.features.event.dto;
 
-import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
