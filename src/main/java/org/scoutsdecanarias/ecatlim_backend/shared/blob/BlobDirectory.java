@@ -9,6 +9,7 @@ public enum BlobDirectory {
     PROFILE_PHOTOS("user/photos", "user/photos/thumbnails", 200),
     EDUCATION_DOCUMENTS("user/education-documents"),
     ACTIVITY_ATTACHMENTS("user/activities"),
+    CHAT_PHOTOS("chat/photos", "chat/photos/thumbnails", 200),
     RESOURCES("resources");
 
     private final String path;
