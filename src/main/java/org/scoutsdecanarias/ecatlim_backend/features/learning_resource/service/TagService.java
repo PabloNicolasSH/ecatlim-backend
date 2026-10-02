@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.features.learning_resource.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.dto.TagDto;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.entity.Tag;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.repository.TagRepository;
 import org.springframework.stereotype.Service;

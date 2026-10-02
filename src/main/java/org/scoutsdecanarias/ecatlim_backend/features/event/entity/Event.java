@@ -4,9 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
-import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItem;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
+import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItem;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.time.LocalDateTime;

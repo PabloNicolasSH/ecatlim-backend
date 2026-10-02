@@ -13,6 +13,19 @@ public interface EventEnrollmentRepository extends JpaRepository<EventEnrollment
     boolean existsByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
     void deleteByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
 
+    @Query("SELECT ee FROM EventEnrollment ee " +
+            "JOIN FETCH ee.event e " +
+            "JOIN FETCH ee.lessonBlock lb " +
+            "JOIN FETCH lb.module m " +
+            "WHERE ee.user.email = :email " +
+            "AND ee.hasAttended = true " +
+            "AND m.educationStage.id = :stageId " +
+            "ORDER BY e.startDate DESC")
+    List<EventEnrollment> findAttendedByUserEmailAndStageId(
+            @Param("email") String email,
+            @Param("stageId") Integer stageId
+    );
+
     @Query("SELECT DISTINCT ee.user.id FROM EventEnrollment ee " +
             "WHERE ee.event.id = :eventId " +
             "AND ee.lessonBlock.id = :lessonBlockId ")

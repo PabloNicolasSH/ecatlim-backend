@@ -15,6 +15,7 @@ public record ActivityCreationDto(
         Boolean isGradable,
         Integer maxAttempts,
         Double passingScore,
-        List<QuestionCreationDto> questions
+        List<QuestionCreationDto> questions,
+        Integer responsibleId
 ) {
 }

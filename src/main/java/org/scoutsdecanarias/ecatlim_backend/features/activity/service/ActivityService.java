@@ -3,6 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.activity.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.*;
@@ -18,8 +19,10 @@ import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepos
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -43,6 +46,17 @@ public class ActivityService {
     private final LessonBlockRepository lessonBlockRepository;
     private final EventEnrollmentRepository eventEnrollmentRepository;
 
+    public List<ActivityDto> getActivitiesByEventForUser(Integer eventId, String userEmail) {
+        Integer userId = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail)).getId();
+        return activityRepository.findByEventId(eventId).stream()
+                .map(activity -> ActivityDto.fromEntity(activity).withProgressStatus(
+                        progressRepository.findByActivityIdAndStudentId(activity.getId(), userId)
+                                .map(p -> p.getStatus().name())
+                                .orElse(ProgressStatus.PENDING.name())))
+                .toList();
+    }
+
     public List<Activity> getActivitiesByEvent(Integer eventId) {
         return activityRepository.findByEventId(eventId);
     }
@@ -54,6 +68,15 @@ public class ActivityService {
         User creator = userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
         LessonBlock lessonBlock = lessonBlockRepository.findById(dto.lessonBlockId()).orElseThrow(() -> new ResourceNotFoundException("Lesson Block not found with id: " + dto.lessonBlockId()));
+
+        if (dto.responsibleId() == null) {
+            throw new EcatlimException("Debes indicar el formador responsable de la actividad", HttpStatus.BAD_REQUEST);
+        }
+        User responsible = userRepository.findById(dto.responsibleId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.responsibleId()));
+        if (!responsible.getRoles().contains(Role.TRAINER)) {
+            throw new EcatlimException("El responsable de la actividad debe tener el rol de formador", HttpStatus.BAD_REQUEST);
+        }
 
         Activity activity;
         ActivityType activityType = ActivityType.valueOf(dto.activityType());
@@ -74,6 +97,7 @@ public class ActivityService {
         activity.setEvent(event);
         activity.setCreator(creator);
         activity.setLessonBlock(lessonBlock);
+        activity.getCorrectors().add(responsible);
 
         activity.setTitle(dto.title());
         activity.setDescription(dto.description());

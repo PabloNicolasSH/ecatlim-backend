@@ -9,5 +9,6 @@ public record UserEnrollmentDetailDto(
         String stageName,
         boolean completed,
         double percentage,
-        List<ModuleDetailDto> modules
+        List<ModuleDetailDto> modules,
+        EnrollmentDocumentsDto documents
 ) {}

@@ -26,20 +26,32 @@ public class EventController {
         return ResponseEntity.ok(eventService.findAll().stream().map(EventDto::fromEntity).toList());
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR')")
+    @GetMapping("/suggestions")
+    public ResponseEntity<EventSuggestionsDto> getSuggestions() {
+        return ResponseEntity.ok(eventService.getSuggestions());
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
+    @GetMapping("/{id}/detail")
+    public ResponseEntity<EventDetailDto> getDetail(@PathVariable Integer id) {
+        return ResponseEntity.ok(eventService.getEventDetail(id));
+    }
+
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")
     @GetMapping("/edit/{id}")
     public ResponseEntity<EventFormDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(EventFormDto.fromEntity(eventService.findById(id)));
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/user-calendar")
     public ResponseEntity<List<EventUserCalendarDto>> getUserCalendar() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(eventService.getEventsForUser(userEmail));
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
     @GetMapping("/admin/calendar")
     public ResponseEntity<List<EventAdminCalendarDto>> getAdminCalendar() {
         return ResponseEntity.ok(eventService.getEventsForAdmin());
@@ -70,7 +82,7 @@ public class EventController {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.update(id, event)));
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('MANAGER_DIRECTOR')")
     @PutMapping("/admin/update-status/{id}")
     public ResponseEntity<EventDto> updateStatus(@PathVariable Integer id, @RequestBody String status) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.updateStatus(id, status)));
