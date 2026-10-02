@@ -12,3 +12,15 @@ services:
       - '3306:3306'
     expose:
       - '3306'
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    container_name: ecatlim-storage
+    ports:
+      - '10000:10000'
+    volumes:
+      - azurite_data:/data
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data
+    restart: 'unless-stopped'
+
+volumes:
+  azurite_data:

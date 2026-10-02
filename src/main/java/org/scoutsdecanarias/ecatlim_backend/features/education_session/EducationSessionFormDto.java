@@ -1,0 +1,17 @@
+package org.scoutsdecanarias.ecatlim_backend.features.education_session;
+
+import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
+
+import java.util.List;
+
+public record EducationSessionFormDto(
+        Integer lessonBlockId,
+        List<Integer> trainerIds
+) {
+    public static EducationSessionFormDto fromEntity(EducationSession educationSession) {
+        return new EducationSessionFormDto(
+                educationSession.getLessonBlock().getId(),
+                educationSession.getFacilitators().stream().map(User::getId).toList()
+        );
+    }
+}
