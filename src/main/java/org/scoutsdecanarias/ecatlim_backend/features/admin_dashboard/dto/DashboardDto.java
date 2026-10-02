@@ -1,4 +1,4 @@
-package org.scoutsdecanarias.ecatlim_backend.admin_dashboard.dto;
+package org.scoutsdecanarias.ecatlim_backend.features.admin_dashboard.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
