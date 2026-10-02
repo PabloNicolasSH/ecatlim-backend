@@ -6,22 +6,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public record LearningResourceDto(
-        Integer id,
-        String name,
-        String description,
-        String type,
-        String blobPath,
-        List<TagDto> tags
+    Integer id,
+    String name,
+    String description,
+    String type,
+    String blobPath,
+    List<TagDto> tags
 ) {
 
     public static LearningResourceDto fromEntity(LearningResource entity) {
         return new LearningResourceDto(
-                entity.getId(),
-                entity.getName(),
-                entity.getDescription(),
-                entity.getResourceType().toString(),
-                entity.getBlobPath(),
-                TagDto.fromCollection(entity.getTags())
+            entity.getId(),
+            entity.getName(),
+            entity.getDescription(),
+            entity.getResourceType().toString(),
+            entity.getBlobPath(),
+            TagDto.fromCollection(entity.getTags())
         );
     }
 

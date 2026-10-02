@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.user_file;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
@@ -25,14 +26,32 @@ public class UserFileService {
     private final UserFileRepository userFileRepository;
 
     @Transactional
-    public void uploadProfileAvatar(String email, MultipartFile file) {
+    public void uploadProfileAvatar(String email, @Nullable MultipartFile file) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con el email: " + email));
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con el email: " + email));
+
+        //fixme: if how the blobFileName is calculated changes in any way, old profile pictures will not be able to be deleted or accessed.
+        // Consider storing the blobFileName in the UserFile entity to avoid this issue. Or just use the UUID for storing
+        // this fix will require a migration to update the existing UserFile entities with the correct blobFileName.
 
         try {
+            if (file == null || file.isEmpty()) {
+                UserProfile userProfile = user.getProfile();
+
+                if (userProfile.getProfilePicture() != null) {
+                    UserFile existingFile = userProfile.getProfilePicture();
+                    String extension = existingFile.getName() == null ? ".jpg" : existingFile.getName().substring(existingFile.getName().lastIndexOf("."));
+                    String blobName = existingFile.getUuid() + extension;
+
+                    blobStorageService.delete(blobName, BlobDirectory.PROFILE_PHOTOS);
+                    userProfile.setProfilePicture(null);
+                }
+                return;
+            }
+
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
-            String customName = "profile_" + user.getProfile().getName() +"." + extension;
+            String customName = "profile_" + user.getProfile().getName() + "." + extension;
 
             String fileUuid = UUID.randomUUID().toString();
             String blobFileName = fileUuid + extension;
