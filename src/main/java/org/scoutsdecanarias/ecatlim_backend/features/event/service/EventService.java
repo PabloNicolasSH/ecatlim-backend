@@ -2,25 +2,29 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
-import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
-import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
-import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ActivityDto;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.ActivityRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventConfiguration;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.NotificationTarget;
+import org.scoutsdecanarias.ecatlim_backend.features.event.enums.PaymentStatus;
+import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventConfigurationRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
-import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -42,7 +46,17 @@ public class EventService {
     private final EducationStageRepository educationStageRepository;
     private final UserLessonBlockRepository userLessonBlockRepository;
     private final EventConfigurationService eventConfigurationService;
+    private final EventConfigurationRepository eventConfigurationRepository;
+    private final ActivityRepository activityRepository;
     private final EmailService emailService;
+
+    public EventSuggestionsDto getSuggestions() {
+        return new EventSuggestionsDto(
+                eventRepository.findDistinctLocations(),
+                eventConfigurationRepository.findDistinctTransferBankNumbers(),
+                eventConfigurationRepository.findDistinctTransferCodes()
+        );
+    }
 
     public List<Event> findAll() {
         return eventRepository.findAll();
@@ -84,6 +98,84 @@ public class EventService {
                     );
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public EventDetailDto getEventDetail(Integer id) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
+
+        EducationStage stage = event.getEducationStage();
+        EventConfiguration config = event.getEventConfiguration();
+
+        Map<User, List<EventEnrollment>> byStudent = new LinkedHashMap<>();
+        event.getEnrollments().stream()
+                .sorted(Comparator.comparing((EventEnrollment e) -> e.getUser().getEmail()))
+                .forEach(e -> byStudent.computeIfAbsent(e.getUser(), u -> new ArrayList<>()).add(e));
+
+        List<EventDetailDto.ParticipantDto> participants = byStudent.entrySet().stream()
+                .map(entry -> {
+                    User student = entry.getKey();
+                    List<EventEnrollment> rows = entry.getValue();
+                    boolean anyPending = rows.stream().anyMatch(r -> r.getPaymentStatus() == PaymentStatus.PENDING);
+                    boolean anyRefunded = rows.stream().anyMatch(r -> r.getPaymentStatus() == PaymentStatus.REFUNDED);
+                    SimpleUserDto simple = SimpleUserDto.fromEntity(student);
+                    return new EventDetailDto.ParticipantDto(
+                            student.getId(),
+                            simple.name(),
+                            simple.surname(),
+                            student.getEmail(),
+                            simple.avatarUrl(),
+                            student.getProfile() != null && student.getProfile().getScoutGroup() != null
+                                    ? student.getProfile().getScoutGroup().getName() : null,
+                            (anyPending ? PaymentStatus.PENDING : anyRefunded ? PaymentStatus.REFUNDED : PaymentStatus.PAID).name(),
+                            rows.stream()
+                                    .map(r -> new EventDetailDto.ParticipantBlockDto(
+                                            r.getLessonBlock().getCode(), r.getLessonBlock().getName(), r.isHasAttended()))
+                                    .sorted(Comparator.comparing(EventDetailDto.ParticipantBlockDto::code))
+                                    .toList()
+                    );
+                })
+                .sorted(Comparator.comparing((EventDetailDto.ParticipantDto p) -> p.surname() == null ? "" : p.surname())
+                        .thenComparing(p -> p.name() == null ? "" : p.name()))
+                .toList();
+
+        return new EventDetailDto(
+                event.getId(),
+                event.getTitle(),
+                event.getShortname(),
+                event.getDescription(),
+                event.getContents(),
+                event.getStartDate(),
+                event.getEndDate(),
+                event.getLocation(),
+                event.getOrganizer(),
+                event.getStatus().name(),
+                event.getTheoreticalHours(),
+                event.getPracticalHours(),
+                event.getOnlineHours(),
+                stage == null ? null : new EventDetailDto.StageDto(stage.getId(), stage.getName(), stage.getCode()),
+                event.getDirector() == null ? null : SimpleUserDto.fromEntity(event.getDirector()),
+                event.getFacilitators().stream().map(SimpleUserDto::fromEntity).toList(),
+                event.getStaff().stream().map(SimpleUserDto::fromEntity).toList(),
+                event.getLessonBlocks().stream()
+                        .map(LessonBlockCalendarSummaryDto::fromEntity)
+                        .sorted(Comparator.comparing(LessonBlockCalendarSummaryDto::code))
+                        .toList(),
+                config == null ? null : new EventDetailDto.ConfigDto(
+                        config.getMinParticipants(),
+                        config.getDateOpenInscription(),
+                        config.getDateCloseInscription(),
+                        config.getCost(),
+                        config.getTransferBankNumber(),
+                        config.getTransferCode(),
+                        config.getNotificationTarget().stream().map(Enum::name).sorted().toList()),
+                participants,
+                event.getTimelineItems().stream()
+                        .map(t -> new EventDetailDto.TimelineEntryDto(
+                                t.getId(), t.getTitle(), t.getDescription(), t.getStartTime(), t.getEndTime(), t.getItemType().name()))
+                        .toList(),
+                ActivityDto.fromCollection(activityRepository.findByEventId(id))
+        );
     }
 
     public List<EventAdminCalendarDto> getEventsForAdmin() {

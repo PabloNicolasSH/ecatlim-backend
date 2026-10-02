@@ -11,7 +11,6 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter

@@ -7,22 +7,22 @@ import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
-import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
-import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
-import org.springframework.http.HttpStatus;
-import java.util.Optional;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
+import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobDirectory;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
 import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileTransferDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -101,11 +101,6 @@ public class UserFileService {
         return new FileTransferDto(fileBytes, file.getName(), file.getMimeType()).asResponseEntity();
     }
 
-    /**
-     * Education documents are restricted: the personal plan is visible to the student and their tutor, the entity
-     * approval to the student, the head of education of their scout group and management roles.
-     * Other file types (avatars, chat pictures, activity attachments) are not restricted here.
-     */
     private void assertCanAccess(UserFile file, String requesterEmail) {
         if (file.getFileType() != UserFileType.USER_EDUCATION_STAGE) {
             return;

@@ -1,7 +1,5 @@
 package org.scoutsdecanarias.ecatlim_backend.shared.utils;
 
-import jakarta.activation.DataSource;
-import jakarta.mail.util.ByteArrayDataSource;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.http.ContentDisposition;

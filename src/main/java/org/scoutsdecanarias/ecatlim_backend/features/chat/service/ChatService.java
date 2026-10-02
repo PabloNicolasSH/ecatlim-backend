@@ -1,30 +1,30 @@
 package org.scoutsdecanarias.ecatlim_backend.features.chat.service;
 
 import jakarta.transaction.Transactional;
+import org.jspecify.annotations.Nullable;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.Chat;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.ChatMessage;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.dto.ChatDto;
+import org.scoutsdecanarias.ecatlim_backend.features.chat.dto.NewChatFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.enums.ChatMessageType;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.exception.ChatException;
-import org.scoutsdecanarias.ecatlim_backend.features.chat.dto.NewChatFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.repository.ChatMessageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.repository.ChatRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
-import org.jspecify.annotations.Nullable;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFile;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileService;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileType;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
