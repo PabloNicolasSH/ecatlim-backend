@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.enrollment;
 
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.AttendedEventDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.EventDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.springframework.http.MediaType;
@@ -29,6 +30,12 @@ public class EnrollmentController {
     public ResponseEntity<List<UserEnrollmentDetailDto>> getMyProgress() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(enrollmentService.getUserProgress(userEmail));
+    }
+
+    @GetMapping("/stages/{stageId}/attended-events")
+    public ResponseEntity<List<AttendedEventDto>> getAttendedEvents(@PathVariable Integer stageId) {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(enrollmentService.getAttendedEvents(userEmail, stageId));
     }
 
     @PostMapping(value = "/stages/{enrollmentId}/documents/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

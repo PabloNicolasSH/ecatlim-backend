@@ -33,10 +33,17 @@ import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationSt
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.AttendedEventDto;
+import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
+
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -174,6 +181,25 @@ public class EnrollmentService {
         );
 
         return eventRepository.save(event);
+    }
+
+    @Transactional
+    public List<AttendedEventDto> getAttendedEvents(String userEmail, Integer stageId) {
+        Map<Event, List<EventEnrollment>> byEvent = eventEnrollmentRepository
+                .findAttendedByUserEmailAndStageId(userEmail, stageId).stream()
+                .collect(Collectors.groupingBy(EventEnrollment::getEvent, LinkedHashMap::new, Collectors.toList()));
+
+        return byEvent.entrySet().stream()
+                .map(entry -> {
+                    Event event = entry.getKey();
+                    List<LessonBlockCalendarSummaryDto> blocks = entry.getValue().stream()
+                            .map(ee -> LessonBlockCalendarSummaryDto.fromEntity(ee.getLessonBlock()))
+                            .sorted(Comparator.comparing(LessonBlockCalendarSummaryDto::code))
+                            .toList();
+                    return new AttendedEventDto(event.getId(), event.getTitle(), event.getStartDate(),
+                            event.getEndDate(), event.getLocation(), blocks);
+                })
+                .toList();
     }
 
     @Transactional
