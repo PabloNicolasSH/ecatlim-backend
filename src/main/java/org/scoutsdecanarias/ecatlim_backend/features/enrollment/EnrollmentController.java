@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.EventDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,14 @@ public class EnrollmentController {
     public ResponseEntity<List<UserEnrollmentDetailDto>> getMyProgress() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(enrollmentService.getUserProgress(userEmail));
+    }
+
+    @PostMapping(value = "/stages/{enrollmentId}/documents/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EnrollmentDocumentsDto> uploadDocument(@PathVariable Integer enrollmentId,
+                                                                 @PathVariable EnrollmentDocumentType type,
+                                                                 @RequestParam("file") MultipartFile file) {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(enrollmentService.uploadDocument(userEmail, enrollmentId, type, file));
     }
 
     @PostMapping("/events/{id}/enroll")

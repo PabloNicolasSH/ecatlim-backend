@@ -29,7 +29,8 @@ public class UserFileController {
 
     @GetMapping("/{fileId}")
     public ResponseEntity<byte[]> getUserFile(@PathVariable Integer fileId) {
-        return userFileService.downloadUserFile(fileId);
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userFileService.downloadUserFile(fileId, currentUserEmail);
     }
 
     @GetMapping("thumbnail/{fileId}")
