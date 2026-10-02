@@ -26,5 +26,12 @@ public interface ChatRepository extends JpaRepository<Chat, Integer> {
     boolean existsByIdAndMemberEmail(@Param("chatId") Integer chatId,
                                      @Param("email") String email);
 
+    @Query("""
+            SELECT m.email FROM Chat c
+            JOIN c.chatMembers m
+            WHERE c.id = :chatId
+        """)
+    List<String> findMemberEmails(@Param("chatId") Integer chatId);
+
     Chat getChatById(Integer id);
 }

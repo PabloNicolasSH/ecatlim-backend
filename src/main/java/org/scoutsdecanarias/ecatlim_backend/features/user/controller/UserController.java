@@ -1,7 +1,9 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.controller;
 
+import com.azure.core.annotation.Get;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserMeFormDto;
@@ -38,6 +40,11 @@ public class UserController {
     public UserDto updateMyUserInfo(@RequestBody UserMeFormDto userMeFormDto) {
         log.info("METHOD updateMyUserInfo() - Update user info for principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
         return UserDto.fromEntity(userService.updateUserMe(userMeFormDto));
+    }
+
+    @GetMapping("/simpleUsersInfo")
+    public List<SimpleUserDto> getSimpleUserInfo() {
+        return SimpleUserDto.fromCollection(userService.getActiveUsers());
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")

@@ -97,11 +97,41 @@ public class UserFileService {
         return new FileTransferDto(thumbnailBytes, file.getName(), file.getMimeType()).asResponseEntity();
     }
 
+    public UserFile storeFile(MultipartFile file, UserFileType type, String customName) {
+        String originalFilename = file.getOriginalFilename();
+        int dot = originalFilename == null ? -1 : originalFilename.lastIndexOf(".");
+        String extension = dot >= 0 ? originalFilename.substring(dot) : ".jpg";
+        String name = dot >= 0 ? originalFilename : "file" + extension;
+
+        String fileUuid = UUID.randomUUID().toString();
+
+        try {
+            blobStorageService.upload(file, getFileTypeDirectory(type), fileUuid + extension);
+        } catch (IOException e) {
+            throw new RuntimeException("Error al procesar el archivo en el almacenamiento de Azure", e);
+        }
+
+        UserFile userFile = new UserFile();
+        userFile.setUuid(fileUuid);
+        userFile.setName(name);
+        userFile.setFileType(type);
+        userFile.setMimeType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
+        userFile.setCustomName(customName);
+        userFile.setUploadDate(ZonedDateTime.now());
+        return userFile;
+    }
+
+    public void deleteStoredFile(UserFile file) {
+        String blobName = file.getUuid() + file.getName().substring(file.getName().lastIndexOf("."));
+        blobStorageService.delete(blobName, getFileTypeDirectory(file.getFileType()));
+    }
+
     private BlobDirectory getFileTypeDirectory(UserFileType fileType) {
         return switch (fileType) {
             case PROFILE -> BlobDirectory.PROFILE_PHOTOS;
             case USER_EDUCATION_STAGE -> BlobDirectory.EDUCATION_DOCUMENTS;
             case USER_ACTIVITIES -> BlobDirectory.ACTIVITY_ATTACHMENTS;
+            case CHAT_PICTURE -> BlobDirectory.CHAT_PHOTOS;
         };
     }
 }

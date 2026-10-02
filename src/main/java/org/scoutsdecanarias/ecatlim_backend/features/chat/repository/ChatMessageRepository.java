@@ -15,7 +15,11 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Repository
-public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+public interface ChatMessageRepository extends JpaRepository<ChatMessage, Integer> {
+
+    @Modifying
+    @Query("delete from ChatMessage m where m.chat = :chat")
+    void deleteAllByChat(@Param("chat") Chat chat);
 
     Page<ChatMessage> findByChat(Chat chat, Pageable pageable);
 

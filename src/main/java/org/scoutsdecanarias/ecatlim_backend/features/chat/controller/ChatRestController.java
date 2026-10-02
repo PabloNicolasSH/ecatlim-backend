@@ -12,7 +12,13 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.repository.ChatRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.chat.service.ChatService;
 import org.springframework.data.domain.Page;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.jspecify.annotations.Nullable;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,10 +40,13 @@ public class ChatRestController {
     private final ChatRepository chatRepository;
     private final UserService userService;
 
-    public ChatRestController(ChatService chatService, ChatRepository chatRepository, UserService userService) {
+    private final SimpMessagingTemplate template;
+
+    public ChatRestController(ChatService chatService, ChatRepository chatRepository, UserService userService, SimpMessagingTemplate template) {
         this.chatService = chatService;
         this.chatRepository = chatRepository;
         this.userService = userService;
+        this.template = template;
     }
 
 
@@ -45,12 +54,12 @@ public class ChatRestController {
     public List<ChatMessageDto> getChatMessages(
             @PathVariable Integer id,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size
+            @RequestParam(defaultValue = "30") int size,
+            Principal principal
     ) {
         log.info("METHOD getChatMessages() - chat {} page {} size {}", id, page, size);
 
-        Chat chat = chatRepository.getChatById(id);
-        Page<ChatMessage> pageResult = chatService.getChatHistoryPage(chat, page, size);
+        Page<ChatMessage> pageResult = chatService.getChatHistoryPage(id, principal.getName(), page, size);
 
         return ChatMessageDto.fromCollection(pageResult.getContent());
     }
@@ -68,10 +77,52 @@ public class ChatRestController {
         return chatService.getUnreadMessagesCount(user);
     }
 
-    @PostMapping("/add")
-    public void addChat(@RequestBody @Valid NewChatFormDto chat) {
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void addChat(@RequestPart("chat") @Valid NewChatFormDto chat,
+                        @RequestPart(value = "picture", required = false) @Nullable MultipartFile picture,
+                        Principal principal) {
         log.info("METHOD addChat() - Adding new chat");
-        chatService.saveChat(chat);
+        Chat saved = chatService.saveChat(chat, picture);
+
+        ChatDto dto = ChatDto.fromEntity(saved, null);
+        saved.getChatMembers().stream()
+                .map(User::getEmail)
+                .filter(email -> !email.equals(principal.getName()))
+                .forEach(email -> template.convertAndSendToUser(email, "/queue/new-chats", dto));
+    }
+
+    @PostMapping(value = "/{id}/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ChatDto setPicture(@PathVariable Integer id, @RequestPart("picture") MultipartFile picture, Principal principal) {
+        log.info("METHOD setPicture() - User {} changing picture of chat {}", principal.getName(), id);
+        Chat saved = chatService.setChatPicture(id, principal.getName(), picture);
+        return broadcastChatUpdated(saved);
+    }
+
+    @DeleteMapping("/{id}/picture")
+    public ChatDto removePicture(@PathVariable Integer id, Principal principal) {
+        log.info("METHOD removePicture() - User {} removing picture of chat {}", principal.getName(), id);
+        Chat saved = chatService.removeChatPicture(id, principal.getName());
+        return broadcastChatUpdated(saved);
+    }
+
+    private ChatDto broadcastChatUpdated(Chat chat) {
+        ChatDto dto = ChatDto.fromEntity(chat, null);
+        template.convertAndSend("/topic/chat/" + chat.getId() + "/updated", dto);
+        return dto;
+    }
+
+    @DeleteMapping("/{id}/messages/{messageId}")
+    public void deleteMessage(@PathVariable Integer id, @PathVariable Integer messageId, Principal principal) {
+        log.info("METHOD deleteMessage() - Deleting message {} from chat {}", messageId, id);
+        chatService.deleteChatMessage(id, messageId, principal.getName());
+        template.convertAndSend("/topic/chat/" + id + "/message-deleted", messageId);
+    }
+
+    @DeleteMapping("/{id}")
+    public void leaveChat(@PathVariable Integer id, Principal principal) {
+        log.info("METHOD leaveChat() - User {} leaving chat {}", principal.getName(), id);
+        chatService.leaveChat(id, principal.getName())
+                .ifPresent(msg -> template.convertAndSend("/topic/chat/" + id, ChatMessageDto.fromEntity(msg)));
     }
 
     @PostMapping("/{id}/mark-read")

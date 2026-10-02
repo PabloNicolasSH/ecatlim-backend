@@ -29,15 +29,17 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             String token = servletServerHttpRequest.getServletRequest().getParameter("token");
 
             if (token != null) {
-                String username = jwtService.extractUsername(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                try {
+                    String username = jwtService.extractUsername(token);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                if (jwtService.validateToken(token, userDetails)) {
+                    if (jwtService.validateToken(token, userDetails)) {
+                        attributes.put("username", username);
+                        return true;
+                    }
+                } catch (Exception e) {
                     return false;
                 }
-
-                attributes.put("username", username);
-                return true;
             }
         }
 
