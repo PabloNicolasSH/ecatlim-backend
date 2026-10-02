@@ -1,11 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.dto;
 
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupDto;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public record ProfileDto(
         String name,

@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.core.configuration;
 
 import org.scoutsdecanarias.ecatlim_backend.core.UserDetailsServiceImpl;
 import org.scoutsdecanarias.ecatlim_backend.core.auth.JWTAuthFilter;
-import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +28,7 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(securedEnabled = true)
+@EnableMethodSecurity
 public class WebSecurityConfig {
 
 
@@ -54,17 +54,14 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/auth/login", "/password/**", "/scout-group/all", "/pending-user/request").permitAll()
-                        .requestMatchers("/event/**").hasAnyAuthority("ADMIN", "MANAGEMENT", "EVENT_DIRECTOR")
-                        .requestMatchers("/*/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/*/management/**").hasAnyAuthority("ADMIN", "MANAGEMENT")
-                        .anyRequest().hasAnyAuthority("ADMIN", "MANAGEMENT", "TRAINER", "EVENT_DIRECTOR", "STUDENT")
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .cors(Customizer.withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                .requestMatchers("/auth/login", "/password/**", "/scout-group/all", "/pending-user/request", "/ws/**").permitAll()
+                    .anyRequest().fullyAuthenticated()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

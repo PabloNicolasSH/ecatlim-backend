@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageDto;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageFormDto;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ public class EducationStageController {
         this.educationStageService = educationStageService;
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/admin/all")
     public List<EducationStageDto> getAllEducationStages() {
         log.info("METHOD getAllEducationStages() - Get all the education stages by {}",
@@ -27,6 +29,7 @@ public class EducationStageController {
         return EducationStageDto.fromCollection(educationStageService.getEducationStages());
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/admin/add")
     public EducationStageDto addEducationStage(@RequestBody EducationStageFormDto educationStage) {
         log.info("METHOD addEducationStage() - Add education stage by {}, the education stage is {}",

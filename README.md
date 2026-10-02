@@ -15,9 +15,10 @@ con infancia y juventud.
 - **Migraciones:** Flyway
 - **Seguridad:** Spring Security + JWT (JSON Web Token)
 - **Caché:** Caffeine
-- **Comunicación:** WebSockets
+- **Comunicación:** WebSockets (STOMP)
+- **Almacenamiento de ficheros:** Azure Blob Storage (Azurite en local)
 - **Contenerización:** Docker & Docker Compose
-- **Despliegue:** Azure (Planificado)
+- **Despliegue:** Azure App Service
 
 ## 📋 Requisitos Previos
 
@@ -38,28 +39,20 @@ usas Docker) o directamente en el servicio de despliegue.
 | `DATABASE_PASSWORD`       | Contraseña de la base de datos             | `password`                            |
 | `JWT_SECRET`              | Secreto para firmar los tokens JWT         | (Generado por defecto)                |
 | `ECATLIM_LINK`            | URL del frontend (para resets de password) | `http://localhost:4200`               |
+| `BLOB_CONNECTION`         | Cadena de conexión de Azure Blob Storage   | Azurite local (`127.0.0.1:10000`)     |
 | `NO_REPLY_EMAIL_USERNAME` | Usuario SMTP (Gmail)                       | **REQUERIDO**                         |
 | `NO_REPLY_EMAIL_PASSWORD` | Contraseña/Token SMTP                      | **REQUERIDO**                         |
 
 ## 🚀 Guía de Inicio Rápido
 
-### Opción A: Con Docker (Recomendado)
-
-Docker Compose levantará automáticamente la base de datos y la aplicación.
-
-```bash
-docker-compose up --build
-```
-
-### Opción B: Ejecución Manual
-
-1. **Levantar solo la base de datos:**
+1. **Levantar los servicios de infraestructura** (MySQL en el puerto `3306` y Azurite en el `10000`):
    ```bash
-   docker-compose up -d db
+   docker-compose up -d
    ```
-   *O asegúrate de tener una instancia de MySQL corriendo localmente con una base de datos llamada `ecatlim`.*
+   *`docker-compose.yml` no incluye la aplicación, solo sus dependencias. También puedes usar una instancia local de
+   MySQL con una base de datos llamada `ecatlim`.*
 
-2. **Ejecutar la aplicación:**
+2. **Ejecutar la aplicación** (Flyway aplica las migraciones automáticamente al arrancar):
    ```bash
    ./mvnw spring-boot:run
    ```
@@ -77,25 +70,33 @@ VALUES ('<NOMBRE, p.ej: ACAICATE>',
            <NUMERO DE GRUPO, p.ej: 999>,
         '<TU_CORREO_ELECTRONICO p.ej.: tu_correo+acaicate_ecatlim@gmail.com>');
 
-INSERT INTO user (name, surname, role, password, email, scout_group_id, enabled)
-VALUES ('<NOMBRE, p.ej: ADMIN>',
-        '<APELLIDO, p.ej: ADMIN>',
-        'ADMIN',
-        '$2a$12$d.phqIe.7XzADQr7hzahQe8Ox2SnekB50PjePxoA9F2YjjQND8kjO',
+INSERT INTO user (password, email, enabled)
+VALUES ('$2a$12$d.phqIe.7XzADQr7hzahQe8Ox2SnekB50PjePxoA9F2YjjQND8kjO',
         '<TU_CORREO_ELECTRONICO p.ej: tu_correo+admin_local_ecatlim@gmail.com>',
-        1,
         true);
+
+SET @admin_id = LAST_INSERT_ID();
+
+INSERT INTO user_profile (user_id, name, surname, scout_group_id)
+VALUES (@admin_id,
+        '<NOMBRE, p.ej: ADMIN>',
+        '<APELLIDO, p.ej: ADMIN>',
+        1);
+
+INSERT INTO user_roles (user_id, role)
+VALUES (@admin_id, 'ADMIN');
 ```
 
 - El campo `password` ya contiene la contraseña encriptada **1234** (puedes cambiarla después desde la app).
+- Los datos del usuario se reparten en tres tablas: `user` (credenciales), `user_profile` (datos personales) y
+  `user_roles` (un usuario puede tener varios roles).
 - Sustituye los valores entre `<>` por los datos reales que desees utilizar.
 
 ## 🛠️ Scripts y Comandos Maven
 
-- `mvn clean install`: Limpia y construye el proyecto generando el archivo JAR.
-- `mvn spring-boot:run`: Arranca la aplicación en modo desarrollo.
-- `mvn test`: Ejecuta la suite de pruebas unitarias e integración.
-- `mvn flyway:migrate`: Ejecuta manualmente las migraciones de base de datos (habitualmente automático al arrancar).
+- `./mvnw clean install`: Limpia y construye el proyecto generando el archivo JAR.
+- `./mvnw spring-boot:run`: Arranca la aplicación en modo desarrollo.
+- `./mvnw test`: Ejecuta los tests.
 
 ## 🧪 Tests
 
@@ -105,8 +106,8 @@ Para ejecutar los tests del proyecto:
 ./mvnw test
 ```
 
-Los tests se encuentran en `src/test/java`. Actualmente incluye tests de carga de contexto
-y [TODO: añadir descripción de cobertura de tests adicionales].
+Los tests se encuentran en `src/test/java`. Actualmente solo hay un test de carga de contexto (`@SpringBootTest`), que
+necesita MySQL levantado y las variables de entorno configuradas.
 
 ## 📁 Estructura del Proyecto
 
@@ -115,13 +116,13 @@ y [TODO: añadir descripción de cobertura de tests adicionales].
 │   ├── main
 │   │   ├── java
 │   │   │   └── org.scoutsdecanarias.ecatlim_backend
-│   │   │       ├── auth          # Lógica de autenticación y JWT
-│   │   │       ├── configuration # Configuración de Spring (CORS, WS, Security)
-│   │   │       ├── controller    # Endpoints REST
-│   │   │       ├── dto           # Objetos de transferencia de datos
-│   │   │       ├── entity        # Entidades JPA (Modelo de base de datos)
-│   │   │       ├── repository    # Interfaces de acceso a datos
-│   │   │       └── service       # Lógica de negocio
+│   │   │       ├── core
+│   │   │       │   ├── auth          # Login, JWT y recuperación de contraseña
+│   │   │       │   ├── configuration # Security, CORS, WebSocket, caché, async, Blob
+│   │   │       │   └── exception     # Excepciones y manejador global de errores
+│   │   │       ├── shared            # Servicios reutilizables (blob, email, utils)
+│   │   │       └── features          # Un paquete por dominio (user, chat, event, ...)
+│   │   │           └── <feature>     # controller / dto / entity / repository / service
 │   │   └── resources
 │   │       ├── db/migration      # Scripts de Flyway
 │   │       ├── templates         # Plantillas (Thymeleaf/Email)
@@ -133,10 +134,13 @@ y [TODO: añadir descripción de cobertura de tests adicionales].
 
 ## 🚧 CI/CD y Despliegue
 
-Este proyecto implementa GitFlow para el control de versiones. El despliegue está configurado/planificado para:
+Este proyecto implementa GitFlow para el control de versiones (`master`, `develop`, `test` y ramas `feature/ECL-<n>`).
 
-- **Azure App Service**
-- **Contenedores Docker** en infraestructura cloud.
+- Cada push a la rama `test` ejecuta el workflow `.github/workflows/test_ecatlim-test-backend.yml`, que compila el JAR
+  y lo despliega en **Azure App Service** (`ecatlim-test-backend`).
+- La CI no ejecuta los tests (`-DskipTests`), así que ejecútalos en local antes de subir cambios.
+
+Las convenciones de código y la guía para agentes de IA están en [`AGENTS.md`](AGENTS.md).
 
 ---
 
