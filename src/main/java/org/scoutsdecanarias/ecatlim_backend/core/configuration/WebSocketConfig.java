@@ -1,8 +1,10 @@
 package org.scoutsdecanarias.ecatlim_backend.configuration;
 
 import org.scoutsdecanarias.ecatlim_backend.core.auth.JwtHandshakeInterceptor;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.StompAuthorizationInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -18,9 +20,16 @@ import java.util.Map;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
+    private final StompAuthorizationInterceptor stompAuthorizationInterceptor;
 
-    public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor) {
+    public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor, StompAuthorizationInterceptor stompAuthorizationInterceptor) {
         this.jwtHandshakeInterceptor = jwtHandshakeInterceptor;
+        this.stompAuthorizationInterceptor = stompAuthorizationInterceptor;
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompAuthorizationInterceptor);
     }
 
     @Override

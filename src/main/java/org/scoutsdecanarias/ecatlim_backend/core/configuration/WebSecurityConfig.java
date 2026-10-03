@@ -2,6 +2,8 @@ package org.scoutsdecanarias.ecatlim_backend.core.configuration;
 
 import org.scoutsdecanarias.ecatlim_backend.core.UserDetailsServiceImpl;
 import org.scoutsdecanarias.ecatlim_backend.core.auth.JWTAuthFilter;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.RateLimitFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,9 +38,13 @@ public class WebSecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
 
-    public WebSecurityConfig(JWTAuthFilter jwtAuthFilter, UserDetailsServiceImpl userDetailsService) {
+    private final boolean trustForwardedFor;
+
+    public WebSecurityConfig(JWTAuthFilter jwtAuthFilter, UserDetailsServiceImpl userDetailsService,
+                             @Value("${ecatlim.rate-limit.trust-forwarded-for}") boolean trustForwardedFor) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthFilter = jwtAuthFilter;
+        this.trustForwardedFor = trustForwardedFor;
     }
 
     @Bean
@@ -60,6 +67,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/auth/login", "/password/**", "/scout-group/all", "/pending-user/request", "/ws/**").permitAll()
                     .anyRequest().fullyAuthenticated()
             )
+            .addFilterAfter(new RateLimitFilter(RateLimitFilter.defaultRules(trustForwardedFor), trustForwardedFor), CorsFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -79,7 +87,7 @@ public class WebSecurityConfig {
         corsConfiguration.setAllowedOrigins(Collections.singletonList("*"));
         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(Arrays.asList("authorization", "content-type"));
-        corsConfiguration.setExposedHeaders(Collections.singletonList("authorization"));
+        corsConfiguration.setExposedHeaders(Arrays.asList("authorization", "retry-after"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);

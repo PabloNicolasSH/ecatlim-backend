@@ -34,12 +34,12 @@ usas Docker) o directamente en el servicio de despliegue.
 
 | Variable                  | Descripción                                | Valor por Defecto                     |
 |:--------------------------|:-------------------------------------------|:--------------------------------------|
-| `DATABASE_URL`            | URL de conexión a MySQL                    | `jdbc:mysql://localhost:3306/ecatlim` |
-| `DATABASE_USERNAME`       | Usuario de la base de datos                | `admin`                               |
-| `DATABASE_PASSWORD`       | Contraseña de la base de datos             | `password`                            |
-| `JWT_SECRET`              | Secreto para firmar los tokens JWT         | (Generado por defecto)                |
-| `ECATLIM_LINK`            | URL del frontend (para resets de password) | `http://localhost:4200`               |
-| `BLOB_CONNECTION`         | Cadena de conexión de Azure Blob Storage   | Azurite local (`127.0.0.1:10000`)     |
+| `DATABASE_URL`            | URL de conexión a MySQL                    | Perfil `dev`: `jdbc:mysql://localhost:3306/ecatlim` |
+| `DATABASE_USERNAME`       | Usuario de la base de datos                | Perfil `dev`: `admin`                               |
+| `DATABASE_PASSWORD`       | Contraseña de la base de datos             | Perfil `dev`: `password`                            |
+| `JWT_SECRET`              | Secreto JWT (Base64, ≥ 256 bits: `openssl rand -base64 48`) | Perfil `dev`: secreto solo para local |
+| `ECATLIM_LINK`            | URL del frontend (para resets de password) | Perfil `dev`: `http://localhost:4200`               |
+| `BLOB_CONNECTION`         | Cadena de conexión de Azure Blob Storage   | Perfil `dev`: Azurite local (`127.0.0.1:10000`)     |
 | `NO_REPLY_EMAIL_USERNAME` | Usuario SMTP (Gmail)                       | **REQUERIDO**                         |
 | `NO_REPLY_EMAIL_PASSWORD` | Contraseña/Token SMTP                      | **REQUERIDO**                         |
 

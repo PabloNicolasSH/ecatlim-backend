@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.learning_resource.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.ResourceType;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.dto.LearningResourceUploadDto;
@@ -11,7 +12,9 @@ import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.repositor
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.repository.TagRepository;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobDirectory;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileNames;
 import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileTransferDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,9 +48,9 @@ public class LearningResourceService {
             mimeType = "text/uri-list";
         } else {
             if (file == null || file.isEmpty()) {
-                throw new IllegalArgumentException("El archivo es obligatorio para este tipo de recurso.");
+                throw new EcatlimException("El archivo es obligatorio para este tipo de recurso", HttpStatus.BAD_REQUEST);
             }
-            var response = blobStorageService.upload(file, BlobDirectory.RESOURCES, file.getOriginalFilename());
+            var response = blobStorageService.upload(file, BlobDirectory.RESOURCES, FileNames.randomBlobName(file.getOriginalFilename()));
             finalPath = response.fileName();
             mimeType = file.getContentType();
         }

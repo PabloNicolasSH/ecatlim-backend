@@ -1,7 +1,9 @@
 package org.scoutsdecanarias.ecatlim_backend.core.auth.password;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +20,12 @@ public class PasswordRequestController {
     }
 
     @GetMapping("/forgot")
-    public void forgotPassword(@NotNull @RequestParam String email) {
-        log.info("METHOD forgotPassword - Forgot password request for email: {}", email);
+    public void forgotPassword(@RequestParam
+                               @NotBlank(message = "El email es obligatorio")
+                               @Email(message = "El email no tiene un formato válido")
+                               @Size(max = 255, message = "El email no puede superar los 255 caracteres")
+                               String email) {
+        log.info("METHOD forgotPassword() - Forgot password request");
         passwordResetService.generatePasswordResetToken(email);
     }
 
@@ -30,7 +36,7 @@ public class PasswordRequestController {
     }
 
     @PostMapping("/change-password")
-    public void changePassword(@RequestBody ChangePasswordDto changePasswordDto) {
+    public void changePassword(@Valid @RequestBody ChangePasswordDto changePasswordDto) {
         log.info("METHOD changePassword() - Changing password of: {}", SecurityContextHolder.getContext().getAuthentication().getName());
         passwordResetService.changePassword(changePasswordDto);
     }

@@ -1,5 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.lesson_block;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +29,7 @@ public class LessonBlockController {
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/admin/add")
-    public void createLessonBlocks(@RequestBody List<LessonBlockDto> lessonBlocks) {
+    public void createLessonBlocks(@RequestBody @NotEmpty(message = "Debes añadir al menos un bloque formativo") List<@Valid @NotNull LessonBlockDto> lessonBlocks) {
         log.info("METHOD createLessonBlocks() - Creating lesson blocks by {}", SecurityContextHolder.getContext().getAuthentication().getName());
         lessonBlockService.addLessonBlocks(lessonBlocks);
     }

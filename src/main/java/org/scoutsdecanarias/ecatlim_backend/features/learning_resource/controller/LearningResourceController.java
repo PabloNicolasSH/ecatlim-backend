@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.learning_resource.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.dto.LearningResourceDto;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.dto.LearningResourceUploadDto;
@@ -32,7 +33,7 @@ public class LearningResourceController {
 
     @PreAuthorize("hasAnyAuthority('MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER', 'ADMIN')")
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<LearningResourceDto> upload(@RequestPart(value = "file", required = false) MultipartFile file, @RequestPart("data") LearningResourceUploadDto data) throws IOException {
+    public ResponseEntity<LearningResourceDto> upload(@RequestPart(value = "file", required = false) MultipartFile file, @Valid @RequestPart("data") LearningResourceUploadDto data) throws IOException {
         return ResponseEntity.ok(LearningResourceDto.fromEntity(learningResourceService.create(data, file)));
     }
 }

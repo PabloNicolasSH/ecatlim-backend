@@ -1,5 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.module;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,7 +31,7 @@ public class ModuleController {
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/admin/create-modules")
-    public void addModules(@RequestBody List<ModuleDto> modules) {
+    public void addModules(@RequestBody @NotEmpty(message = "Debes añadir al menos un módulo") List<@Valid @NotNull ModuleDto> modules) {
         log.info("METHOD addModule() - Adding new modules by {}",
                 SecurityContextHolder.getContext().getAuthentication().getName());
         this.moduleService.addModules(modules);

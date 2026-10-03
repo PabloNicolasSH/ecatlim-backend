@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.education_stage;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageDto;
@@ -31,7 +32,7 @@ public class EducationStageController {
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/admin/add")
-    public EducationStageDto addEducationStage(@RequestBody EducationStageFormDto educationStage) {
+    public EducationStageDto addEducationStage(@Valid @RequestBody EducationStageFormDto educationStage) {
         log.info("METHOD addEducationStage() - Add education stage by {}, the education stage is {}",
                 SecurityContextHolder.getContext().getAuthentication().getName(),
                 educationStage.name());
@@ -40,7 +41,7 @@ public class EducationStageController {
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PutMapping("/admin/{id}")
-    public EducationStageDto updateEducationStage(@PathVariable int id, @RequestBody EducationStageFormDto educationStage) {
+    public EducationStageDto updateEducationStage(@PathVariable int id, @Valid @RequestBody EducationStageFormDto educationStage) {
         log.info("METHOD updateEducationStage() - Update education stage {} by {}", id,
                 SecurityContextHolder.getContext().getAuthentication().getName());
         return EducationStageDto.fromEntity(educationStageService.updateEducationStage(id, educationStage));
