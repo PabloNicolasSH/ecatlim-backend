@@ -43,4 +43,7 @@ public class LearningResource {
     private User user;
 
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private int downloadCount;
 }

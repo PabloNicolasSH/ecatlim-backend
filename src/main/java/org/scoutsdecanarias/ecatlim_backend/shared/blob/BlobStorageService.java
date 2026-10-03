@@ -2,8 +2,10 @@ package org.scoutsdecanarias.ecatlim_backend.shared.blob;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobStorageException;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.tomcat.util.http.fileupload.ByteArrayOutputStream;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,19 +61,24 @@ public class BlobStorageService {
     public byte[] download(String fileName, BlobDirectory directory) {
         String originalPath = directory.getPath() + "/" + fileName;
 
-        return container
-                .getBlobClient(originalPath)
-                .downloadContent()
-                .toBytes();
+        return downloadContent(originalPath);
     }
 
     public byte[] downloadThumbnail(String fileName, BlobDirectory directory) {
         String fullPath = directory.getThumbnailPath() + "/" + fileName;
 
-        return container
-                .getBlobClient(fullPath)
-                .downloadContent()
-                .toBytes();
+        return downloadContent(fullPath);
+    }
+
+    private byte[] downloadContent(String path) {
+        try {
+            return container.getBlobClient(path).downloadContent().toBytes();
+        } catch (BlobStorageException e) {
+            if (e.getStatusCode() == 404) {
+                throw new ResourceNotFoundException("El archivo ya no está disponible");
+            }
+            throw e;
+        }
     }
 
     private String uploadThumbnail(MultipartFile file, BlobDirectory directory, String fileName) throws IOException {
