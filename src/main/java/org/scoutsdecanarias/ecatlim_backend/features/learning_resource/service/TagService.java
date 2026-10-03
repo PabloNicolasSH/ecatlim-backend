@@ -17,7 +17,7 @@ public class TagService {
     private final TagRepository tagRepository;
 
     public List<Tag> getAllTags() {
-        return tagRepository.findAll();
+        return tagRepository.findAllByOrderByNameAsc();
     }
 
     @Transactional
