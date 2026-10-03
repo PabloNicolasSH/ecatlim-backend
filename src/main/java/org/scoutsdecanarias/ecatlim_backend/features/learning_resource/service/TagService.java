@@ -2,8 +2,10 @@ package org.scoutsdecanarias.ecatlim_backend.features.learning_resource.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.entity.Tag;
 import org.scoutsdecanarias.ecatlim_backend.features.learning_resource.repository.TagRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,7 +17,7 @@ public class TagService {
     private final TagRepository tagRepository;
 
     public List<Tag> getAllTags() {
-        return tagRepository.findAll();
+        return tagRepository.findAllByOrderByNameAsc();
     }
 
     @Transactional
@@ -23,7 +25,7 @@ public class TagService {
         String sanitizedName = name.trim();
 
         if (tagRepository.existsByNameIgnoreCase(sanitizedName)) {
-            throw new IllegalArgumentException("La etiqueta '" + sanitizedName + "' ya existe.");
+            throw new EcatlimException("La etiqueta '" + sanitizedName + "' ya existe", HttpStatus.CONFLICT);
         }
 
         Tag tag = new Tag();

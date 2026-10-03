@@ -21,13 +21,21 @@ import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRep
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
+import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobDirectory;
+import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileNames;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +53,7 @@ public class ActivityService {
     private final SurveyQuestionRepository surveyQuestionRepository;
     private final LessonBlockRepository lessonBlockRepository;
     private final EventEnrollmentRepository eventEnrollmentRepository;
+    private final BlobStorageService blobStorageService;
 
     public List<ActivityDto> getActivitiesByEventForUser(Integer eventId, String userEmail) {
         Integer userId = userRepository.findByEmail(userEmail)
@@ -152,42 +161,44 @@ public class ActivityService {
         progressRepository.saveAll(initialProgresses);
     }
 
-    public ForumPublication createForumPublication(Integer activityId, Integer studentId, ForumPublicationDto dto) {
+    public ForumPublication createForumPublication(Integer activityId, String userEmail, ForumPublicationFormDto dto) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
         if (!(activity instanceof ForumActivity forumActivity)) {
-            throw new IllegalArgumentException("This activity is not a Forum or Glossary");
+            throw new EcatlimException("Esta actividad no es un foro ni un glosario", HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> user = userRepository.findById(studentId);
+        User student = getParticipant(activityId, userEmail);
 
         ForumPublication publication = new ForumPublication();
         publication.setActivity(forumActivity);
-        user.ifPresent(publication::setAuthor);
+        publication.setAuthor(student);
         publication.setTitle(dto.title());
         publication.setBody(dto.body());
         ForumPublication saved = forumRepository.save(publication);
 
         if (activity.getEvaluationMethod() == EvaluationMethod.AUTOMATIC) {
-            this.completeActivity(activityId, studentId);
+            this.completeActivity(activityId, student.getId());
         }
 
         return saved;
     }
 
-    public void submitSurveyResponses(Integer activityId, Integer studentId, List<SurveyResponseDto> responsesDto) {
+    public void submitSurveyResponses(Integer activityId, String userEmail, List<SurveyResponseDto> responsesDto) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
         if (!(activity instanceof SurveyActivity surveyActivity)) {
-            throw new IllegalArgumentException("This activity is not a Survey/Exam");
+            throw new EcatlimException("Esta actividad no es una encuesta ni un examen", HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> user = userRepository.findById(studentId);
+        User student = getParticipant(activityId, userEmail);
+        Integer studentId = student.getId();
+        Optional<User> user = Optional.of(student);
 
         ActivityProgress progress = progressRepository.findByActivityIdAndStudentId(activityId, studentId)
-                .orElse(new ActivityProgress());
+                .orElseThrow(() -> new ResourceNotFoundException("Progress record not found"));
 
         Integer attempts = 0;
         if (!surveyActivity.getSurveyQuestions().isEmpty()) {
@@ -195,14 +206,15 @@ public class ActivityService {
             attempts = surveyResponseRepository.findMaxAttemptByStudentAndQuestion(studentId, firstQuestionId);
         }
 
-        if (progress.getId() == null) {
-            progress.setActivity(surveyActivity);
-            user.ifPresent(u -> progress.setStudentId(studentId));
-        }
-
         if (Boolean.TRUE.equals(surveyActivity.getIsGradable()) && surveyActivity.getMaxAttempts() != null
                 && attempts >= surveyActivity.getMaxAttempts()) {
-            throw new IllegalStateException("You have reached the maximum number of attempts for this exam");
+            throw new EcatlimException("Has alcanzado el número máximo de intentos de este examen", HttpStatus.CONFLICT);
+        }
+
+        Set<Integer> questionIds = surveyActivity.getSurveyQuestions().stream().map(SurveyQuestion::getId).collect(Collectors.toSet());
+        List<Integer> answeredIds = responsesDto.stream().map(SurveyResponseDto::id).toList();
+        if (answeredIds.size() != questionIds.size() || !questionIds.equals(new HashSet<>(answeredIds))) {
+            throw new EcatlimException("Debes responder a todas las preguntas de la encuesta, una sola vez cada una", HttpStatus.BAD_REQUEST);
         }
 
         int correctAnswersCount = 0;
@@ -213,6 +225,9 @@ public class ActivityService {
         for (SurveyResponseDto dto : responsesDto) {
             SurveyQuestion question = surveyQuestionRepository.findById(dto.id())
                     .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
+            if (!question.getActivity().getId().equals(activityId)) {
+                throw new EcatlimException("La pregunta no pertenece a esta actividad", HttpStatus.BAD_REQUEST);
+            }
 
             SurveyResponse response = new SurveyResponse();
             user.ifPresent(response::setStudent);
@@ -252,29 +267,49 @@ public class ActivityService {
         progressRepository.save(progress);
     }
 
-    public FileSubmission submitFile(Integer activityId, Integer studentId, String fileUrl, String comment) {
+    public FileSubmission submitFile(Integer activityId, String userEmail, MultipartFile file, String comment) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
         if (!(activity instanceof FileUploadActivity fileUploadActivity)) {
-            throw new IllegalArgumentException("This activity does not accept file submissions");
+            throw new EcatlimException("Esta actividad no admite entregas de archivos", HttpStatus.BAD_REQUEST);
+        }
+        if (file == null || file.isEmpty()) {
+            throw new EcatlimException("Debes adjuntar un archivo", HttpStatus.BAD_REQUEST);
         }
 
-        Optional<User> user = userRepository.findById(studentId);
+        User student = getParticipant(activityId, userEmail);
+
+        String blobName = student.getId() + "_" + System.currentTimeMillis() + "_" + FileNames.randomBlobName(file.getOriginalFilename());
+        String fileUrl;
+        try {
+            fileUrl = blobStorageService.upload(file, BlobDirectory.ACTIVITY_ATTACHMENTS, blobName).url();
+        } catch (IOException e) {
+            throw new EcatlimException("No se ha podido guardar el archivo, inténtalo de nuevo", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         FileSubmission submission = new FileSubmission();
         submission.setActivity(fileUploadActivity);
-        user.ifPresent(submission::setStudent);
+        submission.setStudent(student);
         submission.setFileUrl(fileUrl);
         submission.setComment(comment);
         FileSubmission saved = fileRepository.save(submission);
 
         if (fileUploadActivity.getEvaluationMethod() == EvaluationMethod.AUTOMATIC) {
             saved.setIsApproved(true);
-            this.completeActivity(activityId, studentId);
+            this.completeActivity(activityId, student.getId());
         }
 
         return saved;
+    }
+
+    private User getParticipant(Integer activityId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
+        if (progressRepository.findByActivityIdAndStudentId(activityId, user.getId()).isEmpty()) {
+            throw new EcatlimException("No estás inscrito en el bloque de esta actividad", HttpStatus.FORBIDDEN);
+        }
+        return user;
     }
 
     @EventListener

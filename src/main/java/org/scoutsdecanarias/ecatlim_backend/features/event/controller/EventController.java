@@ -1,5 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.event.controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EventService;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
@@ -72,19 +75,19 @@ public class EventController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/admin/add")
-    public EventDto create(@RequestBody EventFormDto event) {
+    public EventDto create(@Valid @RequestBody EventFormDto event) {
         return EventDto.fromEntity(eventService.save(event));
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/admin/{id}")
-    public ResponseEntity<EventDto> update(@PathVariable Integer id, @RequestBody EventFormDto event) {
+    public ResponseEntity<EventDto> update(@PathVariable Integer id, @Valid @RequestBody EventFormDto event) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.update(id, event)));
     }
 
     @PreAuthorize("hasAuthority('MANAGER_DIRECTOR')")
     @PutMapping("/admin/update-status/{id}")
-    public ResponseEntity<EventDto> updateStatus(@PathVariable Integer id, @RequestBody String status) {
+    public ResponseEntity<EventDto> updateStatus(@PathVariable Integer id, @RequestBody @NotBlank(message = "El estado es obligatorio") @Pattern(regexp = "PUBLISHED|PENDING|DRAFT", message = "El estado del evento no es válido") String status) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.updateStatus(id, status)));
     }
 

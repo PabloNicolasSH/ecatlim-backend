@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.controller;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
@@ -34,7 +35,7 @@ public class UserController {
     }
 
     @PutMapping("/update/me")
-    public UserDto updateMyUserInfo(@RequestBody UserMeFormDto userMeFormDto) {
+    public UserDto updateMyUserInfo(@Valid @RequestBody UserMeFormDto userMeFormDto) {
         log.info("METHOD updateMyUserInfo() - Update user info for principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
         return UserDto.fromEntity(userService.updateUserMe(userMeFormDto));
     }
@@ -62,7 +63,7 @@ public class UserController {
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
     @PostMapping("/team/add")
-    public TeamMemberDto addTeamMember(@RequestBody UserFormDto user) {
+    public TeamMemberDto addTeamMember(@Valid @RequestBody UserFormDto user) {
         log.info("METHOD addTeamMember - Adding team member: {}, by: {}", user.email(), SecurityContextHolder.getContext().getAuthentication().getName());
         return trainingTeamService.addMember(user);
     }
@@ -116,14 +117,14 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/admin/add")
-    public UserDto addUser(@RequestBody UserFormDto user) {
+    public UserDto addUser(@Valid @RequestBody UserFormDto user) {
         log.info("METHOD addUser - Adding user: {}, by: {}", user, SecurityContextHolder.getContext().getAuthentication().getName());
         return UserDto.fromEntity(userService.addUser(user));
     }
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
     @PostMapping("/student/add")
-    public UserDto addStudent(@RequestBody UserFormDto user) {
+    public UserDto addStudent(@Valid @RequestBody UserFormDto user) {
         log.info("METHOD addStudent - Adding student: {}, by: {}", user.email(), SecurityContextHolder.getContext().getAuthentication().getName());
         UserFormDto student = new UserFormDto(user.name(), user.surname(), user.email(), user.phone(), user.nif(),
                 user.census(), user.address(), user.city(), user.country(), Set.of(Role.STUDENT), user.scoutGroupId());
@@ -132,7 +133,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/admin/edit/{id}")
-    public UserDto editUser(@PathVariable Integer id, @RequestBody UserFormDto user) {
+    public UserDto editUser(@PathVariable Integer id, @Valid @RequestBody UserFormDto user) {
         log.info("METHOD editUser() - Updating user: {}, by: {}", user, SecurityContextHolder.getContext().getAuthentication().getName());
         return UserDto.fromEntity(userService.updateUser(id, user));
     }

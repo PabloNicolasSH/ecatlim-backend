@@ -14,8 +14,14 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
         ConstraintValidator.super.initialize(constraintAnnotation);
     }
 
+    static final String POLICY_MESSAGE = "La contraseña debe tener entre 8 y 256 caracteres, al menos una mayúscula, "
+            + "una minúscula, un número y un carácter especial, y no puede contener espacios";
+
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
+        if (password == null) {
+            return true;
+        }
         PasswordValidator validator = new PasswordValidator(Arrays.asList(
                 new LengthRule(8, 256),
                 new CharacterRule(EnglishCharacterData.UpperCase, 1),
@@ -27,9 +33,7 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
         RuleResult result = validator.validate(new PasswordData(password));
         if (result.isValid()) return true;
         context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(
-                String.join(",", validator.getMessages(result))
-        ).addConstraintViolation();
+        context.buildConstraintViolationWithTemplate(POLICY_MESSAGE).addConstraintViolation();
         return false;
     }
 }

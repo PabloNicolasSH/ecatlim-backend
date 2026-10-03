@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.service;
 
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.IdDocuments;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
@@ -74,7 +75,7 @@ public class UserService {
             profile.setUser(newUser);
             profile.setName(user.name());
             profile.setSurname(user.surname());
-            profile.setNif(user.nif());
+            profile.setNif(IdDocuments.normalize(user.nif()));
             profile.setAddress(user.address());
             profile.setCountry(user.country());
             profile.setCity(user.city());
@@ -114,7 +115,7 @@ public class UserService {
             profile.setUser(updatedUser);
             profile.setName(user.name());
             profile.setSurname(user.surname());
-            profile.setNif(user.nif());
+            profile.setNif(IdDocuments.normalize(user.nif()));
             profile.setAddress(user.address());
             profile.setCountry(user.country());
             profile.setCity(user.city());
@@ -146,7 +147,7 @@ public class UserService {
             profile.setUser(me);
             profile.setName(userMeFormDto.name());
             profile.setSurname(userMeFormDto.surname());
-            profile.setNif(userMeFormDto.nif());
+            profile.setNif(IdDocuments.normalize(userMeFormDto.nif()));
             profile.setAddress(userMeFormDto.address());
             profile.setCountry(userMeFormDto.country());
             profile.setCity(userMeFormDto.city());

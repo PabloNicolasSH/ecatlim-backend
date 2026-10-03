@@ -1,6 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.activity.dto;
 
+import org.hibernate.Hibernate;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.Activity;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.SurveyActivity;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.SimpleUserDto;
 
 import java.time.LocalDateTime;
@@ -16,8 +18,13 @@ public record ActivityDto(
         LocalDateTime dueDate,
         Boolean isOptional,
         SimpleUserDto responsible,
-        String progressStatus) {
+        String progressStatus,
+        List<SurveyQuestionDto> questions) {
     public static ActivityDto fromEntity(Activity activity) {
+        Object real = Hibernate.unproxy(activity);
+        List<SurveyQuestionDto> questions = real instanceof SurveyActivity survey
+                ? SurveyQuestionDto.fromCollection(survey.getSurveyQuestions())
+                : null;
         return new ActivityDto(
                 activity.getId(),
                 activity.getTitle(),
@@ -28,13 +35,14 @@ public record ActivityDto(
                 activity.getDueDate(),
                 activity.getIsOptional(),
                 activity.getCorrectors().stream().findFirst().map(SimpleUserDto::fromEntity).orElse(null),
-                null
+                null,
+                questions
         );
     }
 
     public ActivityDto withProgressStatus(String status) {
         return new ActivityDto(id, title, description, activityType, evaluationMethod, availableAt, dueDate, isOptional,
-                responsible, status);
+                responsible, status, questions);
     }
 
     public static List<ActivityDto> fromCollection(List<Activity> activitiesByEvent) {

@@ -1,5 +1,7 @@
 package org.scoutsdecanarias.ecatlim_backend.features.enrollment;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.dto.EducationStageCardDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.AttendedEventDto;
@@ -47,13 +49,13 @@ public class EnrollmentController {
     }
 
     @PostMapping("/events/{id}/enroll")
-    public ResponseEntity<EventDto> eventEnroll(@PathVariable Integer id, @RequestBody List<Integer> lessonBlockIds) {
+    public ResponseEntity<EventDto> eventEnroll(@PathVariable Integer id, @RequestBody @NotEmpty(message = "Debes seleccionar al menos un bloque formativo") List<@NotNull Integer> lessonBlockIds) {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(EventDto.fromEntity(enrollmentService.enrollStudent(id, userEmail, lessonBlockIds)));
     }
 
     @PostMapping("/events/{id}/unenroll")
-    public ResponseEntity<EventDto> eventUnenroll(@PathVariable Integer id, @RequestBody List<Integer> lessonBlockIds) {
+    public ResponseEntity<EventDto> eventUnenroll(@PathVariable Integer id, @RequestBody @NotEmpty(message = "Debes seleccionar al menos un bloque formativo") List<@NotNull Integer> lessonBlockIds) {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(EventDto.fromEntity(enrollmentService.unenrollStudent(id, userEmail, lessonBlockIds)));
     }

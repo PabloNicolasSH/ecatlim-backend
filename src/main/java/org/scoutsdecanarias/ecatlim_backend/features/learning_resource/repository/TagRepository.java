@@ -10,5 +10,7 @@ import java.util.List;
 public interface TagRepository extends JpaRepository<Tag,Integer> {
     List<Tag> findByNameIn(List<String> names);
 
+    List<Tag> findAllByOrderByNameAsc();
+
     boolean existsByNameIgnoreCase(String sanitizedName);
 }

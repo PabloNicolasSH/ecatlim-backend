@@ -41,6 +41,11 @@ public class PasswordResetService {
     }
 
     public void generatePasswordResetToken(String email) {
+        boolean canRecover = userRepository.findByEmail(email).map(User::isEnabled).orElse(false);
+        if (!canRecover) {
+            log.info("METHOD generatePasswordResetToken() - No enabled account for the requested email, no email sent");
+            return;
+        }
         try {
             String token = UUID.randomUUID().toString();
             cacheManager.getCache(CACHE_NAME).put(token, email);
@@ -57,11 +62,15 @@ public class PasswordResetService {
     public void resetPassword(ResetPasswordDto passwordDto) {
         Cache cache = cacheManager.getCache(CACHE_NAME);
 
+        if (!passwordDto.newPassword().equals(passwordDto.newPasswordRepeat())) {
+            throw new EcatlimException("Las contraseñas no coinciden", HttpStatus.BAD_REQUEST);
+        }
+
         assert cache != null;
         Cache.ValueWrapper wrapper = cache.get(passwordDto.token());
 
         if (wrapper == null || wrapper.get() == null) {
-            throw new RuntimeException("Token inválido o caducado");
+            throw new EcatlimException("El enlace de recuperación no es válido o ha caducado. Solicita uno nuevo", HttpStatus.BAD_REQUEST);
         }
 
         String email = (String) wrapper.get();

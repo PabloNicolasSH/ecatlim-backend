@@ -1,11 +1,13 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.PendingUserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +24,7 @@ public class PendingUserController {
     }
 
     @PostMapping("/request")
-    public void createPendingUser(@RequestBody PendingUserFormDto pendingUserFormDto) {
+    public void createPendingUser(@Valid @RequestBody PendingUserFormDto pendingUserFormDto) {
         log.info("METHOD createPendingUser() - A user with email {} have created a pending user request", pendingUserFormDto.email());
         this.pendingUserService.addPendingUser(pendingUserFormDto);
     }
@@ -42,14 +44,14 @@ public class PendingUserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/admin/create-user")
-    public void createUserFromPendingUser(@RequestBody PendingUserFormDto pendingUserFormDto) {
+    public void createUserFromPendingUser(@Validated(PendingUserFormDto.ByEmail.class) @RequestBody PendingUserFormDto pendingUserFormDto) {
         log.info("METHOD createUserFromPendingUser() - {} created a user from pending user request by {}", SecurityContextHolder.getContext().getAuthentication().getName(), pendingUserFormDto.email());
         this.pendingUserService.createUserFromRequest(pendingUserFormDto);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/admin/delete")
-    public void deletePendingUser(@RequestBody PendingUserFormDto pendingUserFormDto) {
+    public void deletePendingUser(@Validated(PendingUserFormDto.ByEmail.class) @RequestBody PendingUserFormDto pendingUserFormDto) {
         log.info("METHOD deletePendingUser() - {} have declined the request of {}", SecurityContextHolder.getContext().getAuthentication().getName(), pendingUserFormDto.email());
         this.pendingUserService.deletePendingUser(pendingUserFormDto);
     }

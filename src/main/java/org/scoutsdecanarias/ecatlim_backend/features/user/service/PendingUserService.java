@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.service;
 
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.IdDocuments;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
@@ -59,7 +60,7 @@ public class PendingUserService {
             throw new EcatlimException("Con este email ya se ha solicitado que se le dé de alta en el sistema", HttpStatus.CONFLICT);
         }
 
-        if (userProfileRepository.findByNif(pendingUser.nif()).isPresent()) {
+        if (userProfileRepository.findByNif(IdDocuments.normalize(pendingUser.nif())).isPresent()) {
             throw new EcatlimException("Este NIF ya está de alta en el sistema", HttpStatus.CONFLICT);
         }
 
@@ -67,7 +68,7 @@ public class PendingUserService {
         newPendingUser.setName(pendingUser.name());
         newPendingUser.setSurname(pendingUser.surname());
         newPendingUser.setEmail(pendingUser.email());
-        newPendingUser.setNif(pendingUser.nif());
+        newPendingUser.setNif(IdDocuments.normalize(pendingUser.nif()));
 
         if (pendingUser.scoutGroupId() != null) {
             newPendingUser.setScoutGroup(scoutGroupService.getScoutGroupById(pendingUser.scoutGroupId()));
@@ -82,7 +83,8 @@ public class PendingUserService {
             throw new EcatlimException("Con este email ya se ha solicitado que se le dé de alta en el sistema", HttpStatus.CONFLICT);
         }
 
-        PendingUser pendingUser = pendingUserRepository.findByEmail(pendingUserFormDto.email()).get();
+        PendingUser pendingUser = pendingUserRepository.findByEmail(pendingUserFormDto.email())
+                .orElseThrow(() -> new EcatlimException("No existe ninguna solicitud de alta con ese email", HttpStatus.NOT_FOUND));
 
         User newUser = new User();
         newUser.setEmail(pendingUser.getEmail());

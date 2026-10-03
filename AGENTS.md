@@ -15,12 +15,12 @@ Guía para agentes de IA (y personas) que trabajan en **ecatlim-backend**, el ba
 
 ```bash
 docker-compose up -d          # MySQL (3306) + Azurite (10000). No levanta la app.
-./mvnw spring-boot:run        # Arranca la app
+./mvnw spring-boot:run        # Arranca la app con el perfil "dev"
 ./mvnw clean package          # Compila y empaqueta
-./mvnw test                   # Tests (requiere MySQL levantado y variables de entorno)
+./mvnw test                   # Tests (contextLoads usa el perfil "dev" y requiere MySQL levantado)
 ```
 
-Variables de entorno (ver `src/main/resources/application.properties`): `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET`, `ECATLIM_LINK`, `BLOB_CONNECTION`, `NO_REPLY_EMAIL_USERNAME`, `NO_REPLY_EMAIL_PASSWORD`. No hay perfiles de Spring. **Nunca** escribas secretos reales en ficheros versionados.
+Variables de entorno (ver `src/main/resources/application.properties`): `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET`, `ECATLIM_LINK`, `BLOB_CONNECTION`, `NO_REPLY_EMAIL_USERNAME`, `NO_REPLY_EMAIL_PASSWORD`. En `application.properties` **no tienen valor por defecto**: si falta alguna, la app no arranca. Los valores locales están en `application-dev.properties` (perfil `dev`, que `./mvnw spring-boot:run` activa automáticamente; en IntelliJ añade `dev` en *Active profiles*). Nunca actives `dev` en Azure. `JWT_SECRET` debe ser Base64 de al menos 256 bits (`openssl rand -base64 48`); `JwtUtil` lo valida al arrancar. **Nunca** escribas secretos reales en ficheros versionados.
 
 ## Estructura
 
@@ -56,12 +56,18 @@ Las features más grandes usan subpaquetes `controller/`, `dto/`, `entity/`, `en
 ## Seguridad
 
 - API sin estado con JWT (`Authorization: Bearer <token>`), sin CSRF, y `@EnableMethodSecurity` activado.
-- Endpoints públicos (`WebSecurityConfig`): `/auth/login`, `/password/**`, `/scout-group/all`, `/pending-user/request`, `/ws/**`. Todo lo demás requiere autenticación. Si añades un endpoint público, actualiza esta lista.
+- Endpoints públicos (`WebSecurityConfig`): `/auth/login`, `/password/**`, `/scout-group/all`, `/pending-user/request`, `/ws/**`. Todo lo demás requiere autenticación. Si añades un endpoint público, actualiza esta lista **y añade su límite en `RateLimitFilter.defaultRules`**.
+- Rate limiting en memoria (`core/auth/RateLimitFilter`): ventana fija por IP (y por email en `/password/forgot`), responde 429 con `Retry-After`. Detrás de App Service la IP real es la última de `X-Forwarded-For` (`ecatlim.rate-limit.trust-forwarded-for`).
+- Validación: los errores de Bean Validation llegan al frontend como 400 `{ecatlimMessage}` en español. Las reglas compartidas están en `shared/utils/ValidationPatterns` (teléfono) e `IdDocuments` / `@ValidIdDocument` (DNI/NIE con letra de control o pasaporte; se guarda normalizado con `IdDocuments.normalize`). El frontend las replica en `src/app/shared/validation/validation-patterns.ts`: mantenlas sincronizadas.
+- Nunca uses el nombre original de un fichero subido como ruta de blob: usa `FileNames.randomBlobName`.
+- Nunca recibas el id del usuario que actúa desde el cliente (p. ej. `studentId`): sácalo del token.
+- Los emails salen por `emailExecutor`, con cola acotada (`ecatlim.email.queue-capacity`); si se llena, se descartan y se registra un error.
 - Valida siempre en el servicio que el usuario tiene permiso sobre el recurso, por ejemplo que pertenece al chat o es el autor del mensaje. Que el usuario esté autenticado no basta.
 
 ## WebSocket / chat
 
 - Endpoint STOMP: `/ws?token=<jwt>`. `JwtHandshakeInterceptor` valida el token. No se usa SockJS.
+- `StompAuthorizationInterceptor` autoriza cada frame: `SUBSCRIBE` solo a `/user/**` o a `/topic/chat/{id}[/...]` si eres miembro; `SEND` solo a `/app/**`. Si añades un destino nuevo, añádelo ahí.
 - El prefijo de aplicación es `/app` y los prefijos del broker son `/topic` y `/queue`.
 - Destinos del chat:
   - Enviar: `/app/chat/{chatId}/send` con payload `{ message, clientId }`.
@@ -82,7 +88,7 @@ Las features más grandes usan subpaquetes `controller/`, `dto/`, `entity/`, `en
 
 ## Tests
 
-- Solo hay un `@SpringBootTest` (`contextLoads`), que necesita MySQL y las variables de entorno.
+- `contextLoads` (`@SpringBootTest`, perfil `dev`) necesita MySQL y `NO_REPLY_EMAIL_*`. El resto de tests son unitarios y no necesitan nada.
 - Si añades tests, usa `spring-boot-starter-test` y `spring-security-test`, que ya están en el `pom.xml`.
 - La CI no ejecuta los tests, así que ejecútalos en local con `./mvnw test` antes de dar algo por terminado.
 
