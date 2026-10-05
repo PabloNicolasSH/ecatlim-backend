@@ -138,7 +138,8 @@ public class UserFileService {
                 .map(request -> request.getUser().getId().equals(requester.getId())
                         || requester.getRoles().contains(Role.MANAGEMENT)
                         || requester.getRoles().contains(Role.MANAGER_DIRECTOR)
-                        || request.getCommission().stream().anyMatch(member -> member.getId().equals(requester.getId())))
+                        || requester.getRoles().contains(Role.EVENT_DIRECTOR)
+                        || requester.getRoles().contains(Role.TRAINER))
                 .orElse(false);
 
         if (!allowed) {

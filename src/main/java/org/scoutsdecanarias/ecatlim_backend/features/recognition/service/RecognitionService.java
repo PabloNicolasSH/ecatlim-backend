@@ -59,23 +59,23 @@ public class RecognitionService {
         return RecognitionRequestDto.fromCollection(recognitionRepository.findByUserIdOrderByCreatedAtDesc(user.getId()));
     }
 
-    /** Managers see every request; the rest of the staff only the ones whose commission they belong to. */
-    public List<RecognitionRequestDto> getRequestsForReview(String email, Set<RecognitionStatus> statuses) {
-        User staff = findUser(email);
+    /** Every staff member can read every request, resolved ones included, so past decisions can be used as precedent. */
+    public List<RecognitionRequestDto> getRequestsForReview(Set<RecognitionStatus> statuses) {
         Set<RecognitionStatus> filter = statuses == null || statuses.isEmpty() ? EnumSet.allOf(RecognitionStatus.class) : statuses;
-        List<RecognitionRequest> requests = isManager(staff)
-                ? recognitionRepository.findByStatusInOrderByUpdatedAtDesc(filter)
-                : recognitionRepository.findByStatusInAndCommissionMember(filter, staff);
-        return RecognitionRequestDto.fromCollectionForStaff(requests);
+        return RecognitionRequestDto.fromCollectionForStaff(recognitionRepository.findByStatusInOrderByUpdatedAtDesc(filter));
     }
 
-    public RecognitionRequestDto getRequest(String email, Integer id) {
+    public RecognitionRequestDto getRequest(Integer id) {
+        return RecognitionRequestDto.fromEntityForStaff(findRequest(id));
+    }
+
+    /** Requests waiting for this person: unassigned ones for managers, plus those awaiting a reply from their commission. */
+    public int countPendingForStaff(String email) {
         User staff = findUser(email);
-        RecognitionRequest request = findRequest(id);
-        if (!isManager(staff) && !isInCommission(request, staff)) {
-            throw new EcatlimException("No formas parte de la comisión de esta solicitud", HttpStatus.FORBIDDEN);
-        }
-        return RecognitionRequestDto.fromEntityForStaff(request);
+        boolean manager = isManager(staff);
+        return (int) recognitionRepository.findByStatusInOrderByUpdatedAtDesc(EnumSet.of(RecognitionStatus.PENDING_REVIEW)).stream()
+                .filter(request -> isInCommission(request, staff) || (manager && request.getCommission().isEmpty()))
+                .count();
     }
 
     public List<SimpleUserDto> getCommissionCandidates() {

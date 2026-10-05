@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -55,13 +56,19 @@ public class RecognitionController {
     @PreAuthorize(STAFF)
     @GetMapping("/admin")
     public List<RecognitionRequestDto> getRequestsForReview(@RequestParam(value = "status", required = false) @Nullable Set<RecognitionStatus> status) {
-        return recognitionService.getRequestsForReview(currentEmail(), status);
+        return recognitionService.getRequestsForReview(status);
+    }
+
+    @PreAuthorize(STAFF)
+    @GetMapping("/admin/pending-count")
+    public Map<String, Integer> getPendingCount() {
+        return Map.of("count", recognitionService.countPendingForStaff(currentEmail()));
     }
 
     @PreAuthorize(STAFF)
     @GetMapping("/admin/{id}")
     public RecognitionRequestDto getRequest(@PathVariable Integer id) {
-        return recognitionService.getRequest(currentEmail(), id);
+        return recognitionService.getRequest(id);
     }
 
     @PreAuthorize(MANAGERS)

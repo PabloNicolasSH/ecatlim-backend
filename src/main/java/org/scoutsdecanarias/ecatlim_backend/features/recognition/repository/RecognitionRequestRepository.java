@@ -2,7 +2,6 @@ package org.scoutsdecanarias.ecatlim_backend.features.recognition.repository;
 
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.entity.RecognitionRequest;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.enums.RecognitionStatus;
-import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,14 +16,6 @@ public interface RecognitionRequestRepository extends JpaRepository<RecognitionR
     List<RecognitionRequest> findByUserIdOrderByCreatedAtDesc(Integer userId);
 
     List<RecognitionRequest> findByStatusInOrderByUpdatedAtDesc(Collection<RecognitionStatus> statuses);
-
-    @Query("""
-        SELECT r FROM RecognitionRequest r
-            WHERE r.status IN :statuses AND :member MEMBER OF r.commission
-            ORDER BY r.updatedAt DESC
-    """)
-    List<RecognitionRequest> findByStatusInAndCommissionMember(@Param("statuses") Collection<RecognitionStatus> statuses,
-                                                               @Param("member") User member);
 
     boolean existsByUserIdAndLessonBlockIdAndStatusIn(Integer userId, Integer lessonBlockId, Collection<RecognitionStatus> statuses);
 
