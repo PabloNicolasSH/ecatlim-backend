@@ -19,6 +19,9 @@ public record ActivityDto(
         Boolean isOptional,
         SimpleUserDto responsible,
         SimpleUserDto assignedUser,
+        Integer lessonBlockId,
+        String lessonBlockCode,
+        String lessonBlockName,
         String progressStatus,
         List<SurveyQuestionDto> questions) {
     public static ActivityDto fromEntity(Activity activity) {
@@ -37,6 +40,9 @@ public record ActivityDto(
                 activity.getIsOptional(),
                 activity.getCorrectors().stream().findFirst().map(SimpleUserDto::fromEntity).orElse(null),
                 activity.getAssignedUser() == null ? null : SimpleUserDto.fromEntity(activity.getAssignedUser()),
+                activity.getLessonBlock().getId(),
+                activity.getLessonBlock().getCode(),
+                activity.getLessonBlock().getName(),
                 null,
                 questions
         );
@@ -44,7 +50,7 @@ public record ActivityDto(
 
     public ActivityDto withProgressStatus(String status) {
         return new ActivityDto(id, title, description, activityType, evaluationMethod, availableAt, dueDate, isOptional,
-                responsible, assignedUser, status, questions);
+                responsible, assignedUser, lessonBlockId, lessonBlockCode, lessonBlockName, status, questions);
     }
 
     public static List<ActivityDto> fromCollection(List<Activity> activitiesByEvent) {

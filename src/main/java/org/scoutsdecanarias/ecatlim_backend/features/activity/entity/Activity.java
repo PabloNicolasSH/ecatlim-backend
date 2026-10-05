@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.ActivityType;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.EvaluationMethod;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 
@@ -67,6 +68,10 @@ public abstract class Activity {
     private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_user_id")
-    private User assignedUser;
+    @JoinColumn(name = "assigned_enrollment_id")
+    private EventEnrollment assignedEnrollment;
+
+    public User getAssignedUser() {
+        return assignedEnrollment == null ? null : assignedEnrollment.getUser();
+    }
 }

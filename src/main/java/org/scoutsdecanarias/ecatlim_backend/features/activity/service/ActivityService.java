@@ -14,6 +14,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.SurveyRespon
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
@@ -92,13 +93,11 @@ public class ActivityService {
             throw new EcatlimException("El responsable de la actividad debe tener el rol de formador", HttpStatus.BAD_REQUEST);
         }
 
-        User assignedUser = null;
+        EventEnrollment assignedEnrollment = null;
         if (dto.assignedUserId() != null) {
-            assignedUser = userRepository.findById(dto.assignedUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.assignedUserId()));
-            if (!eventEnrollmentRepository.existsByUserIdAndEventIdAndLessonBlockId(assignedUser.getId(), eventId, lessonBlock.getId())) {
-                throw new EcatlimException("La persona asignada no está inscrita en este bloque del evento", HttpStatus.BAD_REQUEST);
-            }
+            assignedEnrollment = eventEnrollmentRepository
+                    .findByUserIdAndEventIdAndLessonBlockId(dto.assignedUserId(), eventId, lessonBlock.getId())
+                    .orElseThrow(() -> new EcatlimException("La persona asignada no está inscrita en este bloque del evento", HttpStatus.BAD_REQUEST));
         }
 
         Activity activity;
@@ -121,7 +120,7 @@ public class ActivityService {
         activity.setCreator(creator);
         activity.setLessonBlock(lessonBlock);
         activity.getCorrectors().add(responsible);
-        activity.setAssignedUser(assignedUser);
+        activity.setAssignedEnrollment(assignedEnrollment);
 
         activity.setTitle(dto.title());
         activity.setDescription(dto.description());
