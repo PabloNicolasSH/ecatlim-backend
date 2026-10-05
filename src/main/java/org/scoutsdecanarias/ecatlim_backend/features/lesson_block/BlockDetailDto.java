@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 public record BlockDetailDto(
+        Integer id,
         String code,
         String name,
         String status,

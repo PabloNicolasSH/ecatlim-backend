@@ -68,6 +68,7 @@ public class EnrollmentService {
                                                     .findByUserIdAndLessonBlockId(user.getId(), block.getId());
 
                                             return new BlockDetailDto(
+                                                    block.getId(),
                                                     block.getCode(),
                                                     block.getName(),
                                                     progress.map(p -> p.isCompleted() ? "Superada" : "En Curso").orElse("Pendiente"),

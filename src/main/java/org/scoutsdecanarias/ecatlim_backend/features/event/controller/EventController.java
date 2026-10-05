@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
+import org.scoutsdecanarias.ecatlim_backend.features.event.service.AttendanceService;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EventService;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,11 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
+    private final AttendanceService attendanceService;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, AttendanceService attendanceService) {
         this.eventService = eventService;
+        this.attendanceService = attendanceService;
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")
@@ -38,7 +41,8 @@ public class EventController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
     @GetMapping("/{id}/detail")
     public ResponseEntity<EventDetailDto> getDetail(@PathVariable Integer id) {
-        return ResponseEntity.ok(eventService.getEventDetail(id));
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(eventService.getEventDetail(id, userEmail));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")
@@ -95,6 +99,14 @@ public class EventController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         eventService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'EVENT_DIRECTOR', 'TRAINER')")
+    @PutMapping("/{id}/attendance")
+    public ResponseEntity<Void> markAttendance(@PathVariable Integer id, @Valid @RequestBody AttendanceFormDto form) {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        attendanceService.markAttendance(id, form, userEmail);
         return ResponseEntity.noContent().build();
     }
 }
