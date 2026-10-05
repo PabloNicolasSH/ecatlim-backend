@@ -23,6 +23,8 @@ import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRep
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
 import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleDetailDto;
+import org.scoutsdecanarias.ecatlim_backend.features.recognition.dto.RecognitionSummaryDto;
+import org.scoutsdecanarias.ecatlim_backend.features.recognition.repository.RecognitionRequestRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
@@ -51,6 +53,7 @@ public class EnrollmentService {
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final UserFileService userFileService;
+    private final RecognitionRequestRepository recognitionRepository;
 
     public List<UserEnrollmentDetailDto> getUserProgress(String email) {
         User user = userRepository.findByEmail(email)
@@ -73,6 +76,9 @@ public class EnrollmentService {
                                                     block.getName(),
                                                     progress.map(p -> p.isCompleted() ? "Superada" : "En Curso").orElse("Pendiente"),
                                                     progress.map(UserLessonBlock::getCompletionDate).orElse(null),
+                                                    block.isRecognizable(),
+                                                    recognitionRepository.findLatestByUserAndBlock(user.getId(), block.getId()).stream()
+                                                            .findFirst().map(RecognitionSummaryDto::fromEntity).orElse(null),
                                                     // TODO: Add activities
                                                     Collections.emptyList()
                                             );

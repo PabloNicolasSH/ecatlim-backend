@@ -10,6 +10,7 @@ public enum BlobDirectory {
     EDUCATION_DOCUMENTS("user/education-documents"),
     ACTIVITY_ATTACHMENTS("user/activities"),
     CHAT_PHOTOS("chat/photos", "chat/photos/thumbnails", 200),
+    RECOGNITION_DOCUMENTS("user/recognition-documents"),
     RESOURCES("resources");
 
     private final String path;
