@@ -29,7 +29,8 @@ public record EventDetailDto(
         ConfigDto config,
         List<ParticipantDto> participants,
         List<TimelineEntryDto> timeline,
-        List<ActivityDto> activities
+        List<ActivityDto> activities,
+        List<Integer> markableLessonBlockIds
 ) {
     public record StageDto(Integer id, String name, String code) {
     }
@@ -57,7 +58,7 @@ public record EventDetailDto(
     ) {
     }
 
-    public record ParticipantBlockDto(String code, String name, boolean attended) {
+    public record ParticipantBlockDto(Integer lessonBlockId, String code, String name, String attendance) {
     }
 
     public record TimelineEntryDto(

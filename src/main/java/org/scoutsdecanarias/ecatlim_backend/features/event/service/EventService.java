@@ -49,6 +49,7 @@ public class EventService {
     private final EventConfigurationRepository eventConfigurationRepository;
     private final ActivityRepository activityRepository;
     private final EmailService emailService;
+    private final AttendanceService attendanceService;
 
     public EventSuggestionsDto getSuggestions() {
         return new EventSuggestionsDto(
@@ -101,7 +102,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public EventDetailDto getEventDetail(Integer id) {
+    public EventDetailDto getEventDetail(Integer id, String requesterEmail) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
 
         EducationStage stage = event.getEducationStage();
@@ -130,7 +131,8 @@ public class EventService {
                             (anyPending ? PaymentStatus.PENDING : anyRefunded ? PaymentStatus.REFUNDED : PaymentStatus.PAID).name(),
                             rows.stream()
                                     .map(r -> new EventDetailDto.ParticipantBlockDto(
-                                            r.getLessonBlock().getCode(), r.getLessonBlock().getName(), r.isHasAttended()))
+                                            r.getLessonBlock().getId(), r.getLessonBlock().getCode(), r.getLessonBlock().getName(),
+                                            r.getAttendance() == null ? null : r.getAttendance().name()))
                                     .sorted(Comparator.comparing(EventDetailDto.ParticipantBlockDto::code))
                                     .toList()
                     );
@@ -174,7 +176,8 @@ public class EventService {
                         .map(t -> new EventDetailDto.TimelineEntryDto(
                                 t.getId(), t.getTitle(), t.getDescription(), t.getStartTime(), t.getEndTime(), t.getItemType().name()))
                         .toList(),
-                ActivityDto.fromCollection(activityRepository.findByEventId(id))
+                ActivityDto.fromCollection(activityRepository.findByEventId(id)),
+                attendanceService.getMarkableLessonBlockIds(event, requesterEmail).stream().sorted().toList()
         );
     }
 

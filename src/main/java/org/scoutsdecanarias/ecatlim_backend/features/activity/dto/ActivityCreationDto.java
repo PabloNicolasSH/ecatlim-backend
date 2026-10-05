@@ -48,7 +48,9 @@ public record ActivityCreationDto(
         List<@Valid @NotNull QuestionCreationDto> questions,
 
         @NotNull(message = "Debes indicar el formador responsable de la actividad")
-        Integer responsibleId
+        Integer responsibleId,
+
+        Integer assignedUserId
 ) {
     @AssertTrue(message = "La fecha de entrega debe ser posterior a la de apertura")
     public boolean isDueDateAfterAvailableAt() {
