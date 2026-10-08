@@ -68,7 +68,7 @@ class DtoValidationTest {
     void activityDueDateMustBeAfterOpening() {
         LocalDateTime now = LocalDateTime.now();
         var activity = new ActivityCreationDto("Título válido", "Descripción", "FORUM", "AUTOMATIC",
-                now, now.minusDays(1), false, 1, false, null, null, List.of(), 2);
+                now, now.minusDays(1), false, 1, false, null, null, List.of(), 2, null);
 
         assertThat(messages(validator.validate(activity))).containsExactly("La fecha de entrega debe ser posterior a la de apertura");
     }
@@ -77,7 +77,7 @@ class DtoValidationTest {
     void activityRejectsUnknownTypes() {
         LocalDateTime now = LocalDateTime.now();
         var activity = new ActivityCreationDto("Título válido", "Descripción", "HACK", "AUTOMATIC",
-                now, now.plusDays(1), false, 1, false, null, null, null, 2);
+                now, now.plusDays(1), false, 1, false, null, null, null, 2, null);
 
         assertThat(messages(validator.validate(activity))).containsExactly("El tipo de actividad no es válido");
     }

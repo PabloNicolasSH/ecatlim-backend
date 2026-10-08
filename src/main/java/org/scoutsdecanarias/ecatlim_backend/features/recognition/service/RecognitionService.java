@@ -7,6 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
+import org.scoutsdecanarias.ecatlim_backend.features.certificate.CertificatePdfService;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.dto.RecognitionFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.dto.RecognitionRequestDto;
@@ -37,12 +40,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecognitionService {
 
+    private static final String STAFF_LINK = "/app/convalidaciones";
+    private static final String STUDENT_LINK = "/app/mi-ruta-formacion";
     private static final int MAX_FILES_PER_MESSAGE = 10;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png");
 
@@ -53,6 +59,7 @@ public class RecognitionService {
     private final LessonBlockRepository lessonBlockRepository;
     private final UserLessonBlockRepository userLessonBlockRepository;
     private final UserFileService userFileService;
+    private final NotificationService notificationService;
 
     public List<RecognitionRequestDto> getMyRequests(String email) {
         User user = findUser(email);
@@ -107,6 +114,12 @@ public class RecognitionService {
         request.getCommission().addAll(members);
         request.setUpdatedAt(ZonedDateTime.now());
 
+        notificationService.resolveAll(NotificationType.RECOGNITION_COMMISSION_NEEDED, requestId);
+        notificationService.resolveAll(NotificationType.RECOGNITION_REVIEW_NEEDED, requestId);
+        if (request.getStatus() == RecognitionStatus.PENDING_REVIEW) {
+            notifyCommissionToReview(request);
+        }
+
         log.info("METHOD assignCommission() - Recognition request {} commission set to {}", requestId, distinctIds);
         return RecognitionRequestDto.fromEntityForStaff(recognitionRepository.save(request));
     }
@@ -140,8 +153,21 @@ public class RecognitionService {
         request.setUpdatedAt(now);
         request.addMessage(buildMessage(user, RecognitionMessageKind.SUBMISSION, form.comment(), files, now));
 
+        RecognitionRequest saved = recognitionRepository.save(request);
+
+        List<Integer> managerIds = Stream.of(Role.MANAGEMENT, Role.MANAGER_DIRECTOR)
+                .flatMap(role -> userRepository.findAllByRolesContaining(role).stream())
+                .filter(User::isEnabled)
+                .map(User::getId)
+                .distinct()
+                .toList();
+        notificationService.notifyUsers(managerIds, NotificationType.RECOGNITION_COMMISSION_NEEDED,
+                "Nueva solicitud de convalidación",
+                CertificatePdfService.fullName(user) + " solicita convalidar " + block.getName() + ". Falta asignar la comisión.",
+                STAFF_LINK, true, saved.getId());
+
         log.info("METHOD openRequest() - User {} requests recognition of block {} by {}", user.getId(), lessonBlockId, form.type());
-        return RecognitionRequestDto.fromEntity(recognitionRepository.save(request));
+        return RecognitionRequestDto.fromEntity(saved);
     }
 
     @Transactional
@@ -164,6 +190,9 @@ public class RecognitionService {
 
         request.addMessage(buildMessage(user, RecognitionMessageKind.SUBMISSION, comment, files, ZonedDateTime.now()));
         request.setStatus(RecognitionStatus.PENDING_REVIEW);
+
+        notificationService.resolve(user.getId(), NotificationType.RECOGNITION_DOCUMENTATION_REQUESTED, requestId);
+        notifyCommissionToReview(request);
 
         log.info("METHOD addDocumentation() - User {} adds documentation to recognition request {}", user.getId(), requestId);
         return RecognitionRequestDto.fromEntity(recognitionRepository.save(request));
@@ -207,8 +236,30 @@ public class RecognitionService {
             }
         }
 
+        notificationService.resolveAll(NotificationType.RECOGNITION_REVIEW_NEEDED, requestId);
+        String blockName = request.getLessonBlock().getName();
+        switch (form.decision()) {
+            case APPROVE -> notificationService.notifyUsers(List.of(request.getUser().getId()),
+                    NotificationType.RECOGNITION_ANSWERED, "Convalidación aprobada",
+                    "Se ha aprobado la convalidación de " + blockName + ".", STUDENT_LINK, false, requestId);
+            case REJECT -> notificationService.notifyUsers(List.of(request.getUser().getId()),
+                    NotificationType.RECOGNITION_ANSWERED, "Convalidación rechazada",
+                    "Tu solicitud de convalidación de " + blockName + " ha sido rechazada.", STUDENT_LINK, false, requestId);
+            case REQUEST_DOCUMENTATION -> notificationService.notifyUsers(List.of(request.getUser().getId()),
+                    NotificationType.RECOGNITION_DOCUMENTATION_REQUESTED, "Falta documentación en tu convalidación",
+                    "Aporta lo solicitado para convalidar " + blockName + ".", STUDENT_LINK, true, requestId);
+        }
+
         log.info("METHOD respond() - {} answers {} to recognition request {}", responder.getId(), form.decision(), requestId);
         return RecognitionRequestDto.fromEntityForStaff(recognitionRepository.save(request));
+    }
+
+    private void notifyCommissionToReview(RecognitionRequest request) {
+        notificationService.notifyUsers(request.getCommission().stream().map(User::getId).toList(),
+                NotificationType.RECOGNITION_REVIEW_NEEDED,
+                "Convalidación pendiente de revisar",
+                CertificatePdfService.fullName(request.getUser()) + " · " + request.getLessonBlock().getName(),
+                STAFF_LINK, true, request.getId());
     }
 
     private boolean isManager(User user) {

@@ -20,6 +20,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.FileSub
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.ForumPublicationRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
 import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -41,6 +42,7 @@ class ActivityServiceParticipantTest {
     @Mock ActivityProgressRepository progressRepository;
     @Mock BlobStorageService blobStorageService;
     @Mock SurveyResponseRepository surveyResponseRepository;
+    @Mock NotificationService notificationService;
 
     @InjectMocks ActivityService activityService;
 

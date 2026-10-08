@@ -79,6 +79,14 @@ Las features más grandes usan subpaquetes `controller/`, `dto/`, `entity/`, `en
   - Al salir de un chat se guarda un mensaje de sistema (`ChatMessageType.USER_LEFT`, ya leído) y se emite en `/topic/chat/{chatId}`.
 - REST del chat (`/chat`): `GET /{id}/messages?page&size`, `GET /allMyChats`, `GET /unread-chats`, `POST /add` (multipart: parte JSON `chat` y `picture` opcional), `POST /{id}/picture` y `DELETE /{id}/picture` (foto del grupo; devuelven el `ChatDto` actualizado y lo emiten en `/topic/chat/{chatId}/updated`), `POST /{id}/mark-read`, `DELETE /{id}` (salir del chat; solo si era el último miembro se elimina el chat con sus mensajes), `DELETE /{id}/messages/{messageId}`. Todos comprueban que el usuario es miembro.
 
+## Notificaciones
+
+- `features/notification`: tabla `notification` (usuario, `type`, título, descripción, `link` de la ruta del frontend, `requiresAction`, `referenceId`, `readAt`, `resolvedAt`). Una notificación está **pendiente** si es informativa y no se ha leído, o si exige una acción y aún no está resuelta (`resolvedAt`), aunque se haya leído.
+- Para crear una: `NotificationService.notifyUsers(userIds, type, title, description, link, requiresAction, referenceId)`. Para darla por cumplida: `resolve(userId, type, referenceId)` o `resolveAll(type, referenceId)`. El push por WebSocket se hace tras el commit.
+- Destinos por usuario: `/user/queue/notifications` (nueva) y `/user/queue/notifications-updated` (resuelta o modificada). REST en `/notification` (`GET`, `GET /pending-count`, `POST /{id}/read`, `POST /read-all`, `GET|PUT /preferences`).
+- Tipos actuales (`NotificationType`): actividad asignada, evento publicado, certificado de etapa enviado y los cuatro del flujo de convalidaciones. Para añadir uno: valor en el enum, llamada a `notifyUsers` y, si exige acción, `resolve` donde se cumpla; en el frontend, el tipo en `notification.model.ts` y su icono en `header.component.ts`.
+- `WeeklyReminderService`: cada lunes a las 09:00 (`Atlantic/Canary`, `ecatlim.reminders.cron`) envía un email a quien tenga algo pendiente y no se haya dado de baja (`user.email_reminders_enabled`). Las actividades pendientes salen de `ActivityProgress`, el resto de `notification`. Se desactiva con `ecatlim.reminders.enabled=false` (ya está así en el perfil `dev`). Asume **una sola instancia** del backend; con varias habría que añadir ShedLock o el recordatorio se enviaría duplicado.
+
 ## Base de datos y migraciones
 
 - Hibernate trabaja con `ddl-auto=validate`, así que **cualquier cambio en las entidades necesita una migración Flyway**.
