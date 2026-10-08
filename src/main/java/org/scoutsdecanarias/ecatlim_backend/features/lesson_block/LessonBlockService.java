@@ -1,8 +1,13 @@
 package org.scoutsdecanarias.ecatlim_backend.features.lesson_block;
 
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockDto;
+import org.scoutsdecanarias.ecatlim_backend.features.module.Module;
 import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,5 +53,39 @@ public class LessonBlockService {
         }
 
         this.lessonBlockRepository.saveAll(newLessonBlocks);
+    }
+
+    @Transactional
+    public void updateLessonBlock(Integer id, LessonBlockDto form) {
+        LessonBlock lessonBlock = lessonBlockRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Bloque formativo no encontrado"));
+
+        Module module = lessonBlock.getModule();
+        if (module != null) {
+            int onlineBefore = 0;
+            int contactBefore = 0;
+            int onlineAfter = 0;
+            int contactAfter = 0;
+            for (LessonBlock other : module.getLessonBlocks()) {
+                boolean isCurrent = other.getId().equals(lessonBlock.getId());
+                onlineBefore += other.getOnlineHours();
+                contactBefore += other.getContactHours();
+                onlineAfter += isCurrent ? form.onlineHours() : other.getOnlineHours();
+                contactAfter += isCurrent ? form.contactHours() : other.getContactHours();
+            }
+            if ((onlineAfter > module.getOnlineHours() && onlineAfter > onlineBefore)
+                    || (contactAfter > module.getContactHours() && contactAfter > contactBefore)) {
+                throw new EcatlimException("Las horas de los bloques formativos superan las horas totales del módulo", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        lessonBlock.setName(form.name());
+        lessonBlock.setDescription(form.description());
+        lessonBlock.setLessonBlockId(form.lessonBlockId());
+        lessonBlock.setOnlineHours(form.onlineHours());
+        lessonBlock.setContactHours(form.contactHours());
+        lessonBlock.setRecognizable(form.recognizable());
+
+        lessonBlockRepository.save(lessonBlock);
     }
 }
