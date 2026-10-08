@@ -76,7 +76,7 @@ class RateLimitFilterTest {
 
         MockHttpServletRequest get = new MockHttpServletRequest("GET", "/auth/login");
         get.setRemoteAddr("1.1.1.1");
-        MockHttpServletRequest other = new MockHttpServletRequest("POST", "/events/admin/add");
+        MockHttpServletRequest other = new MockHttpServletRequest("POST", "/events/add");
         other.setRemoteAddr("1.1.1.1");
 
         assertThat(call(filter, get).getStatus()).isEqualTo(200);
