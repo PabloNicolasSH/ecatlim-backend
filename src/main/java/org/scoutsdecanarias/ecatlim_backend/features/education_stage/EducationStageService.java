@@ -55,13 +55,6 @@ public class EducationStageService {
         EducationStage stage = educationStageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Etapa formativa no encontrada"));
 
-        EducationStageDto current = EducationStageDto.fromEntity(stage);
-        if (form.onlineHours() < current.allocatedOnlineHours()
-                || form.contactHours() < current.allocatedContactHours()
-                || form.practicalHours() < current.allocatedPracticalHours()) {
-            throw new EcatlimException("Las horas totales no pueden ser inferiores a las ya asignadas a los módulos", HttpStatus.BAD_REQUEST);
-        }
-
         EducationStage previousStage = null;
         if (Boolean.TRUE.equals(form.previousStageRequired())) {
             previousStage = educationStageRepository.findById(form.previousStageId())

@@ -33,4 +33,11 @@ public class LessonBlockController {
         log.info("METHOD createLessonBlocks() - Creating lesson blocks by {}", SecurityContextHolder.getContext().getAuthentication().getName());
         lessonBlockService.addLessonBlocks(lessonBlocks);
     }
+
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
+    @PutMapping("/{id}")
+    public void updateLessonBlock(@PathVariable Integer id, @RequestBody @Valid LessonBlockDto lessonBlock) {
+        log.info("METHOD updateLessonBlock() - Updating lesson block {} by {}", id, SecurityContextHolder.getContext().getAuthentication().getName());
+        lessonBlockService.updateLessonBlock(id, lessonBlock);
+    }
 }

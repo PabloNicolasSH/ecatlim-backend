@@ -36,4 +36,12 @@ public class ModuleController {
                 SecurityContextHolder.getContext().getAuthentication().getName());
         this.moduleService.addModules(modules);
     }
+
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
+    @PutMapping("/{id}")
+    public void updateModule(@PathVariable Integer id, @RequestBody @Valid ModuleDto module) {
+        log.info("METHOD updateModule() - Updating module {} by {}", id,
+                SecurityContextHolder.getContext().getAuthentication().getName());
+        this.moduleService.updateModule(id, module);
+    }
 }
