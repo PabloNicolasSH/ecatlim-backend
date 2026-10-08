@@ -45,7 +45,7 @@ public class EventController {
         return ResponseEntity.ok(eventService.getEventDetail(id, userEmail));
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR') or @eventSecurity.isDirector(#id, authentication.name)")
     @GetMapping("/edit/{id}")
     public ResponseEntity<EventFormDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(EventFormDto.fromEntity(eventService.findById(id)));
@@ -59,7 +59,7 @@ public class EventController {
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
-    @GetMapping("/admin/calendar")
+    @GetMapping("/calendar")
     public ResponseEntity<List<EventAdminCalendarDto>> getAdminCalendar() {
         return ResponseEntity.ok(eventService.getEventsForAdmin());
     }
@@ -77,22 +77,28 @@ public class EventController {
         return ResponseEntity.ok(LessonBlockDto.fromCollections(eventService.getEventLessonBlocks(id)));
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/admin/add")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR')")
+    @PostMapping("/add")
     public EventDto create(@Valid @RequestBody EventFormDto event) {
         return EventDto.fromEntity(eventService.save(event));
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR') or @eventSecurity.isDirector(#id, authentication.name)")
+    @PutMapping("/{id}")
     public ResponseEntity<EventDto> update(@PathVariable Integer id, @Valid @RequestBody EventFormDto event) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.update(id, event)));
     }
 
     @PreAuthorize("hasAuthority('MANAGER_DIRECTOR')")
-    @PutMapping("/admin/update-status/{id}")
+    @PutMapping("/update-status/{id}")
     public ResponseEntity<EventDto> updateStatus(@PathVariable Integer id, @RequestBody @NotBlank(message = "El estado es obligatorio") @Pattern(regexp = "PUBLISHED|PENDING|DRAFT", message = "El estado del evento no es válido") String status) {
         return ResponseEntity.ok(EventDto.fromEntity(eventService.updateStatus(id, status)));
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR') or @eventSecurity.isDirector(#id, authentication.name)")
+    @PutMapping("/{id}/set-pending")
+    public ResponseEntity<EventDto> setPending(@PathVariable Integer id) {
+        return ResponseEntity.ok(EventDto.fromEntity(eventService.setPending(id)));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")

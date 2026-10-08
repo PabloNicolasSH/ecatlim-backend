@@ -19,6 +19,8 @@ public record ModuleDto(
         @Size(max = 255, message = "El nombre del módulo no puede superar los 255 caracteres")
         String name,
 
+        @NotNull(message = "El número del módulo es obligatorio")
+        @Min(value = 1, message = "El número del módulo debe ser al menos 1")
         Integer moduleId,
 
         @NotNull(message = "La descripción del módulo no puede ser nula")

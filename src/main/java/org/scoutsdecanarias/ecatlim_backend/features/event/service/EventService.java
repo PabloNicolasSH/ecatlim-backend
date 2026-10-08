@@ -2,7 +2,9 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ActivityDto;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.ActivityRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
@@ -272,6 +274,18 @@ public class EventService {
                 .orElseThrow(() -> new EntityNotFoundException("Evento no encontrado"));
 
         existingEvent.setStatus(EventStatus.valueOf(status));
+        return eventRepository.save(existingEvent);
+    }
+
+    public Event setPending(Integer id) {
+        Event existingEvent = eventRepository.findByIdWithTimeline(id)
+                .orElseThrow(() -> new EntityNotFoundException("Evento no encontrado"));
+
+        if (existingEvent.getStatus() != EventStatus.DRAFT) {
+            throw new EcatlimException("Solo se pueden pasar a pendiente los eventos en borrador", HttpStatus.CONFLICT);
+        }
+
+        existingEvent.setStatus(EventStatus.PENDING);
         return eventRepository.save(existingEvent);
     }
 
