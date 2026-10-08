@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.recognition.repository.RecognitionRequestRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
@@ -33,6 +34,7 @@ public class UserFileService {
     private final UserRepository userRepository;
     private final UserFileRepository userFileRepository;
     private final UserEducationStageRepository userEducationStageRepository;
+    private final RecognitionRequestRepository recognitionRequestRepository;
 
     @Transactional
     public void uploadProfileAvatar(String email, @Nullable MultipartFile file) {
@@ -102,10 +104,15 @@ public class UserFileService {
     }
 
     private void assertCanAccess(UserFile file, String requesterEmail) {
+        if (file.getFileType() == UserFileType.RECOGNITION) {
+            assertCanAccessRecognitionFile(file, requesterEmail);
+            return;
+        }
         if (file.getFileType() != UserFileType.USER_EDUCATION_STAGE) {
             return;
         }
 
+        Optional<UserEducationStage> asCertificate = userEducationStageRepository.findByStageCertificateId(file.getId());
         Optional<UserEducationStage> asPlan = userEducationStageRepository.findByPersonalPlanId(file.getId());
         Optional<UserEducationStage> asApproval = asPlan.isPresent()
                 ? Optional.empty()
@@ -114,12 +121,36 @@ public class UserFileService {
         User requester = userRepository.findByEmail(requesterEmail)
                 .orElseThrow(() -> new EcatlimException("Usuario no encontrado", HttpStatus.FORBIDDEN));
 
-        boolean allowed = asPlan.map(e -> isStudentOrTutor(e, requester)).orElse(false)
+        boolean allowed = asCertificate.map(e -> canSeeStageCertificate(e, requester)).orElse(false)
+                || asPlan.map(e -> isStudentOrTutor(e, requester)).orElse(false)
                 || asApproval.map(e -> canSeeEntityApproval(e, requester)).orElse(false);
 
         if (!allowed) {
             throw new EcatlimException("No tienes permiso para ver este archivo", HttpStatus.FORBIDDEN);
         }
+    }
+
+    private void assertCanAccessRecognitionFile(UserFile file, String requesterEmail) {
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new EcatlimException("Usuario no encontrado", HttpStatus.FORBIDDEN));
+
+        boolean allowed = recognitionRequestRepository.findByFileId(file.getId())
+                .map(request -> request.getUser().getId().equals(requester.getId())
+                        || requester.getRoles().contains(Role.MANAGEMENT)
+                        || requester.getRoles().contains(Role.MANAGER_DIRECTOR)
+                        || requester.getRoles().contains(Role.EVENT_DIRECTOR)
+                        || requester.getRoles().contains(Role.TRAINER))
+                .orElse(false);
+
+        if (!allowed) {
+            throw new EcatlimException("No tienes permiso para ver este archivo", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private boolean canSeeStageCertificate(UserEducationStage enrollment, User requester) {
+        return enrollment.getUser().getId().equals(requester.getId())
+                || requester.getRoles().contains(Role.MANAGEMENT)
+                || requester.getRoles().contains(Role.MANAGER_DIRECTOR);
     }
 
     private boolean isStudentOrTutor(UserEducationStage enrollment, User requester) {
@@ -181,6 +212,11 @@ public class UserFileService {
         return userFile;
     }
 
+    public byte[] readStoredFile(UserFile file) {
+        String blobName = file.getUuid() + file.getName().substring(file.getName().lastIndexOf("."));
+        return blobStorageService.download(blobName, getFileTypeDirectory(file.getFileType()));
+    }
+
     public void deleteStoredFile(UserFile file) {
         String blobName = file.getUuid() + file.getName().substring(file.getName().lastIndexOf("."));
         blobStorageService.delete(blobName, getFileTypeDirectory(file.getFileType()));
@@ -192,6 +228,7 @@ public class UserFileService {
             case USER_EDUCATION_STAGE -> BlobDirectory.EDUCATION_DOCUMENTS;
             case USER_ACTIVITIES -> BlobDirectory.ACTIVITY_ATTACHMENTS;
             case CHAT_PICTURE -> BlobDirectory.CHAT_PHOTOS;
+            case RECOGNITION -> BlobDirectory.RECOGNITION_DOCUMENTS;
         };
     }
 }

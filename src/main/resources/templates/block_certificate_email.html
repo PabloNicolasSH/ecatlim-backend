@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificado de bloque disponible - ECATLIM</title>
+</head>
+<body style="font-family: Arial, sans-serif;background-color: #f7f9fc;color: #333;text-align: center;padding: 30px;margin: 0;">
+
+<div class="container" style="max-width: 600px;margin: 0 auto;background: #fff;border-radius: 8px;padding: 30px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="color: #aa642a;">¡Tu certificado de bloque está disponible!</h2>
+
+    <p style="text-align: left; line-height: 1.5;">
+        Hola, <b th:text="${name}"></b>. Has superado
+        <span th:text="${blocks.size() == 1 ? 'el siguiente bloque formativo' : 'los siguientes bloques formativos'}">el bloque</span>
+        y ya puedes descargar tu certificado desde el aula virtual:
+    </p>
+
+    <ul style="list-style-type: none; padding-left: 0; text-align: left;">
+        <li th:each="block : ${blocks}" style="margin-bottom: 8px;">
+            <span style="color: #aa642a; margin-right: 10px;">✔</span>
+            <span th:text="${block}">Nombre del bloque</span>
+        </li>
+    </ul>
+
+    <a th:href="${progressLink}" target="_blank" class="button"
+       style="display: inline-block; background-color: #aa642a; color: white; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-top: 10px;">
+        DESCARGAR CERTIFICADO
+    </a>
+
+    <div class="features" style="text-align: left;margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+        <p>Para cualquier duda puedes escribir al correo <b><a href="mailto:ecatlim@scoutsdecanarias.org" style="color: #aa642a; text-decoration: none;">ecatlim@scoutsdecanarias.org</a></b></p>
+    </div>
+
+    <div class="footer" style="font-size: 11px;color: #7C9EC2;margin-top: 30px; text-align: start">
+        <p style="margin-bottom: 0">#ECATLIM</p>
+        <p style="margin-top: 0">#ESCUELA CANARIA de ANIMACIÓN en el TIEMPO LIBRE INSIGNIA de MADERA</p>
+    </div>
+</div>
+</body>
+</html>

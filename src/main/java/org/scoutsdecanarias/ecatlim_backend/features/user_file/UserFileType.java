@@ -4,5 +4,6 @@ public enum UserFileType {
     PROFILE,
     USER_EDUCATION_STAGE,
     USER_ACTIVITIES,
-    CHAT_PICTURE
+    CHAT_PICTURE,
+    RECOGNITION
 }

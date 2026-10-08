@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Certificado de bloque formativo</title>
+    <style>
+        @page { size: A4 landscape; margin: 0; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #3d2e24; margin: 0; }
+        .frame { margin: 28pt; border: 4pt solid #aa642a; padding: 8pt; height: 500pt; }
+        .inner { border: 1pt solid #aa642a; height: 482pt; text-align: center; padding-top: 40pt; }
+        .org { font-size: 11pt; letter-spacing: 2pt; color: #795221; margin: 0; }
+        h1 { font-size: 34pt; color: #aa642a; margin: 26pt 0 6pt 0; }
+        .small { font-size: 12pt; color: #6b5a4c; margin: 4pt 0; }
+        .name { font-size: 28pt; font-weight: bold; margin: 18pt 0 10pt 0; }
+        .block { font-size: 20pt; font-weight: bold; color: #633f17; margin: 14pt 60pt 6pt 60pt; }
+        .meta { font-size: 12pt; color: #6b5a4c; margin: 4pt 0; }
+        .footer { margin-top: 46pt; font-size: 10pt; color: #7c9ec2; }
+    </style>
+</head>
+<body>
+<div class="frame">
+    <div class="inner">
+        <p class="org">ESCUELA CANARIA DE ANIMACIÓN EN EL TIEMPO LIBRE · INSIGNIA DE MADERA</p>
+        <h1>Certificado de bloque formativo</h1>
+        <p class="small">Se certifica que</p>
+        <p class="name" th:text="${fullName}">Nombre Apellidos</p>
+        <p class="small" th:if="${nif != null}">con documento de identidad <span th:text="${nif}">00000000A</span></p>
+        <p class="small">ha superado el bloque formativo</p>
+        <p class="block" th:text="${blockCode + ' · ' + blockName}">BF1-1 · Nombre del bloque</p>
+        <p class="meta" th:if="${stageName != null}">perteneciente a la etapa <span th:text="${stageName}">Etapa</span></p>
+        <p class="meta"><span th:text="${hours}">0</span> horas formativas</p>
+        <p class="meta" th:if="${completionDate != null}">Fecha de superación: <span th:text="${completionDate}">01/01/2026</span></p>
+        <p class="footer">#ECATLIM</p>
+    </div>
+</div>
+</body>
+</html>

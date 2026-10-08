@@ -3,6 +3,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.event.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.scoutsdecanarias.ecatlim_backend.features.event.enums.AttendanceType;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.PaymentStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
@@ -30,5 +31,6 @@ public class EventEnrollment {
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
-    private boolean hasAttended = false;
+    @Enumerated(EnumType.STRING)
+    private AttendanceType attendance;
 }

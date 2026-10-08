@@ -7,7 +7,8 @@ import java.time.ZonedDateTime;
 
 public record EnrollmentDocumentsDto(
         EnrollmentDocumentDto personalPlan,
-        EnrollmentDocumentDto entityApproval
+        EnrollmentDocumentDto entityApproval,
+        EnrollmentDocumentDto stageCertificate
 ) {
     public record EnrollmentDocumentDto(Integer fileId, String name, String mimeType, ZonedDateTime uploadDate) {
         static EnrollmentDocumentDto fromEntity(UserFile file) {
@@ -18,7 +19,8 @@ public record EnrollmentDocumentsDto(
     public static EnrollmentDocumentsDto fromEnrollment(UserEducationStage enrollment) {
         return new EnrollmentDocumentsDto(
                 EnrollmentDocumentDto.fromEntity(enrollment.getPersonalPlan()),
-                EnrollmentDocumentDto.fromEntity(enrollment.getEntityApproval())
+                EnrollmentDocumentDto.fromEntity(enrollment.getEntityApproval()),
+                EnrollmentDocumentDto.fromEntity(enrollment.getStageCertificate())
         );
     }
 }

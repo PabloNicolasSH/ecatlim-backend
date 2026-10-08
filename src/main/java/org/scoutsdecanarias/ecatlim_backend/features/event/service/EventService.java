@@ -18,6 +18,8 @@ import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventConfi
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
@@ -49,6 +51,8 @@ public class EventService {
     private final EventConfigurationRepository eventConfigurationRepository;
     private final ActivityRepository activityRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
+    private final AttendanceService attendanceService;
 
     public EventSuggestionsDto getSuggestions() {
         return new EventSuggestionsDto(
@@ -101,7 +105,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public EventDetailDto getEventDetail(Integer id) {
+    public EventDetailDto getEventDetail(Integer id, String requesterEmail) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
 
         EducationStage stage = event.getEducationStage();
@@ -130,7 +134,8 @@ public class EventService {
                             (anyPending ? PaymentStatus.PENDING : anyRefunded ? PaymentStatus.REFUNDED : PaymentStatus.PAID).name(),
                             rows.stream()
                                     .map(r -> new EventDetailDto.ParticipantBlockDto(
-                                            r.getLessonBlock().getCode(), r.getLessonBlock().getName(), r.isHasAttended()))
+                                            r.getLessonBlock().getId(), r.getLessonBlock().getCode(), r.getLessonBlock().getName(),
+                                            r.getAttendance() == null ? null : r.getAttendance().name()))
                                     .sorted(Comparator.comparing(EventDetailDto.ParticipantBlockDto::code))
                                     .toList()
                     );
@@ -174,7 +179,8 @@ public class EventService {
                         .map(t -> new EventDetailDto.TimelineEntryDto(
                                 t.getId(), t.getTitle(), t.getDescription(), t.getStartTime(), t.getEndTime(), t.getItemType().name()))
                         .toList(),
-                ActivityDto.fromCollection(activityRepository.findByEventId(id))
+                ActivityDto.fromCollection(activityRepository.findByEventId(id)),
+                attendanceService.getMarkableLessonBlockIds(event, requesterEmail).stream().sorted().toList()
         );
     }
 
@@ -348,6 +354,15 @@ public class EventService {
         }
 
         if (recipients.isEmpty()) return;
+
+        notificationService.notifyUsers(
+                recipients.stream().map(User::getId).toList(),
+                NotificationType.EVENT_PUBLISHED,
+                "Nuevo evento: " + event.getTitle(),
+                event.getLocation() + " · " + this.formatDate(event.getStartDate()),
+                "/app/calendario/evento/" + event.getId(),
+                false,
+                event.getId());
 
         List<String> allEventBlockTitles = eventLessonBlocks.stream()
                 .map(LessonBlock::getName)

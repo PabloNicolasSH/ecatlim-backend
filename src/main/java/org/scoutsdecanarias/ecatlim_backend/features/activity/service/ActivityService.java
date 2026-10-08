@@ -14,10 +14,13 @@ import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.SurveyRespon
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
@@ -31,6 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -54,11 +59,17 @@ public class ActivityService {
     private final LessonBlockRepository lessonBlockRepository;
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final BlobStorageService blobStorageService;
+    private final NotificationService notificationService;
+
+    private static final Set<Role> STAFF_ROLES = Set.of(Role.ADMIN, Role.MANAGER_DIRECTOR, Role.MANAGEMENT, Role.EVENT_DIRECTOR, Role.TRAINER);
 
     public List<ActivityDto> getActivitiesByEventForUser(Integer eventId, String userEmail) {
-        Integer userId = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail)).getId();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
+        Integer userId = user.getId();
+        boolean isStaff = user.getRoles().stream().anyMatch(STAFF_ROLES::contains);
         return activityRepository.findByEventId(eventId).stream()
+                .filter(activity -> isStaff || activity.getAssignedUser() == null || activity.getAssignedUser().getId().equals(userId))
                 .map(activity -> ActivityDto.fromEntity(activity).withProgressStatus(
                         progressRepository.findByActivityIdAndStudentId(activity.getId(), userId)
                                 .map(p -> p.getStatus().name())
@@ -87,6 +98,13 @@ public class ActivityService {
             throw new EcatlimException("El responsable de la actividad debe tener el rol de formador", HttpStatus.BAD_REQUEST);
         }
 
+        EventEnrollment assignedEnrollment = null;
+        if (dto.assignedUserId() != null) {
+            assignedEnrollment = eventEnrollmentRepository
+                    .findByUserIdAndEventIdAndLessonBlockId(dto.assignedUserId(), eventId, lessonBlock.getId())
+                    .orElseThrow(() -> new EcatlimException("La persona asignada no está inscrita en este bloque del evento", HttpStatus.BAD_REQUEST));
+        }
+
         Activity activity;
         ActivityType activityType = ActivityType.valueOf(dto.activityType());
 
@@ -107,6 +125,7 @@ public class ActivityService {
         activity.setCreator(creator);
         activity.setLessonBlock(lessonBlock);
         activity.getCorrectors().add(responsible);
+        activity.setAssignedEnrollment(assignedEnrollment);
 
         activity.setTitle(dto.title());
         activity.setDescription(dto.description());
@@ -145,10 +164,9 @@ public class ActivityService {
     }
 
     private void generateInitialProgressForActivity(Activity activity, Integer eventId) {
-        List<Integer> targetStudentIds = eventEnrollmentRepository.findStudentIdsByEventAndLessonBlock(
-                eventId,
-                activity.getLessonBlock().getId()
-        );
+        List<Integer> targetStudentIds = activity.getAssignedUser() != null
+                ? List.of(activity.getAssignedUser().getId())
+                : eventEnrollmentRepository.findStudentIdsByEventAndLessonBlock(eventId, activity.getLessonBlock().getId());
 
         List<ActivityProgress> initialProgresses = targetStudentIds.stream().map(studentId -> {
             ActivityProgress progress = new ActivityProgress();
@@ -159,6 +177,7 @@ public class ActivityService {
         }).toList();
 
         progressRepository.saveAll(initialProgresses);
+        notifyActivityAssigned(activity, targetStudentIds);
     }
 
     public ForumPublication createForumPublication(Integer activityId, String userEmail, ForumPublicationFormDto dto) {
@@ -257,11 +276,13 @@ public class ActivityService {
 
             if (finalScore >= surveyActivity.getPassingScore()) {
                 progress.setStatus(ProgressStatus.COMPLETED);
+                resolveActivityNotification(progress);
             } else {
                 progress.setStatus(ProgressStatus.PENDING);
             }
         } else {
             progress.setStatus(ProgressStatus.COMPLETED);
+            resolveActivityNotification(progress);
         }
 
         progressRepository.save(progress);
@@ -320,7 +341,8 @@ public class ActivityService {
                 event.lessonBlockId()
         );
 
-        List<ActivityProgress> progressesForNewStudent = blockActivities.stream().map(activity -> {
+        List<ActivityProgress> progressesForNewStudent = blockActivities.stream()
+                .filter(activity -> activity.getAssignedUser() == null).map(activity -> {
             ActivityProgress progress = new ActivityProgress();
             progress.setActivity(activity);
             progress.setStudentId(event.studentId());
@@ -329,6 +351,9 @@ public class ActivityService {
         }).toList();
 
         progressRepository.saveAll(progressesForNewStudent);
+        blockActivities.stream()
+                .filter(activity -> activity.getAssignedUser() == null)
+                .forEach(activity -> notifyActivityAssigned(activity, List.of(event.studentId())));
     }
 
     public List<ForumPublication> getPublicationsSorted(Integer activityId) {
@@ -353,5 +378,24 @@ public class ActivityService {
         progress.setStatus(ProgressStatus.COMPLETED);
         progress.setUpdatedAt(LocalDateTime.now());
         progressRepository.save(progress);
+        resolveActivityNotification(progress);
+    }
+
+    private void notifyActivityAssigned(Activity activity, Collection<Integer> studentIds) {
+        if (studentIds.isEmpty()) {
+            return;
+        }
+        notificationService.notifyUsers(
+                studentIds,
+                NotificationType.ACTIVITY_ASSIGNED,
+                "Nueva actividad: " + activity.getTitle(),
+                "Fecha límite: " + activity.getDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                "/app/" + activity.getEvent().getId() + "/actividades",
+                true,
+                activity.getId());
+    }
+
+    private void resolveActivityNotification(ActivityProgress progress) {
+        notificationService.resolve(progress.getStudentId(), NotificationType.ACTIVITY_ASSIGNED, progress.getActivity().getId());
     }
 }

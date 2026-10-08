@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificado de asistencia - ECATLIM</title>
+</head>
+<body style="font-family: Arial, sans-serif;background-color: #f7f9fc;color: #333;text-align: center;padding: 30px;margin: 0;">
+
+<div class="container" style="max-width: 600px;margin: 0 auto;background: #fff;border-radius: 8px;padding: 30px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="color: #aa642a;">Certificado de asistencia</h2>
+
+    <p style="text-align: left; line-height: 1.5;">
+        Hola, <b th:text="${name}"></b>. Desde la ECATLIM certificamos que has asistido a
+        <b th:text="${eventsCount}">0</b> <span th:text="${eventsCount == 1 ? 'evento' : 'eventos'}">eventos</span>
+        participando en <b th:text="${blocksCount}">0</b> <span th:text="${blocksCount == 1 ? 'bloque formativo' : 'bloques formativos'}">bloques formativos</span><span th:if="${stageName != null}"> de la etapa <b th:text="${stageName}"></b></span>.
+    </p>
+
+    <div th:if="${events != null and !events.isEmpty()}" style="text-align: left; margin-top: 20px;">
+        <p><b>Eventos a los que has asistido:</b></p>
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li th:each="event : ${events}" style="margin-bottom: 8px;">
+                <span style="color: #aa642a; margin-right: 10px;">✔</span>
+                <span th:text="${event}">Nombre del evento</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="features" style="text-align: left;margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+        <p>Para cualquier duda puedes escribir al correo <b><a href="mailto:ecatlim@scoutsdecanarias.org" style="color: #aa642a; text-decoration: none;">ecatlim@scoutsdecanarias.org</a></b></p>
+    </div>
+
+    <div class="footer" style="font-size: 11px;color: #7C9EC2;margin-top: 30px; text-align: start">
+        <p style="margin-bottom: 0">#ECATLIM</p>
+        <p style="margin-top: 0">#ESCUELA CANARIA de ANIMACIÓN en el TIEMPO LIBRE INSIGNIA de MADERA</p>
+    </div>
+</div>
+</body>
+</html>

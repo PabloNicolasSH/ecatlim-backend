@@ -15,4 +15,5 @@ public interface UserEducationStageRepository extends JpaRepository<UserEducatio
     boolean existsByUserIdAndEducationStageId(Integer userId, Integer stageId);
     Optional<UserEducationStage> findByPersonalPlanId(Integer fileId);
     Optional<UserEducationStage> findByEntityApprovalId(Integer fileId);
+    Optional<UserEducationStage> findByStageCertificateId(Integer fileId);
 }

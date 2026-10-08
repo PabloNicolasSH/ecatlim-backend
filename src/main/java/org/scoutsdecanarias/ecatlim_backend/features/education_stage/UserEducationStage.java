@@ -43,6 +43,10 @@ public class UserEducationStage {
     @JoinColumn(name = "entity_approval_id", referencedColumnName = "id")
     private UserFile entityApproval;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "stage_certificate_id", referencedColumnName = "id")
+    private UserFile stageCertificate;
+
     public enum StageStatus {
         ENROLLED, IN_PROGRESS, COMPLETED, DROPPED;
     }

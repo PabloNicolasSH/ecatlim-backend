@@ -43,4 +43,25 @@ public class EmailService {
         String html = emailTemplateService.loadEventNotificationTemplate(name, eventTitle, eventLocation, eventDate, missingBlocks, allEventBlocks, enrollLink);
         emailSenderService.sendEmail("Aula VIrtual ECATLIM - Nueva Formación: " + eventTitle + " - ¡Completa tu etapa!", html, to);
     }
+
+    public void sendAttendanceCertificateEmail(String to, String name, int eventsCount, int blocksCount, String stageName, List<String> events) {
+        String html = emailTemplateService.loadAttendanceCertificateTemplate(name, eventsCount, blocksCount, stageName, events);
+        emailSenderService.sendEmail("Aula Virtual ECATLIM - Certificado de asistencia", html, to);
+    }
+
+    public void sendBlockCertificateEmail(String to, String name, List<String> blocks) {
+        String progressLink = webPageLink + "/app/mi-ruta-formacion";
+        String html = emailTemplateService.loadBlockCertificateTemplate(name, blocks, progressLink);
+        emailSenderService.sendEmail("Aula Virtual ECATLIM - Certificado de bloque disponible", html, to);
+    }
+
+    public void sendStageCertificateEmail(String to, String name, String stageName, List<EmailAttachment> attachments) {
+        String html = emailTemplateService.loadStageCertificateTemplate(name, stageName);
+        emailSenderService.sendEmailWithAttachments("Aula Virtual ECATLIM - ¡Felicidades por completar la etapa " + stageName + "!", html, attachments, to);
+    }
+
+    public void sendWeeklyReminderEmail(String to, String name, List<String> pendingActivities, List<String> otherPending) {
+        String html = emailTemplateService.loadWeeklyReminderTemplate(name, pendingActivities, otherPending, webPageLink + "/app/home", webPageLink);
+        emailSenderService.sendEmail("Aula Virtual ECATLIM - Tienes cosas pendientes", html, to);
+    }
 }

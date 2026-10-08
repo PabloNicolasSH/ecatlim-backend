@@ -58,10 +58,49 @@ public class EmailTemplateService {
         return templateEngine.process("event_notification_email.html", context);
     }
 
+    public String loadAttendanceCertificateTemplate(String name, int eventsCount, int blocksCount, String stageName, List<String> events) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("eventsCount", eventsCount);
+        context.setVariable("blocksCount", blocksCount);
+        context.setVariable("stageName", stageName);
+        context.setVariable("events", events);
+
+        return templateEngine.process("attendance_certificate_email.html", context);
+    }
+
+    public String loadBlockCertificateTemplate(String name, List<String> blocks, String progressLink) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("blocks", blocks);
+        context.setVariable("progressLink", progressLink);
+
+        return templateEngine.process("block_certificate_email.html", context);
+    }
+
+    public String loadStageCertificateTemplate(String name, String stageName) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("stageName", stageName);
+
+        return templateEngine.process("stage_certificate_email.html", context);
+    }
+
     private String generateScoutGroupString(ScoutGroup scoutGroup) {
         if (scoutGroup == null) {
             return "Sin Entidad de Procedencia";
         }
         return scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
+    }
+
+    public String loadWeeklyReminderTemplate(String name, List<String> pendingActivities, List<String> otherPending, String appLink, String webPageLink) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("pendingActivities", pendingActivities);
+        context.setVariable("otherPending", otherPending);
+        context.setVariable("appLink", appLink);
+        context.setVariable("webPageLink", webPageLink);
+
+        return templateEngine.process("weekly_reminder_email.html", context);
     }
 }
