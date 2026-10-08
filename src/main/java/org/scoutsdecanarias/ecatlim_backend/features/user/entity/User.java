@@ -38,6 +38,8 @@ public class User {
 
     private boolean enabled = true;
 
+    private boolean emailRemindersEnabled = true;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
 

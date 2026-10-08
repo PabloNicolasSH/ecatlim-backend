@@ -19,6 +19,8 @@ import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrol
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
@@ -32,6 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -55,6 +59,7 @@ public class ActivityService {
     private final LessonBlockRepository lessonBlockRepository;
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final BlobStorageService blobStorageService;
+    private final NotificationService notificationService;
 
     private static final Set<Role> STAFF_ROLES = Set.of(Role.ADMIN, Role.MANAGER_DIRECTOR, Role.MANAGEMENT, Role.EVENT_DIRECTOR, Role.TRAINER);
 
@@ -172,6 +177,7 @@ public class ActivityService {
         }).toList();
 
         progressRepository.saveAll(initialProgresses);
+        notifyActivityAssigned(activity, targetStudentIds);
     }
 
     public ForumPublication createForumPublication(Integer activityId, String userEmail, ForumPublicationFormDto dto) {
@@ -270,11 +276,13 @@ public class ActivityService {
 
             if (finalScore >= surveyActivity.getPassingScore()) {
                 progress.setStatus(ProgressStatus.COMPLETED);
+                resolveActivityNotification(progress);
             } else {
                 progress.setStatus(ProgressStatus.PENDING);
             }
         } else {
             progress.setStatus(ProgressStatus.COMPLETED);
+            resolveActivityNotification(progress);
         }
 
         progressRepository.save(progress);
@@ -343,6 +351,9 @@ public class ActivityService {
         }).toList();
 
         progressRepository.saveAll(progressesForNewStudent);
+        blockActivities.stream()
+                .filter(activity -> activity.getAssignedUser() == null)
+                .forEach(activity -> notifyActivityAssigned(activity, List.of(event.studentId())));
     }
 
     public List<ForumPublication> getPublicationsSorted(Integer activityId) {
@@ -367,5 +378,24 @@ public class ActivityService {
         progress.setStatus(ProgressStatus.COMPLETED);
         progress.setUpdatedAt(LocalDateTime.now());
         progressRepository.save(progress);
+        resolveActivityNotification(progress);
+    }
+
+    private void notifyActivityAssigned(Activity activity, Collection<Integer> studentIds) {
+        if (studentIds.isEmpty()) {
+            return;
+        }
+        notificationService.notifyUsers(
+                studentIds,
+                NotificationType.ACTIVITY_ASSIGNED,
+                "Nueva actividad: " + activity.getTitle(),
+                "Fecha límite: " + activity.getDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                "/app/" + activity.getEvent().getId() + "/actividades",
+                true,
+                activity.getId());
+    }
+
+    private void resolveActivityNotification(ActivityProgress progress) {
+        notificationService.resolve(progress.getStudentId(), NotificationType.ACTIVITY_ASSIGNED, progress.getActivity().getId());
     }
 }

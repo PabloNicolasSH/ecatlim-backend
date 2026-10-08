@@ -92,4 +92,15 @@ public class EmailTemplateService {
         }
         return scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
     }
+
+    public String loadWeeklyReminderTemplate(String name, List<String> pendingActivities, List<String> otherPending, String appLink, String webPageLink) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("pendingActivities", pendingActivities);
+        context.setVariable("otherPending", otherPending);
+        context.setVariable("appLink", appLink);
+        context.setVariable("webPageLink", webPageLink);
+
+        return templateEngine.process("weekly_reminder_email.html", context);
+    }
 }

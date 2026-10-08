@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienes cosas pendientes - ECATLIM</title>
+</head>
+<body style="font-family: Arial, sans-serif;background-color: #f7f9fc;color: #333;text-align: center;padding: 30px;margin: 0;">
+
+<div class="container" style="max-width: 600px;margin: 0 auto;background: #fff;border-radius: 8px;padding: 30px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <img th:src="${webPageLink} + '/assets/logo.jpeg'" alt="logo">
+    <h2>Esto es lo que tienes pendiente en el <br> Aula Virtual de la ECATLIM</h2>
+
+    <p th:text="'Hola, ' + ${name} + '. Te dejamos un resumen de lo que te queda por hacer esta semana.'"></p>
+
+    <div th:if="${!pendingActivities.isEmpty()}" style="text-align: start; margin-top: 20px;">
+        <p><strong>Actividades sin completar:</strong></p>
+        <ul>
+            <li th:each="activity : ${pendingActivities}" th:text="${activity}"></li>
+        </ul>
+    </div>
+
+    <div th:if="${!otherPending.isEmpty()}" style="text-align: start; margin-top: 20px;">
+        <p><strong>Avisos pendientes:</strong></p>
+        <ul>
+            <li th:each="item : ${otherPending}" th:text="${item}"></li>
+        </ul>
+    </div>
+
+    <p style="margin-top: 30px;">
+        <a th:href="${appLink}"
+           style="display: inline-block;background-color: #aa642a;color: white;padding: 12px 24px;border-radius: 5px;text-decoration: none;font-weight: bold;margin-top: 20px;">
+            Entrar al Aula Virtual
+        </a>
+    </p>
+
+    <p style="font-size: 12px;color: #888;margin-top: 20px;">
+        Recibes este correo cada lunes mientras tengas tareas pendientes. Puedes desactivarlo desde tu perfil, en el Aula Virtual.
+    </p>
+
+    <div class="footer" style="font-size: 12px;color: #7C9EC2;margin-top: 30px; text-align: start">
+        <p style="margin-bottom: 0">#ECATLIM</p>
+        <p style="margin-top: 0">#ESCUELA CANARIA de ANIMACIÓN en el TIEMPO LIBRE INSIGNIA de MADERA</p>
+    </div>
+</div>
+</body>
+</html>

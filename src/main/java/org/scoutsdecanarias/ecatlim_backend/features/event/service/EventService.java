@@ -18,6 +18,8 @@ import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventConfi
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.dto.LessonBlockCalendarSummaryDto;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
@@ -49,6 +51,7 @@ public class EventService {
     private final EventConfigurationRepository eventConfigurationRepository;
     private final ActivityRepository activityRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
     private final AttendanceService attendanceService;
 
     public EventSuggestionsDto getSuggestions() {
@@ -351,6 +354,15 @@ public class EventService {
         }
 
         if (recipients.isEmpty()) return;
+
+        notificationService.notifyUsers(
+                recipients.stream().map(User::getId).toList(),
+                NotificationType.EVENT_PUBLISHED,
+                "Nuevo evento: " + event.getTitle(),
+                event.getLocation() + " · " + this.formatDate(event.getStartDate()),
+                "/app/calendario/evento/" + event.getId(),
+                false,
+                event.getId());
 
         List<String> allEventBlockTitles = eventLessonBlocks.stream()
                 .map(LessonBlock::getName)

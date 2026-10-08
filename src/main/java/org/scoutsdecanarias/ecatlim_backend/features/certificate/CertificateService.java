@@ -15,6 +15,8 @@ import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrol
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
@@ -53,6 +55,7 @@ public class CertificateService {
     private final UserFileService userFileService;
     private final CertificatePdfService pdfService;
     private final EmailService emailService;
+    private final NotificationService notificationService;
     private final EnrollmentService enrollmentService;
 
     @Transactional
@@ -190,6 +193,14 @@ public class CertificateService {
 
         log.info("METHOD sendStageCertificate() - Enrollment {}", enrollmentId);
         emailService.sendStageCertificateEmail(user.getEmail(), CertificatePdfService.fullName(user), stageName, attachments);
+        notificationService.notifyUsers(
+                List.of(user.getId()),
+                NotificationType.STAGE_CERTIFICATE_SENT,
+                "Certificado de etapa disponible",
+                "Has completado la etapa " + stageName + ". Te hemos enviado el diploma por correo.",
+                "/app/mi-ruta-formacion",
+                false,
+                enrollmentId);
     }
 
     private User findUser(Integer userId) {
