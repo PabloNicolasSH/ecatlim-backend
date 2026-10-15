@@ -11,7 +11,9 @@ public enum BlobDirectory {
     ACTIVITY_ATTACHMENTS("user/activities"),
     CHAT_PHOTOS("chat/photos", "chat/photos/thumbnails", 200),
     RECOGNITION_DOCUMENTS("user/recognition-documents"),
-    RESOURCES("resources");
+    RESOURCES("resources"),
+    NEWS_IMAGES("news/images", "news/images/thumbnails", 480),
+    NEWS_ATTACHMENTS("news/attachments");
 
     private final String path;
     private final String thumbnailPath;

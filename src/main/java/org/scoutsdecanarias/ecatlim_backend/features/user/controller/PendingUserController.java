@@ -29,6 +29,7 @@ public class PendingUserController {
         this.pendingUserService.addPendingUser(pendingUserFormDto);
     }
 
+    @PreAuthorize("hasAuthority('HEAD_EDUCATION')")
     @GetMapping("/head-education/my-scout-group")
     public List<PendingUserDto> getPendingUsersByHeadEducation() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
