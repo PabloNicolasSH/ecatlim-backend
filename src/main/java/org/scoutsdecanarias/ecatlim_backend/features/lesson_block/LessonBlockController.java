@@ -28,7 +28,7 @@ public class LessonBlockController {
     }
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
-    @PostMapping("/admin/add")
+    @PostMapping("/add")
     public void createLessonBlocks(@RequestBody @NotEmpty(message = "Debes añadir al menos un bloque formativo") List<@Valid @NotNull LessonBlockDto> lessonBlocks) {
         log.info("METHOD createLessonBlocks() - Creating lesson blocks by {}", SecurityContextHolder.getContext().getAuthentication().getName());
         lessonBlockService.addLessonBlocks(lessonBlocks);

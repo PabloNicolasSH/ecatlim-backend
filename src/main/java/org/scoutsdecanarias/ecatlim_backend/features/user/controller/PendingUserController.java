@@ -29,10 +29,27 @@ public class PendingUserController {
         this.pendingUserService.addPendingUser(pendingUserFormDto);
     }
 
+    @PreAuthorize("hasAuthority('HEAD_OF_EDUCATION')")
     @GetMapping("/head-education/my-scout-group")
     public List<PendingUserDto> getPendingUsersByHeadEducation() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return PendingUserDto.fromCollection(this.pendingUserService.getAllByHeadEducation(email));
+    }
+
+    @PreAuthorize("hasAuthority('HEAD_OF_EDUCATION')")
+    @PostMapping("/head-education/create-user")
+    public void createUserFromPendingUserByHeadEducation(@Validated(PendingUserFormDto.ByEmail.class) @RequestBody PendingUserFormDto pendingUserFormDto) {
+        String headEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("METHOD createUserFromPendingUserByHeadEducation() - {} created a user from pending user request by {}", headEmail, pendingUserFormDto.email());
+        this.pendingUserService.createUserFromRequestByHeadEducation(headEmail, pendingUserFormDto);
+    }
+
+    @PreAuthorize("hasAuthority('HEAD_OF_EDUCATION')")
+    @PutMapping("/head-education/delete")
+    public void deletePendingUserByHeadEducation(@Validated(PendingUserFormDto.ByEmail.class) @RequestBody PendingUserFormDto pendingUserFormDto) {
+        String headEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("METHOD deletePendingUserByHeadEducation() - {} have declined the request of {}", headEmail, pendingUserFormDto.email());
+        this.pendingUserService.deletePendingUserByHeadEducation(headEmail, pendingUserFormDto);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")

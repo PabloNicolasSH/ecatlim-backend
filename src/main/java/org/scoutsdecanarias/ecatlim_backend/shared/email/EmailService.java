@@ -60,6 +60,11 @@ public class EmailService {
         emailSenderService.sendEmailWithAttachments("Aula Virtual ECATLIM - ¡Felicidades por completar la etapa " + stageName + "!", html, attachments, to);
     }
 
+    public void sendPendingUserRequestsDigestEmail(String to, String name, String scoutGroup, List<String> requests) {
+        String html = emailTemplateService.loadPendingUserRequestsDigestTemplate(name, scoutGroup, requests, webPageLink + "/app/responsable-formacion/solicitudes-alta", webPageLink);
+        emailSenderService.sendEmail("Aula Virtual ECATLIM - Solicitudes de alta pendientes", html, to);
+    }
+
     public void sendWeeklyReminderEmail(String to, String name, List<String> pendingActivities, List<String> otherPending) {
         String html = emailTemplateService.loadWeeklyReminderTemplate(name, pendingActivities, otherPending, webPageLink + "/app/home", webPageLink);
         emailSenderService.sendEmail("Aula Virtual ECATLIM - Tienes cosas pendientes", html, to);
