@@ -109,6 +109,28 @@ public class PendingUserService {
         pendingUserRepository.delete(pendingUser);
     }
 
+    public void createUserFromRequestByHeadEducation(String headEmail, PendingUserFormDto pendingUserFormDto) {
+        assertRequestBelongsToHeadEducation(headEmail, pendingUserFormDto.email());
+        createUserFromRequest(pendingUserFormDto);
+    }
+
+    public void deletePendingUserByHeadEducation(String headEmail, PendingUserFormDto pendingUserFormDto) {
+        assertRequestBelongsToHeadEducation(headEmail, pendingUserFormDto.email());
+        deletePendingUser(pendingUserFormDto);
+    }
+
+    private void assertRequestBelongsToHeadEducation(String headEmail, String requestEmail) {
+        User head = userRepository.findByEmail(headEmail).orElseThrow();
+        ScoutGroup headGroup = head.getProfile() != null ? head.getProfile().getScoutGroup() : null;
+        PendingUser pendingUser = pendingUserRepository.findByEmail(requestEmail)
+                .orElseThrow(() -> new EcatlimException("No existe ninguna solicitud de alta con ese email", HttpStatus.NOT_FOUND));
+
+        if (headGroup == null || pendingUser.getScoutGroup() == null
+                || !headGroup.getId().equals(pendingUser.getScoutGroup().getId())) {
+            throw new EcatlimException("Esta solicitud no pertenece a tu entidad", HttpStatus.FORBIDDEN);
+        }
+    }
+
     public void deletePendingUser(PendingUserFormDto pendingUserFormDto) {
         if (pendingUserRepository.findByEmail(pendingUserFormDto.email()).isPresent()) {
             pendingUserRepository.delete(pendingUserRepository.findByEmail(pendingUserFormDto.email()).get());

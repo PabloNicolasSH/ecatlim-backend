@@ -93,6 +93,17 @@ public class EmailTemplateService {
         return scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
     }
 
+    public String loadPendingUserRequestsDigestTemplate(String name, String scoutGroup, List<String> requests, String requestsLink, String webPageLink) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("scoutGroup", scoutGroup);
+        context.setVariable("requests", requests);
+        context.setVariable("requestsLink", requestsLink);
+        context.setVariable("webPageLink", webPageLink);
+
+        return templateEngine.process("pending_user_requests_digest_email.html", context);
+    }
+
     public String loadWeeklyReminderTemplate(String name, List<String> pendingActivities, List<String> otherPending, String appLink, String webPageLink) {
         Context context = new Context();
         context.setVariable("name", name);

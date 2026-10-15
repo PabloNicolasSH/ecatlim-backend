@@ -22,7 +22,7 @@ public class ModuleController {
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
-    @GetMapping("/admin/all")
+    @GetMapping("/all")
     public List<ModuleDto> getAllModules() {
         log.info("METHOD getAllModules() - Get all modules by {}",
                 SecurityContextHolder.getContext().getAuthentication().getName());
@@ -30,7 +30,7 @@ public class ModuleController {
     }
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
-    @PostMapping("/admin/create-modules")
+    @PostMapping("/create-modules")
     public void addModules(@RequestBody @NotEmpty(message = "Debes añadir al menos un módulo") List<@Valid @NotNull ModuleDto> modules) {
         log.info("METHOD addModule() - Adding new modules by {}",
                 SecurityContextHolder.getContext().getAuthentication().getName());

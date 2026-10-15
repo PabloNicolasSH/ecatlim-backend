@@ -64,7 +64,7 @@ public class EventController {
         return ResponseEntity.ok(eventService.getEventsForAdmin());
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGEMENT', 'EVENT_DIRECTOR')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/user-home")
     public ResponseEntity<List<EventHomeWidgetDto>> getUserHome() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();

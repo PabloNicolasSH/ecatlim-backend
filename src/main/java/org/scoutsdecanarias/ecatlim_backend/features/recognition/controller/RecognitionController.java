@@ -54,31 +54,31 @@ public class RecognitionController {
     }
 
     @PreAuthorize(STAFF)
-    @GetMapping("/admin")
+    @GetMapping("/staff")
     public List<RecognitionRequestDto> getRequestsForReview(@RequestParam(value = "status", required = false) @Nullable Set<RecognitionStatus> status) {
         return recognitionService.getRequestsForReview(status);
     }
 
     @PreAuthorize(STAFF)
-    @GetMapping("/admin/pending-count")
+    @GetMapping("/staff/pending-count")
     public Map<String, Integer> getPendingCount() {
         return Map.of("count", recognitionService.countPendingForStaff(currentEmail()));
     }
 
     @PreAuthorize(STAFF)
-    @GetMapping("/admin/{id}")
+    @GetMapping("/staff/{id}")
     public RecognitionRequestDto getRequest(@PathVariable Integer id) {
         return recognitionService.getRequest(id);
     }
 
     @PreAuthorize(MANAGERS)
-    @GetMapping("/admin/commission-candidates")
+    @GetMapping("/staff/commission-candidates")
     public List<SimpleUserDto> getCommissionCandidates() {
         return recognitionService.getCommissionCandidates();
     }
 
     @PreAuthorize(MANAGERS)
-    @PutMapping("/admin/{id}/commission")
+    @PutMapping("/staff/{id}/commission")
     public RecognitionRequestDto assignCommission(@PathVariable Integer id, @RequestBody @Valid RecognitionCommissionFormDto form) {
         log.info("METHOD assignCommission() - Assigning commission to recognition request {}", id);
         return recognitionService.assignCommission(id, form.userIds());
@@ -86,7 +86,7 @@ public class RecognitionController {
 
     /** Only the members of the request's commission can answer; the service enforces it. */
     @PreAuthorize(STAFF)
-    @PostMapping("/admin/{id}/respond")
+    @PostMapping("/staff/{id}/respond")
     public RecognitionRequestDto respond(@PathVariable Integer id, @RequestBody @Valid RecognitionResponseFormDto form) {
         log.info("METHOD respond() - Responding {} to recognition request {}", form.decision(), id);
         return recognitionService.respond(currentEmail(), id, form);

@@ -23,7 +23,7 @@ public class EducationStageController {
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER_DIRECTOR', 'MANAGEMENT', 'EVENT_DIRECTOR', 'TRAINER')")
-    @GetMapping("/admin/all")
+    @GetMapping("/all")
     public List<EducationStageDto> getAllEducationStages() {
         log.info("METHOD getAllEducationStages() - Get all the education stages by {}",
                 SecurityContextHolder.getContext().getAuthentication().getName());
@@ -31,7 +31,7 @@ public class EducationStageController {
     }
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
-    @PostMapping("/admin/add")
+    @PostMapping("/add")
     public EducationStageDto addEducationStage(@Valid @RequestBody EducationStageFormDto educationStage) {
         log.info("METHOD addEducationStage() - Add education stage by {}, the education stage is {}",
                 SecurityContextHolder.getContext().getAuthentication().getName(),
@@ -40,7 +40,7 @@ public class EducationStageController {
     }
 
     @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
-    @PutMapping("/admin/{id}")
+    @PutMapping("/{id}")
     public EducationStageDto updateEducationStage(@PathVariable int id, @Valid @RequestBody EducationStageFormDto educationStage) {
         log.info("METHOD updateEducationStage() - Update education stage {} by {}", id,
                 SecurityContextHolder.getContext().getAuthentication().getName());
