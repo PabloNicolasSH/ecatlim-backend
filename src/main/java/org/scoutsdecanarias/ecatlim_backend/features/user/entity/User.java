@@ -40,6 +40,8 @@ public class User {
 
     private boolean emailRemindersEnabled = true;
 
+    private boolean onboardingCompleted = false;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
 
