@@ -11,7 +11,8 @@ public record UserDto(
         Integer id,
         String email,
         Set<String> roles,
-        ProfileDto profile
+        ProfileDto profile,
+        boolean onboardingCompleted
 ) {
 
     public static UserDto fromEntity(User user){
@@ -23,7 +24,8 @@ public record UserDto(
                 user.getRoles().stream()
                         .map(Role::name)
                         .collect(Collectors.toSet()),
-                hasProfile ? ProfileDto.fromEntity(user.getProfile()) : null
+                hasProfile ? ProfileDto.fromEntity(user.getProfile()) : null,
+                user.isOnboardingCompleted()
         );
     }
 

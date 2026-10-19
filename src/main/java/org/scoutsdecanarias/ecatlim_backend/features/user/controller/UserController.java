@@ -34,6 +34,12 @@ public class UserController {
         return UserDto.fromEntity(userService.getUserByEmail(SecurityContextHolder.getContext().getAuthentication().getName()));
     }
 
+    @PutMapping("/me/onboarding-completed")
+    public UserDto completeOnboarding() {
+        log.info("METHOD completeOnboarding() - Onboarding completed by principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
+        return UserDto.fromEntity(userService.completeOnboarding());
+    }
+
     @PutMapping("/update/me")
     public UserDto updateMyUserInfo(@Valid @RequestBody UserMeFormDto userMeFormDto) {
         log.info("METHOD updateMyUserInfo() - Update user info for principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
