@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface EventEnrollmentRepository extends JpaRepository<EventEnrollment, Integer> {
+    boolean existsByUserId(Integer userId);
     boolean existsByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
     Optional<EventEnrollment> findByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
     void deleteByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
