@@ -94,6 +94,13 @@ public class UserController {
         return trainingTeamService.removeRole(id, role);
     }
 
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
+    @PutMapping("/team/{id}/trainer-stage")
+    public TeamMemberDto setTrainerStage(@PathVariable Integer id, @RequestBody TrainerStageFormDto form) {
+        log.info("METHOD setTrainerStage - Setting trainer stage {} to user {} by: {}", form.stageId(), id, SecurityContextHolder.getContext().getAuthentication().getName());
+        return trainingTeamService.setTrainerStage(id, form.stageId());
+    }
+
     @GetMapping("/simpleUsersInfo")
     public List<SimpleUserDto> getSimpleUserInfo() {
         return SimpleUserDto.fromCollection(userService.getActiveUsers());
