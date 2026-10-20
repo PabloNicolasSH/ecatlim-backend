@@ -2,6 +2,8 @@ package org.scoutsdecanarias.ecatlim_backend.features.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.TeamMemberDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
@@ -22,8 +24,11 @@ public class TrainingTeamService {
     public static final Set<Role> TEAM_ROLES = Set.of(Role.TRAINER, Role.EVENT_DIRECTOR, Role.MANAGEMENT);
     public static final Set<Role> ASSIGNABLE_ROLES = Set.of(Role.TRAINER, Role.EVENT_DIRECTOR);
 
+    public static final Set<String> TRAINER_STAGE_CODES = Set.of("AF", "FS", "FF");
+
     private final UserRepository userRepository;
     private final UserService userService;
+    private final EducationStageRepository educationStageRepository;
 
     @Transactional(readOnly = true)
     public List<TeamMemberDto> getTeam() {
@@ -79,6 +84,25 @@ public class TrainingTeamService {
         return TeamMemberDto.fromEntity(userRepository.save(user));
     }
 
+    @Transactional
+    public TeamMemberDto setTrainerStage(Integer userId, Integer stageId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EcatlimException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+        if (!user.getRoles().contains(Role.TRAINER)) {
+            throw new EcatlimException("Solo se puede asignar una etapa a las personas formadoras", HttpStatus.BAD_REQUEST);
+        }
+        EducationStage stage = null;
+        if (stageId != null) {
+            stage = educationStageRepository.findById(stageId)
+                    .orElseThrow(() -> new EcatlimException("Etapa no encontrada", HttpStatus.NOT_FOUND));
+            if (!TRAINER_STAGE_CODES.contains(stage.getCode())) {
+                throw new EcatlimException("Esa no es una etapa de formadores", HttpStatus.BAD_REQUEST);
+            }
+        }
+        user.setTrainerStage(stage);
+        return TeamMemberDto.fromEntity(userRepository.save(user));
+    }
+
     private String searchableText(User user) {
         return String.join(" ",
                 user.getProfile() != null && user.getProfile().getName() != null ? user.getProfile().getName() : "",
@@ -99,6 +123,9 @@ public class TrainingTeamService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EcatlimException("Usuario no encontrado", HttpStatus.NOT_FOUND));
         user.getRoles().remove(role);
+        if (role == Role.TRAINER) {
+            user.setTrainerStage(null);
+        }
         return TeamMemberDto.fromEntity(userRepository.save(user));
     }
 }

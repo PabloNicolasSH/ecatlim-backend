@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.UserLessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
@@ -41,6 +42,10 @@ public class User {
     private boolean emailRemindersEnabled = true;
 
     private boolean onboardingCompleted = false;
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_stage_id")
+    private EducationStage trainerStage;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
