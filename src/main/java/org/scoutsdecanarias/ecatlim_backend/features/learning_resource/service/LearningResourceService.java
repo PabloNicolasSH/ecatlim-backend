@@ -197,10 +197,6 @@ public class LearningResourceService {
 
     private void checkFileMatchesType(ResourceType type, String mimeType, String fileName) {
         String mime = mimeType == null ? "" : mimeType.toLowerCase(Locale.ROOT);
-        String extension = FileNames.safeExtension(fileName);
-        if (type == ResourceType.PDF && !mime.equals("application/pdf") && !extension.equals(".pdf")) {
-            throw new EcatlimException("El archivo debe ser un PDF", HttpStatus.BAD_REQUEST);
-        }
         if (type == ResourceType.IMAGE && !mime.startsWith("image/")) {
             throw new EcatlimException("El archivo debe ser una imagen", HttpStatus.BAD_REQUEST);
         }
