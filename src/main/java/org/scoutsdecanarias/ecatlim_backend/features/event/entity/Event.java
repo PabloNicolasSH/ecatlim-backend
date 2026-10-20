@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
+import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventContactType;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItem;
@@ -73,6 +74,9 @@ public class Event {
     private Set<User> staff = new HashSet<>();
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventContact> contacts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<EventEnrollment> enrollments = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -98,6 +102,10 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventStatus status;
+
+    public List<EventContact> getContactsOfType(EventContactType type) {
+        return contacts.stream().filter(c -> c.getType() == type).toList();
+    }
 
     public Set<User> getEnrolledUsers() {
         if (this.enrollments == null) {
