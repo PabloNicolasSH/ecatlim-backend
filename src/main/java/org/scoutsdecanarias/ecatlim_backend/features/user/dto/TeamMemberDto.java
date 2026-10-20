@@ -12,7 +12,8 @@ public record TeamMemberDto(
         String email,
         String avatarUrl,
         String entityName,
-        List<String> roles
+        List<String> roles,
+        TrainerStageDto trainerStage
 ) {
     public static TeamMemberDto fromEntity(User user) {
         SimpleUserDto simple = SimpleUserDto.fromEntity(user);
@@ -24,7 +25,8 @@ public record TeamMemberDto(
                 user.getEmail(),
                 simple.avatarUrl(),
                 hasGroup ? user.getProfile().getScoutGroup().getName() : null,
-                user.getRoles().stream().map(Enum::name).sorted(Comparator.naturalOrder()).toList()
+                user.getRoles().stream().map(Enum::name).sorted(Comparator.naturalOrder()).toList(),
+                TrainerStageDto.fromEntity(user.getTrainerStage())
         );
     }
 }

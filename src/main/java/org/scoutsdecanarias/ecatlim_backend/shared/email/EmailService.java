@@ -61,7 +61,7 @@ public class EmailService {
     }
 
     public void sendPendingUserRequestsDigestEmail(String to, String name, String scoutGroup, List<String> requests) {
-        String html = emailTemplateService.loadPendingUserRequestsDigestTemplate(name, scoutGroup, requests, webPageLink + "/app/responsable-formacion/solicitudes-alta", webPageLink);
+        String html = emailTemplateService.loadPendingUserRequestsDigestTemplate(name, scoutGroup, requests, webPageLink + "/app/responsable-formacion", webPageLink);
         emailSenderService.sendEmail("Aula Virtual ECATLIM - Solicitudes de alta pendientes", html, to);
     }
 

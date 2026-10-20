@@ -25,6 +25,8 @@ public record EventDetailDto(
         SimpleUserDto director,
         List<SimpleUserDto> facilitators,
         List<SimpleUserDto> staff,
+        List<EventContactDto> collaborators,
+        List<EventContactDto> evas,
         List<LessonBlockCalendarSummaryDto> lessonBlocks,
         ConfigDto config,
         List<ParticipantDto> participants,

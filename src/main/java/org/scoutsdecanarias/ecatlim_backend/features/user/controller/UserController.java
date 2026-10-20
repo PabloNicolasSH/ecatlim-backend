@@ -34,6 +34,12 @@ public class UserController {
         return UserDto.fromEntity(userService.getUserByEmail(SecurityContextHolder.getContext().getAuthentication().getName()));
     }
 
+    @PutMapping("/me/onboarding-completed")
+    public UserDto completeOnboarding() {
+        log.info("METHOD completeOnboarding() - Onboarding completed by principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
+        return UserDto.fromEntity(userService.completeOnboarding());
+    }
+
     @PutMapping("/update/me")
     public UserDto updateMyUserInfo(@Valid @RequestBody UserMeFormDto userMeFormDto) {
         log.info("METHOD updateMyUserInfo() - Update user info for principal: {}", SecurityContextHolder.getContext().getAuthentication().getName());
@@ -86,6 +92,13 @@ public class UserController {
     public TeamMemberDto removeTeamRole(@PathVariable Integer id, @PathVariable Role role) {
         log.info("METHOD removeTeamRole - Removing role {} from user {} by: {}", role, id, SecurityContextHolder.getContext().getAuthentication().getName());
         return trainingTeamService.removeRole(id, role);
+    }
+
+    @PreAuthorize("hasAnyAuthority('MANAGER_DIRECTOR', 'MANAGEMENT')")
+    @PutMapping("/team/{id}/trainer-stage")
+    public TeamMemberDto setTrainerStage(@PathVariable Integer id, @RequestBody TrainerStageFormDto form) {
+        log.info("METHOD setTrainerStage - Setting trainer stage {} to user {} by: {}", form.stageId(), id, SecurityContextHolder.getContext().getAuthentication().getName());
+        return trainingTeamService.setTrainerStage(id, form.stageId());
     }
 
     @GetMapping("/simpleUsersInfo")

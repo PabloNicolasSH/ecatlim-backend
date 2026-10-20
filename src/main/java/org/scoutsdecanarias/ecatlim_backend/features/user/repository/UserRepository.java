@@ -21,5 +21,7 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
 
     Integer countUsersByEnabledAndRolesContaining(boolean enabled, Role role);
 
+    List<User> findAllByProfile_ScoutGroup(ScoutGroup scoutGroup);
+
     List<User> findAllByRolesContainingAndProfile_ScoutGroup(Set<Role> roles, ScoutGroup profileScoutGroup);
 }

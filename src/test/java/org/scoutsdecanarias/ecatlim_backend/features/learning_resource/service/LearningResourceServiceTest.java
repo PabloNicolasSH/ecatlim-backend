@@ -64,7 +64,7 @@ class LearningResourceServiceTest {
 
     @Test
     void onlyAuthorOrManagersCanManage() {
-        LearningResource resource = resource("author@test.com", ResourceType.PDF);
+        LearningResource resource = resource("author@test.com", ResourceType.DOCUMENT);
 
         loginAs("author@test.com", "TRAINER");
         assertThat(learningResourceService.canManage(resource)).isTrue();
@@ -79,7 +79,7 @@ class LearningResourceServiceTest {
     @Test
     void otherTrainerCannotDeleteResource() {
         loginAs("other@test.com", "TRAINER");
-        when(learningResourceRepository.findById(1)).thenReturn(Optional.of(resource("author@test.com", ResourceType.PDF)));
+        when(learningResourceRepository.findById(1)).thenReturn(Optional.of(resource("author@test.com", ResourceType.DOCUMENT)));
 
         assertThatThrownBy(() -> learningResourceService.delete(1))
                 .isInstanceOf(EcatlimException.class)
@@ -91,7 +91,7 @@ class LearningResourceServiceTest {
     @Test
     void deletingFileResourceRemovesItsBlob() {
         loginAs("author@test.com", "TRAINER");
-        when(learningResourceRepository.findById(1)).thenReturn(Optional.of(resource("author@test.com", ResourceType.PDF)));
+        when(learningResourceRepository.findById(1)).thenReturn(Optional.of(resource("author@test.com", ResourceType.DOCUMENT)));
 
         learningResourceService.delete(1);
 
@@ -101,10 +101,10 @@ class LearningResourceServiceTest {
     @Test
     void fileMustMatchResourceType() {
         loginAs("author@test.com", "TRAINER");
-        MockMultipartFile notAPdf = new MockMultipartFile("file", "photo.png", "image/png", new byte[]{1});
-        LearningResourceUploadDto dto = new LearningResourceUploadDto("Guía", null, null, ResourceType.PDF, List.of());
+        MockMultipartFile notAnImage = new MockMultipartFile("file", "guia.pdf", "application/pdf", new byte[]{1});
+        LearningResourceUploadDto dto = new LearningResourceUploadDto("Foto", null, null, ResourceType.IMAGE, List.of());
 
-        assertThatThrownBy(() -> learningResourceService.create(dto, notAPdf))
+        assertThatThrownBy(() -> learningResourceService.create(dto, notAnImage))
                 .isInstanceOf(EcatlimException.class)
                 .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoInteractions(blobStorageService);

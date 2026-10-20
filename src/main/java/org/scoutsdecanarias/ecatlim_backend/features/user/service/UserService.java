@@ -160,6 +160,14 @@ public class UserService {
         return userRepository.save(me);
     }
 
+    @Transactional
+    public User completeOnboarding() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User me = getUserByEmail(email);
+        me.setOnboardingCompleted(true);
+        return userRepository.save(me);
+    }
+
     public User activateUser(Integer id) {
         User userToActive = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
         userToActive.setEnabled(true);
