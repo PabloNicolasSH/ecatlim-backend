@@ -12,7 +12,9 @@ import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationSt
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventConfiguration;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventContact;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
+import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventContactType;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.NotificationTarget;
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.PaymentStatus;
@@ -164,6 +166,8 @@ public class EventService {
                 event.getDirector() == null ? null : SimpleUserDto.fromEntity(event.getDirector()),
                 event.getFacilitators().stream().map(SimpleUserDto::fromEntity).toList(),
                 event.getStaff().stream().map(SimpleUserDto::fromEntity).toList(),
+                event.getContactsOfType(EventContactType.COLLABORATOR).stream().map(EventContactDto::fromEntity).toList(),
+                event.getContactsOfType(EventContactType.EVA).stream().map(EventContactDto::fromEntity).toList(),
                 event.getLessonBlocks().stream()
                         .map(LessonBlockCalendarSummaryDto::fromEntity)
                         .sorted(Comparator.comparing(LessonBlockCalendarSummaryDto::code))
@@ -293,6 +297,30 @@ public class EventService {
         eventRepository.deleteById(id);
     }
 
+    private void addContacts(Event event, List<EventContactDto> dtos, EventContactType type) {
+        if (dtos == null) return;
+
+        for (EventContactDto dto : dtos) {
+            EventContact contact = new EventContact();
+            contact.setEvent(event);
+            contact.setType(type);
+            contact.setName(dto.name().trim());
+            contact.setSurname(dto.surname().trim());
+            contact.setPhone(dto.phone().trim());
+            contact.setEmail(dto.email().trim());
+            if (type == EventContactType.EVA) {
+                if (dto.originEntityId() == null) {
+                    throw new EcatlimException("Debes indicar la entidad de procedencia del EVA", HttpStatus.BAD_REQUEST);
+                }
+                contact.setOriginEntity(scoutGroupRepository.findById(dto.originEntityId())
+                        .orElseThrow(() -> new EntityNotFoundException("Entidad de procedencia no encontrada")));
+            } else {
+                contact.setSpecialty(dto.specialty() == null ? null : dto.specialty().trim());
+            }
+            event.getContacts().add(contact);
+        }
+    }
+
     private void updateEventFromDto(Event event, EventFormDto form) {
         event.setTitle(form.title());
         event.setDescription(form.description());
@@ -323,6 +351,10 @@ public class EventService {
         }
 
         event.setFacilitators(new HashSet<>(facilitator));
+
+        event.getContacts().clear();
+        addContacts(event, form.collaborators(), EventContactType.COLLABORATOR);
+        addContacts(event, form.evas(), EventContactType.EVA);
 
         if (event.getTimelineItems() != null) {
             event.getTimelineItems().clear();

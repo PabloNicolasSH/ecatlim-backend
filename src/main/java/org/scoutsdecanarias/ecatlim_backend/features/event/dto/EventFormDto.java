@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventContactType;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.timeline.TimelineItemFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
@@ -63,6 +64,10 @@ public record EventFormDto(
         @Size(max = 500, message = "El cronograma no puede tener más de 500 elementos")
         List<@Valid @NotNull TimelineItemFormDto> timelineItems,
 
+        List<@Valid @NotNull EventContactDto> collaborators,
+
+        List<@Valid @NotNull EventContactDto> evas,
+
         @Valid
         @NotNull(message = "La configuración de inscripción es obligatoria")
         EventConfigDto eventConfiguration
@@ -92,6 +97,8 @@ public record EventFormDto(
                 event.getLessonBlocks() != null ?
                         event.getLessonBlocks().stream().map(LessonBlock::getId).toList() : List.of(),
                 TimelineItemFormDto.fromCollection(event.getTimelineItems()),
+                event.getContactsOfType(EventContactType.COLLABORATOR).stream().map(EventContactDto::fromEntity).toList(),
+                event.getContactsOfType(EventContactType.EVA).stream().map(EventContactDto::fromEntity).toList(),
                 event.getEventConfiguration() != null ? EventConfigDto.fromEntity(event.getEventConfiguration()) : null
         );
     }
