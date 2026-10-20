@@ -56,12 +56,6 @@ public class StudentOverviewService {
         SimpleUserDto simple = SimpleUserDto.fromEntity(user);
         boolean hasGroup = user.getProfile() != null && user.getProfile().getScoutGroup() != null;
 
-        Optional<UserEducationStage> current = user.getEducationStages() == null ? Optional.empty()
-                : user.getEducationStages().stream()
-                .filter(enrollment -> enrollment.getStatus() != null && ACTIVE_STATUSES.contains(enrollment.getStatus()))
-                .max(Comparator.comparing(UserEducationStage::getEnrollmentDate,
-                        Comparator.nullsFirst(Comparator.naturalOrder())));
-
         return new StudentOverviewDto.StudentDto(
                 user.getId(),
                 simple.name(),
@@ -69,11 +63,21 @@ public class StudentOverviewService {
                 user.getEmail(),
                 simple.avatarUrl(),
                 hasGroup ? user.getProfile().getScoutGroup().getName() : null,
-                current.map(enrollment -> new StudentOverviewDto.CurrentStageDto(
-                        enrollment.getEducationStage().getId(),
-                        enrollment.getEducationStage().getName(),
-                        enrollment.getEducationStage().getCode(),
-                        enrollment.getStatus().name())).orElse(null)
+                currentStageOf(user)
         );
+    }
+
+    public StudentOverviewDto.CurrentStageDto currentStageOf(User user) {
+        Optional<UserEducationStage> current = user.getEducationStages() == null ? Optional.empty()
+                : user.getEducationStages().stream()
+                .filter(enrollment -> enrollment.getStatus() != null && ACTIVE_STATUSES.contains(enrollment.getStatus()))
+                .max(Comparator.comparing(UserEducationStage::getEnrollmentDate,
+                        Comparator.nullsFirst(Comparator.naturalOrder())));
+
+        return current.map(enrollment -> new StudentOverviewDto.CurrentStageDto(
+                enrollment.getEducationStage().getId(),
+                enrollment.getEducationStage().getName(),
+                enrollment.getEducationStage().getCode(),
+                enrollment.getStatus().name())).orElse(null);
     }
 }

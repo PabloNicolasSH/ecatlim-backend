@@ -27,7 +27,7 @@ import java.util.List;
 @ConditionalOnProperty(name = "ecatlim.pending-users-digest.enabled", havingValue = "true", matchIfMissing = true)
 public class PendingUserDigestService {
 
-    private static final String REQUESTS_LINK = "/app/responsable-formacion/solicitudes-alta";
+    private static final String REQUESTS_LINK = "/app/responsable-formacion";
 
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;

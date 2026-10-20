@@ -46,4 +46,14 @@ public interface EventEnrollmentRepository extends JpaRepository<EventEnrollment
             @Param("eventId") Integer eventId,
             @Param("lessonBlockId") Integer lessonBlockId
     );
+
+    @Query("SELECT ee FROM EventEnrollment ee " +
+            "JOIN FETCH ee.event e " +
+            "JOIN FETCH ee.lessonBlock lb " +
+            "JOIN FETCH ee.user u " +
+            "JOIN FETCH u.profile p " +
+            "WHERE p.scoutGroup.id = :scoutGroupId " +
+            "AND u.enabled = true " +
+            "ORDER BY e.startDate DESC")
+    List<EventEnrollment> findAllByUserScoutGroup(@Param("scoutGroupId") Integer scoutGroupId);
 }
