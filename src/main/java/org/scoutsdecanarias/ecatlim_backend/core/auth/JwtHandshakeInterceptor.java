@@ -33,7 +33,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                     String username = jwtService.extractUsername(token);
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                    if (jwtService.validateToken(token, userDetails)) {
+                    if (jwtService.validateToken(token, userDetails) && !jwtService.isPasswordChangeRequired(token)) {
                         attributes.put("username", username);
                         return true;
                     }

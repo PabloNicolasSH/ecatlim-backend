@@ -7,6 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.mfa.MfaService;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.refresh.RefreshTokenService;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.service.RecognitionService;
@@ -34,6 +36,8 @@ class UserServiceTest {
     @Mock UserProfileRepository userProfileRepository;
     @Mock EnrollmentService enrollmentService;
     @Mock RecognitionService recognitionService;
+    @Mock RefreshTokenService refreshTokenService;
+    @Mock MfaService mfaService;
 
     @InjectMocks UserService userService;
 
@@ -88,6 +92,7 @@ class UserServiceTest {
 
         verify(enrollmentService).releaseUpcomingEnrollments(3);
         verify(recognitionService).removeFromActiveCommissions(3);
+        verify(refreshTokenService).revokeAll(3);
     }
 
     @Test

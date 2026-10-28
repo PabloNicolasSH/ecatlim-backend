@@ -64,7 +64,7 @@ public class WebSecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                .requestMatchers("/auth/login", "/password/**", "/scout-group/all", "/pending-user/request", "/ws/**").permitAll()
+                .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout", "/auth/mfa/**", "/password/**", "/scout-group/all", "/pending-user/request", "/ws/**").permitAll()
                     .anyRequest().fullyAuthenticated()
             )
             .addFilterAfter(new RateLimitFilter(RateLimitFilter.defaultRules(trustForwardedFor), trustForwardedFor), CorsFilter.class)

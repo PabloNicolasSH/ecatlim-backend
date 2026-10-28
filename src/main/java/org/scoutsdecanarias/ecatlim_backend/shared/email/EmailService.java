@@ -31,6 +31,11 @@ public class EmailService {
         emailSenderService.sendEmail("Bienvenida a la ECATLIM", html, to);
     }
 
+    public void sendTemporaryPasswordEmail(String to, String password) {
+        String html = emailTemplateService.loadTemporaryPasswordTemplate(to, password, webPageLink);
+        emailSenderService.sendEmail("Aula Virtual ECATLIM - Contraseña temporal", html, to);
+    }
+
     public void sendRecoverPasswordEmail(String to, String token) {
         String resetLink = webPageLink + "/resetear-contraseña?token=" + token;
         String html = emailTemplateService.loadRecoverPasswordTemplate(resetLink);

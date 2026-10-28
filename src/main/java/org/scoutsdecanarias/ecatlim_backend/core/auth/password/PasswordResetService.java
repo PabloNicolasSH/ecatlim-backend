@@ -2,6 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.core.auth.password;
 
 import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.core.auth.SecurityUtils;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.refresh.RefreshTokenService;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -30,10 +32,13 @@ public class PasswordResetService {
     @Value("${ecatlim.link}")
     private String webPageLink;
 
+    private final RefreshTokenService refreshTokenService;
+
     private static final String CACHE_NAME = "passwordResetCache";
     public static final String FAKE_PASSWORD = "fake_password";
 
-    public PasswordResetService(PasswordEncoder passwordEncoder, EmailService emailService, CacheManager cacheManager, UserRepository userRepository) {
+    public PasswordResetService(PasswordEncoder passwordEncoder, EmailService emailService, CacheManager cacheManager, UserRepository userRepository, RefreshTokenService refreshTokenService) {
+        this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.cacheManager = cacheManager;
@@ -81,8 +86,7 @@ public class PasswordResetService {
             throw new EcatlimException("El enlace de recuperación no es válido o ha caducado. Solicita uno nuevo", HttpStatus.BAD_REQUEST);
         }
 
-        user.setPassword(passwordEncoder.encode(passwordDto.newPassword()));
-        userRepository.save(user);
+        applyNewPassword(user, passwordDto.newPassword());
 
         cache.evict(passwordDto.token());
     }
@@ -103,7 +107,18 @@ public class PasswordResetService {
             log.warn("Current password is not valid");
             throw new EcatlimException("La contraseña actual no es válida", HttpStatus.CONFLICT);
         }
-        user.setPassword(passwordEncoder.encode(changePasswordDto.newPassword()));
+        if (changePasswordDto.newPassword().equals(changePasswordDto.currentPassword())) {
+            throw new EcatlimException("La nueva contraseña debe ser distinta de la actual", HttpStatus.CONFLICT);
+        }
+        applyNewPassword(user, changePasswordDto.newPassword());
+    }
+
+    /** A new password ends every open session and lifts the obligation to change a temporary one. */
+    private void applyNewPassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setMustChangePassword(false);
+        user.setPasswordChangedAt(LocalDateTime.now());
         userRepository.save(user);
+        refreshTokenService.revokeAll(user.getId());
     }
 }

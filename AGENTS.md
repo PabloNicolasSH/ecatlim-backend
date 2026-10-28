@@ -109,3 +109,9 @@ Las features más grandes usan subpaquetes `controller/`, `dto/`, `entity/`, `en
 ## Notas conocidas
 
 - `core/configuration/WebSocketConfig.java` declara el paquete `org.scoutsdecanarias.ecatlim_backend.configuration`, que no coincide con su carpeta.
+
+## Control de acceso
+
+- Login por pasos (`core/auth/AuthController`): contraseña → (2FA) → sesión. Los tokens de acceso duran 15 min (`jwt.expirationMs`) y el refresh token 7 días (`jwt.refreshExpirationMs`); el refresh se guarda como hash, rota en cada uso y se revoca al cambiar la contraseña, desactivar al usuario o cerrar sesión.
+- Los roles de `MfaService.REQUIRED_ROLES` (ADMIN, HEAD_OF_EDUCATION, MANAGER_DIRECTOR, MANAGEMENT) no pueden iniciar sesión sin TOTP. Los secretos TOTP se cifran con una clave derivada de `ecatlim.mfa.encryption-key` (por defecto `JWT_SECRET`): si cambias esa clave hay que resetear el 2FA de los usuarios (`PUT /user/admin/reset-mfa/{id}`).
+- `User.mustChangePassword`: se activa al crear usuarios con contraseña generada o al restablecerla un admin (`PUT /user/admin/reset-password/{id}`). El token de esa sesión lleva `pwdChange` y `JWTAuthFilter` solo le deja usar `/password/change-password`, `/auth/refresh`, `/auth/logout` y `/user/me`.

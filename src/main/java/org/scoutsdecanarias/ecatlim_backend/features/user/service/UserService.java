@@ -1,6 +1,8 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.service;
 
 import org.scoutsdecanarias.ecatlim_backend.core.auth.SecurityUtils;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.mfa.MfaService;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.refresh.RefreshTokenService;
 import org.scoutsdecanarias.ecatlim_backend.shared.utils.IdDocuments;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,6 +44,8 @@ public class UserService {
     private final EnrollmentService enrollmentService;
     private final RecognitionService recognitionService;
     private final UserProfileRepository userProfileRepository;
+    private final RefreshTokenService refreshTokenService;
+    private final MfaService mfaService;
 
     public List<User> getActiveUsers() {
         return userRepository.findAllByEnabled(true);
@@ -74,6 +79,7 @@ public class UserService {
             new CharacterRule(EnglishCharacterData.Alphabetical, 7),
             new CharacterRule(EnglishCharacterData.Digit, 3));
         newUser.setPassword(passwordEncoder.encode(password));
+        newUser.setMustChangePassword(true);
 
         String emailNameParam = null;
 
@@ -196,9 +202,37 @@ public class UserService {
         }
 
         user.setEnabled(false);
+        refreshTokenService.revokeAll(user.getId());
         enrollmentService.releaseUpcomingEnrollments(user.getId());
         recognitionService.removeFromActiveCommissions(user.getId());
         return userRepository.save(user);
+    }
+
+    /** Replaces the password with a generated one that has to be changed at the next login. */
+    @Transactional
+    public void resetPasswordByAdmin(Integer id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
+        if (!user.isEnabled()) {
+            throw new EcatlimException("No se puede restablecer la contraseña de un usuario desactivado", HttpStatus.CONFLICT);
+        }
+
+        String password = new PasswordGenerator().generatePassword(12,
+                new CharacterRule(EnglishCharacterData.Alphabetical, 7),
+                new CharacterRule(EnglishCharacterData.Digit, 3));
+        user.setPassword(passwordEncoder.encode(password));
+        user.setMustChangePassword(true);
+        user.setPasswordChangedAt(LocalDateTime.now());
+        userRepository.saveAndFlush(user);
+        refreshTokenService.revokeAll(user.getId());
+        emailService.sendTemporaryPasswordEmail(user.getEmail(), password);
+    }
+
+    /** For people who lost their authenticator device: they set it up again at their next login. */
+    @Transactional
+    public void resetMfaByAdmin(Integer id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
+        mfaService.reset(user);
+        refreshTokenService.revokeAll(user.getId());
     }
 
     private void assertNifAvailable(String nif, Integer ownerId) {

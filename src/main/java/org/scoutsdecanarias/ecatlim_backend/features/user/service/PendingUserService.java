@@ -140,6 +140,7 @@ public class PendingUserService {
         PasswordGenerator passwordGenerator = new PasswordGenerator();
         String password = passwordGenerator.generatePassword(12, new CharacterRule(EnglishCharacterData.Alphabetical, 7), new CharacterRule(EnglishCharacterData.Digit, 3));
         newUser.setPassword(passwordEncoder.encode(password));
+        newUser.setMustChangePassword(true);
 
         UserProfile newUserProfile = new UserProfile();
         newUserProfile.setUser(newUser);
