@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -16,6 +17,9 @@ public class EmailService {
 
     @Value("${ecatlim.link}")
     private String webPageLink;
+
+    @Value("${ecatlim.contact-email:ecatlim@scoutsdecanarias.org}")
+    private String contactEmail;
 
     public EmailService(EmailSenderService emailSenderService, EmailTemplateService emailTemplateService) {
         this.emailTemplateService = emailTemplateService;
@@ -63,6 +67,11 @@ public class EmailService {
     public void sendPendingUserRequestsDigestEmail(String to, String name, String scoutGroup, List<String> requests) {
         String html = emailTemplateService.loadPendingUserRequestsDigestTemplate(name, scoutGroup, requests, webPageLink + "/app/responsable-formacion", webPageLink);
         emailSenderService.sendEmail("Aula Virtual ECATLIM - Solicitudes de alta pendientes", html, to);
+    }
+
+    public void sendUnattendedPendingUserRequestsEmail(Map<String, List<String>> requestsByGroup) {
+        String html = emailTemplateService.loadPendingUserRequestsUnattendedTemplate(requestsByGroup, webPageLink);
+        emailSenderService.sendEmail("Aula Virtual ECATLIM - Solicitudes de alta sin responsable de formación", html, contactEmail);
     }
 
     public void sendWeeklyReminderEmail(String to, String name, List<String> pendingActivities, List<String> otherPending) {

@@ -41,7 +41,7 @@ public class ActivityController {
 
     @GetMapping("/{activityId}/publications")
     public ResponseEntity<List<ForumPublicationDto>> getPublicationsSorted(@PathVariable Integer activityId) {
-        return ResponseEntity.ok(ForumPublicationDto.fromCollection(activityService.getPublicationsSorted(activityId)));
+        return ResponseEntity.ok(ForumPublicationDto.fromCollection(activityService.getPublicationsSorted(activityId, SecurityContextHolder.getContext().getAuthentication().getName())));
     }
 
     @PostMapping("/{activityId}/forum-publications")

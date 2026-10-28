@@ -36,7 +36,15 @@ public class ChatException extends EcatlimException {
                 "Solo puedes eliminar mensajes enviados en los últimos " + minutes + " minutos", HttpStatus.FORBIDDEN);
     }
 
-    public static ChatException unknown(Integer chatId) {
+public static ChatException invalidMessage(Integer chatId, String reason) {
+    return new ChatException(ChatErrorCode.UNKNOWN, chatId, reason, HttpStatus.BAD_REQUEST);
+}
+
+public static ChatException tooManyMessages(Integer chatId) {
+    return new ChatException(ChatErrorCode.UNKNOWN, chatId, "Estás enviando mensajes demasiado rápido, espera unos segundos", HttpStatus.TOO_MANY_REQUESTS);
+}
+
+public static ChatException unknown(Integer chatId) {
         return new ChatException(ChatErrorCode.UNKNOWN, chatId, "No se ha podido enviar el mensaje", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -7,6 +7,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -91,6 +92,14 @@ public class EmailTemplateService {
             return "Sin Entidad de Procedencia";
         }
         return scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
+    }
+
+    public String loadPendingUserRequestsUnattendedTemplate(Map<String, List<String>> requestsByGroup, String webPageLink) {
+        Context context = new Context();
+        context.setVariable("requestsByGroup", requestsByGroup);
+        context.setVariable("webPageLink", webPageLink);
+
+        return templateEngine.process("pending_user_requests_unattended_email.html", context);
     }
 
     public String loadPendingUserRequestsDigestTemplate(String name, String scoutGroup, List<String> requests, String requestsLink, String webPageLink) {

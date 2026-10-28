@@ -24,6 +24,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonB
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFile;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileService;
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileSignatures;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileType;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailAttachment;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
@@ -92,10 +93,17 @@ public class CertificateService {
         UserLessonBlock progress = userLessonBlockRepository.findByUserIdAndLessonBlockId(userId, lessonBlockId)
                 .orElseThrow(() -> new ResourceNotFoundException("La persona no está inscrita en la etapa de este bloque"));
 
+        if (!passed && isStageCompleted(userId, progress.getLessonBlock().getEducationStageId())) {
+            throw new EcatlimException("La etapa de este bloque ya está completada, no se puede quitar un bloque superado", HttpStatus.CONFLICT);
+        }
+
         log.info("METHOD setBlockPassed() - User {} block {} passed {}", userId, lessonBlockId, passed);
         progress.setCompleted(passed);
         progress.setCompletionDate(passed ? new Date() : null);
         userLessonBlockRepository.save(progress);
+        if (passed) {
+            enrollmentService.releaseUpcomingEnrollmentsForBlock(userId, lessonBlockId);
+        }
     }
 
     @Transactional
@@ -138,7 +146,7 @@ public class CertificateService {
         UserEducationStage enrollment = findEnrollment(enrollmentId);
 
         String lowerName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
-        if (file.isEmpty() || !lowerName.endsWith(".pdf")) {
+        if (file.isEmpty() || !lowerName.endsWith(".pdf") || !FileSignatures.contentMatchesExtension(file)) {
             throw new EcatlimException("El certificado de etapa debe ser un PDF", HttpStatus.BAD_REQUEST);
         }
 
@@ -155,6 +163,9 @@ public class CertificateService {
     @Transactional
     public void completeStage(Integer enrollmentId) {
         UserEducationStage enrollment = findEnrollment(enrollmentId);
+        if (enrollment.getStatus() == UserEducationStage.StageStatus.COMPLETED) {
+            throw new EcatlimException("Esta etapa ya está completada", HttpStatus.CONFLICT);
+        }
         Integer userId = enrollment.getUser().getId();
         Integer stageId = enrollment.getEducationStage().getId();
 
@@ -203,7 +214,13 @@ public class CertificateService {
                 enrollmentId);
     }
 
-    private User findUser(Integer userId) {
+private boolean isStageCompleted(Integer userId, Integer stageId) {
+    return stageId != null && userStageRepository.findByUserId(userId).stream()
+            .anyMatch(e -> e.getEducationStage().getId().equals(stageId)
+                    && e.getStatus() == UserEducationStage.StageStatus.COMPLETED);
+}
+
+private User findUser(Integer userId) {
         return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 

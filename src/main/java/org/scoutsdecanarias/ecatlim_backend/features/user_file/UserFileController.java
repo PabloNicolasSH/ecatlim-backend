@@ -30,6 +30,7 @@ public class UserFileController {
 
     @GetMapping("thumbnail/{fileId}")
     public ResponseEntity<byte[]> getUserFileThumbnail(@PathVariable Integer fileId) {
-        return userFileService.downloadUserFileThumbnail(fileId);
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userFileService.downloadUserFileThumbnail(fileId, currentUserEmail);
     }
 }

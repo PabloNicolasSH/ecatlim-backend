@@ -277,7 +277,19 @@ public class EventService {
         Event existingEvent = eventRepository.findByIdWithTimeline(id)
                 .orElseThrow(() -> new EntityNotFoundException("Evento no encontrado"));
 
-        existingEvent.setStatus(EventStatus.valueOf(status));
+        EventStatus newStatus;
+        try {
+            newStatus = EventStatus.valueOf(status);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new EcatlimException("El estado del evento no es válido", HttpStatus.BAD_REQUEST);
+        }
+
+        if (existingEvent.getStatus() == EventStatus.PUBLISHED && newStatus != EventStatus.PUBLISHED
+                && !existingEvent.getEnrollments().isEmpty()) {
+            throw new EcatlimException("No se puede retirar la publicación de un evento que ya tiene personas inscritas", HttpStatus.CONFLICT);
+        }
+
+        existingEvent.setStatus(newStatus);
         return eventRepository.save(existingEvent);
     }
 
@@ -294,7 +306,12 @@ public class EventService {
     }
 
     public void delete(Integer id) {
-        eventRepository.deleteById(id);
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
+        if (!event.getEnrollments().isEmpty()) {
+            throw new EcatlimException("No se puede borrar un evento con personas inscritas", HttpStatus.CONFLICT);
+        }
+        eventRepository.delete(event);
     }
 
     private void addContacts(Event event, List<EventContactDto> dtos, EventContactType type) {

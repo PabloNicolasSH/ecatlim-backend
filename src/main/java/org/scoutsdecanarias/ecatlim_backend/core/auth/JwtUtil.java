@@ -25,6 +25,8 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
+    private static final String PASSWORD_VERSION_CLAIM = "pv";
+
     @Value("${jwt.expirationMs}")
     private long expirationMs;
 
@@ -52,6 +54,7 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim(PASSWORD_VERSION_CLAIM, passwordVersion(userDetails))
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -64,7 +67,20 @@ public class JwtUtil {
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return username.equals(userDetails.getUsername())
+                && userDetails.isEnabled()
+                && passwordVersion(userDetails).equals(extractClaim(token, claims -> claims.get(PASSWORD_VERSION_CLAIM, String.class)))
+                && !isTokenExpired(token);
+    }
+
+    /** Changes with the password, so tokens issued before a password change stop working. */
+    private static String passwordVersion(UserDetails userDetails) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(userDetails.getPassword().getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash, 0, 8);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
