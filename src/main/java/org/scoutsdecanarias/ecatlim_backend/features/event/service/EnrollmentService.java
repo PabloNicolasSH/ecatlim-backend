@@ -36,6 +36,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonB
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFile;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileService;
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileSignatures;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileType;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -235,7 +236,17 @@ public class EnrollmentService {
      */
     @Transactional
     public void releaseUpcomingEnrollments(Integer userId) {
-        for (EventEnrollment enrollment : eventEnrollmentRepository.findUpcomingByUserId(userId, LocalDateTime.now())) {
+        releaseEnrollments(userId, eventEnrollmentRepository.findUpcomingByUserId(userId, LocalDateTime.now()));
+    }
+
+    /** Once a block is passed, any upcoming enrollment in it is pointless, so it is dropped with its tasks. */
+    @Transactional
+    public void releaseUpcomingEnrollmentsForBlock(Integer userId, Integer lessonBlockId) {
+        releaseEnrollments(userId, eventEnrollmentRepository.findUpcomingByUserIdAndLessonBlockId(userId, lessonBlockId, LocalDateTime.now()));
+    }
+
+    private void releaseEnrollments(Integer userId, List<EventEnrollment> enrollments) {
+        for (EventEnrollment enrollment : enrollments) {
             eventPublisher.publishEvent(new StudentUnenrolledEvent(
                     enrollment.getEvent().getId(), userId, enrollment.getLessonBlock().getId()));
             enrollment.getEvent().getEnrollments().remove(enrollment);
@@ -289,7 +300,8 @@ public class EnrollmentService {
         }
 
         String lowerName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
-        if (file.isEmpty() || !(lowerName.endsWith(".pdf") || lowerName.endsWith(".doc") || lowerName.endsWith(".docx"))) {
+        if (file.isEmpty() || !(lowerName.endsWith(".pdf") || lowerName.endsWith(".doc") || lowerName.endsWith(".docx"))
+                || !FileSignatures.contentMatchesExtension(file)) {
             throw new EcatlimException("El archivo debe ser un PDF o un documento Word", HttpStatus.BAD_REQUEST);
         }
 

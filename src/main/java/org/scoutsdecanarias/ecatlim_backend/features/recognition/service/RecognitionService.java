@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlockRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
 import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
 import org.scoutsdecanarias.ecatlim_backend.features.certificate.CertificatePdfService;
@@ -26,6 +27,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonB
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFile;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileService;
+import org.scoutsdecanarias.ecatlim_backend.shared.utils.FileSignatures;
 import org.scoutsdecanarias.ecatlim_backend.features.user_file.UserFileType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,7 @@ public class RecognitionService {
     private final UserLessonBlockRepository userLessonBlockRepository;
     private final UserFileService userFileService;
     private final NotificationService notificationService;
+    private final EnrollmentService enrollmentService;
 
     public List<RecognitionRequestDto> getMyRequests(String email) {
         User user = findUser(email);
@@ -159,16 +162,7 @@ public class RecognitionService {
 
         RecognitionRequest saved = recognitionRepository.save(request);
 
-        List<Integer> managerIds = Stream.of(Role.MANAGEMENT, Role.MANAGER_DIRECTOR)
-                .flatMap(role -> userRepository.findAllByRolesContaining(role).stream())
-                .filter(User::isEnabled)
-                .map(User::getId)
-                .distinct()
-                .toList();
-        notificationService.notifyUsers(managerIds, NotificationType.RECOGNITION_COMMISSION_NEEDED,
-                "Nueva solicitud de convalidación",
-                CertificatePdfService.fullName(user) + " solicita convalidar " + block.getName() + ". Falta asignar la comisión.",
-                STAFF_LINK, true, saved.getId());
+        notifyManagersCommissionNeeded(saved, "Nueva solicitud de convalidación");
 
         log.info("METHOD openRequest() - User {} requests recognition of block {} by {}", user.getId(), lessonBlockId, form.type());
         return RecognitionRequestDto.fromEntity(saved);
@@ -261,7 +255,39 @@ public class RecognitionService {
         return RecognitionRequestDto.fromEntityForStaff(recognitionRepository.save(request));
     }
 
-    private void notifyCommissionToReview(RecognitionRequest request) {
+    private void notifyManagersCommissionNeeded(RecognitionRequest request, String title) {
+    List<Integer> managerIds = Stream.of(Role.MANAGEMENT, Role.MANAGER_DIRECTOR)
+            .flatMap(role -> userRepository.findAllByRolesContaining(role).stream())
+            .filter(User::isEnabled)
+            .map(User::getId)
+            .distinct()
+            .toList();
+    notificationService.notifyUsers(managerIds, NotificationType.RECOGNITION_COMMISSION_NEEDED, title,
+            CertificatePdfService.fullName(request.getUser()) + " solicita convalidar " + request.getLessonBlock().getName() + ". Falta asignar la comisión.",
+            STAFF_LINK, true, request.getId());
+}
+
+/**
+ * A deactivated person can no longer review: they leave the commission of every open request, and requests left
+ * without commission go back to the managers.
+ */
+@Transactional
+public void removeFromActiveCommissions(Integer userId) {
+    for (RecognitionRequest request : recognitionRepository.findByStatusInOrderByUpdatedAtDesc(
+            EnumSet.of(RecognitionStatus.PENDING_REVIEW, RecognitionStatus.AWAITING_DOCUMENTATION))) {
+        if (!request.getCommission().removeIf(member -> member.getId().equals(userId))) {
+            continue;
+        }
+        request.setUpdatedAt(ZonedDateTime.now());
+        notificationService.resolve(userId, NotificationType.RECOGNITION_REVIEW_NEEDED, request.getId());
+        if (request.getCommission().isEmpty()) {
+            notifyManagersCommissionNeeded(request, "Convalidación sin comisión");
+        }
+        recognitionRepository.save(request);
+    }
+}
+
+private void notifyCommissionToReview(RecognitionRequest request) {
         notificationService.notifyUsers(request.getCommission().stream().map(User::getId).toList(),
                 NotificationType.RECOGNITION_REVIEW_NEEDED,
                 "Convalidación pendiente de revisar",
@@ -284,6 +310,7 @@ public class RecognitionService {
         progress.setCompleted(true);
         progress.setCompletionDate(new Date());
         userLessonBlockRepository.save(progress);
+        enrollmentService.releaseUpcomingEnrollmentsForBlock(request.getUser().getId(), request.getLessonBlock().getId());
     }
 
     private RecognitionMessage buildMessage(User author, RecognitionMessageKind kind, String comment,
@@ -309,7 +336,7 @@ public class RecognitionService {
     private void validateFile(MultipartFile file) {
         String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
         int dot = name.lastIndexOf('.');
-        if (dot < 0 || !ALLOWED_EXTENSIONS.contains(name.substring(dot))) {
+        if (dot < 0 || !ALLOWED_EXTENSIONS.contains(name.substring(dot)) || !FileSignatures.contentMatchesExtension(file)) {
             throw new EcatlimException("Los archivos deben ser PDF, Word o imágenes (JPG, PNG)", HttpStatus.BAD_REQUEST);
         }
     }

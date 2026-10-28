@@ -17,6 +17,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserProfileRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
+import org.scoutsdecanarias.ecatlim_backend.features.recognition.service.RecognitionService;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,6 +39,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final EnrollmentService enrollmentService;
+    private final RecognitionService recognitionService;
     private final UserProfileRepository userProfileRepository;
 
     public List<User> getActiveUsers() {
@@ -195,6 +197,7 @@ public class UserService {
 
         user.setEnabled(false);
         enrollmentService.releaseUpcomingEnrollments(user.getId());
+        recognitionService.removeFromActiveCommissions(user.getId());
         return userRepository.save(user);
     }
 

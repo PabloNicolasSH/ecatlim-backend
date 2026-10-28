@@ -15,11 +15,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Every day, tells each head of education which people of their scout group are still waiting for their
  * registration request to be accepted, by email. The in-app notification of each request is created with it.
+ * Requests of entities without an active head of education are sent to the ECATLIM address instead.
  */
 @Slf4j
 @Service
@@ -37,11 +43,13 @@ public class PendingUserDigestService {
     public void sendDailyDigest() {
         log.info("METHOD sendDailyDigest() - Starting pending registration requests digest");
         int sent = 0;
+        Set<Integer> groupsWithHead = new HashSet<>();
         for (User head : userRepository.findAllByRolesContaining(Role.HEAD_OF_EDUCATION)) {
             if (!head.isEnabled() || head.getProfile() == null || head.getProfile().getScoutGroup() == null) {
                 continue;
             }
             ScoutGroup scoutGroup = head.getProfile().getScoutGroup();
+            groupsWithHead.add(scoutGroup.getId());
             List<PendingUser> pending = pendingUserRepository.findAllByScoutGroup(scoutGroup);
             if (pending.isEmpty()) {
                 continue;
@@ -54,6 +62,29 @@ public class PendingUserDigestService {
             }
         }
         log.info("METHOD sendDailyDigest() - {} heads of education notified", sent);
+        notifyUnattendedRequests(groupsWithHead);
+    }
+
+    /** Requests nobody can accept because their entity has no active head of education go to the ECATLIM address. */
+    private void notifyUnattendedRequests(Set<Integer> groupsWithHead) {
+        Map<String, List<String>> requestsByGroup = new LinkedHashMap<>();
+        for (PendingUser request : pendingUserRepository.findAll()) {
+            ScoutGroup scoutGroup = request.getScoutGroup();
+            if (scoutGroup != null && groupsWithHead.contains(scoutGroup.getId())) {
+                continue;
+            }
+            String groupName = scoutGroup == null ? "Sin entidad de procedencia" : scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
+            requestsByGroup.computeIfAbsent(groupName, key -> new ArrayList<>())
+                    .add(request.getName() + " " + request.getSurname() + " (" + request.getEmail() + ")");
+        }
+        if (requestsByGroup.isEmpty()) {
+            return;
+        }
+        try {
+            emailService.sendUnattendedPendingUserRequestsEmail(requestsByGroup);
+        } catch (RuntimeException e) {
+            log.error("METHOD notifyUnattendedRequests() - Could not send the unattended requests email", e);
+        }
     }
 
     private void notifyHead(User head, ScoutGroup scoutGroup, List<PendingUser> pending) {

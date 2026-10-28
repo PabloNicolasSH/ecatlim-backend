@@ -55,6 +55,9 @@ public class JWTAuthFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    writeErrorResponse(response, "La sesión no es válida, vuelva a iniciar sesión");
+                    return;
                 }
             }
 

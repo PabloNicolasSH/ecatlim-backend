@@ -76,6 +76,10 @@ public class PasswordResetService {
         String email = (String) wrapper.get();
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+        if (!user.isEnabled()) {
+            cache.evict(passwordDto.token());
+            throw new EcatlimException("El enlace de recuperación no es válido o ha caducado. Solicita uno nuevo", HttpStatus.BAD_REQUEST);
+        }
 
         user.setPassword(passwordEncoder.encode(passwordDto.newPassword()));
         userRepository.save(user);

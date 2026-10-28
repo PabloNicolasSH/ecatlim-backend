@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
+import org.scoutsdecanarias.ecatlim_backend.features.recognition.service.RecognitionService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
@@ -32,6 +33,7 @@ class UserServiceTest {
     @Mock UserRepository userRepository;
     @Mock UserProfileRepository userProfileRepository;
     @Mock EnrollmentService enrollmentService;
+    @Mock RecognitionService recognitionService;
 
     @InjectMocks UserService userService;
 
@@ -85,6 +87,7 @@ class UserServiceTest {
         userService.deactivateUser(3);
 
         verify(enrollmentService).releaseUpcomingEnrollments(3);
+        verify(recognitionService).removeFromActiveCommissions(3);
     }
 
     @Test

@@ -26,17 +26,32 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
 
     private static final Duration MESSAGE_DELETION_WINDOW = Duration.ofMinutes(15);
+    private static final int MAX_MESSAGE_LENGTH = 2000;
+    private static final int MAX_MESSAGES_PER_WINDOW = 20;
+
+    /** Messages sent by each user in the last 10 seconds. */
+    private final Cache<String, AtomicInteger> recentMessages = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(10))
+            .maximumSize(10_000)
+            .build();
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRepository chatRepository;
@@ -55,6 +70,18 @@ public class ChatService {
     public ChatMessage saveChatMessage(Integer chatId, String senderEmail, String content) {
         User sender = userService.getUserByEmail(senderEmail);
         assertMember(chatId, senderEmail);
+        if (!sender.isEnabled()) {
+            throw ChatException.notAMember(chatId);
+        }
+        if (content == null || content.isBlank()) {
+            throw ChatException.invalidMessage(chatId, "El mensaje no puede estar vacío");
+        }
+        if (content.length() > MAX_MESSAGE_LENGTH) {
+            throw ChatException.invalidMessage(chatId, "El mensaje no puede superar los " + MAX_MESSAGE_LENGTH + " caracteres");
+        }
+        if (recentMessages.get(senderEmail, key -> new AtomicInteger()).incrementAndGet() > MAX_MESSAGES_PER_WINDOW) {
+            throw ChatException.tooManyMessages(chatId);
+        }
 
         Chat chat = getChatById(chatId);
 
@@ -123,8 +150,20 @@ public class ChatService {
         Chat chat = new Chat();
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        List<User> chatMembers = userRepository.findAllById(chatDto.chatMembers());
-        chatMembers.add(userService.getUserByEmail(userName));
+        Set<Integer> memberIds = new LinkedHashSet<>(chatDto.chatMembers());
+        List<User> chatMembers = new ArrayList<>(userRepository.findAllById(memberIds));
+        if (chatMembers.size() != memberIds.size()) {
+            throw new EcatlimException("Alguna de las personas elegidas no existe", HttpStatus.BAD_REQUEST);
+        }
+        if (chatMembers.stream().anyMatch(member -> !member.isEnabled())) {
+            throw new EcatlimException("No puedes añadir a un chat a personas desactivadas", HttpStatus.BAD_REQUEST);
+        }
+        User creator = userService.getUserByEmail(userName);
+        chatMembers.removeIf(member -> member.getId().equals(creator.getId()));
+        if (chatMembers.isEmpty()) {
+            throw new EcatlimException("Debes seleccionar al menos otro participante", HttpStatus.BAD_REQUEST);
+        }
+        chatMembers.add(creator);
 
         chat.setChatMembers(chatMembers);
         chat.setCreationDate(ZonedDateTime.now().toInstant());
