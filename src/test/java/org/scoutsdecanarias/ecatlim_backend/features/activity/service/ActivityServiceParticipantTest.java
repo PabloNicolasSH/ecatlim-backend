@@ -9,6 +9,7 @@ import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ForumPublicationFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.SurveyResponseDto;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.Activity;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.ActivityProgress;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.SurveyActivity;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.SurveyQuestion;
@@ -130,6 +131,19 @@ class ActivityServiceParticipantTest {
                 .isInstanceOf(EcatlimException.class)
                 .extracting("status").isEqualTo(HttpStatus.CONFLICT);
         verify(surveyResponseRepository, never()).save(any());
+    }
+
+    @Test
+    void reEnrollingDoesNotDuplicateTheProgressOfAnActivity() {
+        ForumActivity forum = new ForumActivity();
+        forum.setId(10);
+        when(activityRepository.findByEventIdAndLessonBlockId(3, 1)).thenReturn(List.of(forum));
+        when(progressRepository.findByActivityIdAndStudentId(10, 7)).thenReturn(Optional.of(new ActivityProgress()));
+
+        activityService.handleStudentEnrolled(new StudentEnrolledEvent(3, 7, 1));
+
+        verify(progressRepository).saveAll(List.of());
+        verifyNoInteractions(notificationService);
     }
 
     @Test

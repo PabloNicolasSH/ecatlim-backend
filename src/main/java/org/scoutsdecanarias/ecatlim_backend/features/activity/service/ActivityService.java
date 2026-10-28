@@ -366,8 +366,12 @@ public class ActivityService {
                 event.lessonBlockId()
         );
 
-        List<ActivityProgress> progressesForNewStudent = blockActivities.stream()
-                .filter(activity -> activity.getAssignedUser() == null).map(activity -> {
+        List<Activity> newActivities = blockActivities.stream()
+                .filter(activity -> activity.getAssignedUser() == null)
+                .filter(activity -> progressRepository.findByActivityIdAndStudentId(activity.getId(), event.studentId()).isEmpty())
+                .toList();
+
+        List<ActivityProgress> progressesForNewStudent = newActivities.stream().map(activity -> {
             ActivityProgress progress = new ActivityProgress();
             progress.setActivity(activity);
             progress.setStudentId(event.studentId());
@@ -376,9 +380,7 @@ public class ActivityService {
         }).toList();
 
         progressRepository.saveAll(progressesForNewStudent);
-        blockActivities.stream()
-                .filter(activity -> activity.getAssignedUser() == null)
-                .forEach(activity -> notifyActivityAssigned(activity, List.of(event.studentId())));
+        newActivities.forEach(activity -> notifyActivityAssigned(activity, List.of(event.studentId())));
     }
 
     @EventListener

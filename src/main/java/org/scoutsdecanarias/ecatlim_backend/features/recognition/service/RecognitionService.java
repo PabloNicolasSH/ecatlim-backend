@@ -110,6 +110,10 @@ public class RecognitionService {
             throw new EcatlimException("La comisión solo puede estar formada por personas del equipo formativo", HttpStatus.BAD_REQUEST);
         }
 
+        if (members.stream().anyMatch(u -> u.getId().equals(request.getUser().getId()))) {
+            throw new EcatlimException("La persona que solicita la convalidación no puede formar parte de su comisión", HttpStatus.BAD_REQUEST);
+        }
+
         request.getCommission().clear();
         request.getCommission().addAll(members);
         request.setUpdatedAt(ZonedDateTime.now());
@@ -203,6 +207,9 @@ public class RecognitionService {
         User responder = findUser(teamEmail);
         RecognitionRequest request = findRequest(requestId);
 
+        if (request.getUser().getId().equals(responder.getId())) {
+            throw new EcatlimException("No puedes responder a tu propia solicitud de convalidación", HttpStatus.FORBIDDEN);
+        }
         if (request.getCommission().isEmpty()) {
             throw new EcatlimException("Todavía no se ha asignado una comisión a esta solicitud", HttpStatus.CONFLICT);
         }

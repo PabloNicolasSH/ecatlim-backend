@@ -1,5 +1,6 @@
 package org.scoutsdecanarias.ecatlim_backend.features.user.service;
 
+import org.scoutsdecanarias.ecatlim_backend.core.auth.SecurityUtils;
 import org.scoutsdecanarias.ecatlim_backend.shared.utils.IdDocuments;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.dto.UserMeFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
+import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserProfileRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
@@ -36,6 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final EnrollmentService enrollmentService;
+    private final UserProfileRepository userProfileRepository;
 
     public List<User> getActiveUsers() {
         return userRepository.findAllByEnabled(true);
@@ -73,6 +76,7 @@ public class UserService {
         String emailNameParam = null;
 
         if (!user.roles().contains(Role.ADMIN)) {
+            assertNifAvailable(IdDocuments.normalize(user.nif()), null);
             UserProfile profile = new UserProfile();
             profile.setUser(newUser);
             profile.setName(user.name());
@@ -92,9 +96,10 @@ public class UserService {
             emailNameParam = profile.getName();
         }
 
-        emailService.sendWelcomeEmail(newUser.getEmail(), emailNameParam, password);
+        User saved = userRepository.saveAndFlush(newUser);
+        emailService.sendWelcomeEmail(saved.getEmail(), emailNameParam, password);
 
-        return userRepository.save(newUser);
+        return saved;
     }
 
     @Transactional
@@ -112,6 +117,7 @@ public class UserService {
         updatedUser.setRoles(user.roles());
 
         if (!user.roles().contains(Role.ADMIN)) {
+            assertNifAvailable(IdDocuments.normalize(user.nif()), id);
             UserProfile profile = updatedUser.getProfile() != null ? updatedUser.getProfile() : new UserProfile();
 
             profile.setUser(updatedUser);
@@ -131,8 +137,6 @@ public class UserService {
             }
 
             updatedUser.setProfile(profile);
-        } else {
-            updatedUser.setProfile(null);
         }
 
         return userRepository.save(updatedUser);
@@ -144,6 +148,7 @@ public class UserService {
         User me = getUserByEmail(email);
 
         if (!me.getRoles().contains(Role.ADMIN)) {
+            assertNifAvailable(IdDocuments.normalize(userMeFormDto.nif()), me.getId());
             UserProfile profile = me.getProfile() != null ? me.getProfile() : new UserProfile();
 
             profile.setUser(me);
@@ -179,9 +184,30 @@ public class UserService {
     @Transactional
     public User deactivateUser(Integer id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
+        if (user.getEmail().equals(SecurityUtils.getLoggedUsername())) {
+            throw new EcatlimException("No puedes desactivar tu propio usuario", HttpStatus.BAD_REQUEST);
+        }
+        boolean lastAdmin = user.isEnabled() && user.getRoles().contains(Role.ADMIN)
+                && userRepository.findAllByRolesContaining(Role.ADMIN).stream().filter(User::isEnabled).count() <= 1;
+        if (lastAdmin) {
+            throw new EcatlimException("No se puede desactivar al último administrador", HttpStatus.CONFLICT);
+        }
+
         user.setEnabled(false);
         enrollmentService.releaseUpcomingEnrollments(user.getId());
         return userRepository.save(user);
+    }
+
+    private void assertNifAvailable(String nif, Integer ownerId) {
+        if (nif == null || nif.isBlank()) {
+            return;
+        }
+        boolean taken = userProfileRepository.findByNif(nif)
+                .map(profile -> !profile.getUser().getId().equals(ownerId))
+                .orElse(false);
+        if (taken) {
+            throw new EcatlimException("Este NIF ya está de alta en el sistema", HttpStatus.CONFLICT);
+        }
     }
 
     private void validateHeadOfEducation(UserFormDto user) {
