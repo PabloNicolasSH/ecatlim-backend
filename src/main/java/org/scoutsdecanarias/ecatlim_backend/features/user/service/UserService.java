@@ -14,6 +14,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.UserProfile;
 import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
+import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
 import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +35,7 @@ public class UserService {
     private final ScoutGroupService scoutGroupService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final EnrollmentService enrollmentService;
 
     public List<User> getActiveUsers() {
         return userRepository.findAllByEnabled(true);
@@ -174,9 +176,11 @@ public class UserService {
         return userRepository.save(userToActive);
     }
 
+    @Transactional
     public User deactivateUser(Integer id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(id.toString()));
         user.setEnabled(false);
+        enrollmentService.releaseUpcomingEnrollments(user.getId());
         return userRepository.save(user);
     }
 

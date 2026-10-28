@@ -2,7 +2,7 @@ package org.scoutsdecanarias.ecatlim_backend.features.notification.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
+import org.scoutsdecanarias.ecatlim_backend.features.user.service.PendingUserService;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.PendingUser;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Every day, tells each head of education which people of their scout group are still waiting for their
- * registration request to be accepted, by email and with an in-app notification.
+ * registration request to be accepted, by email. The in-app notification of each request is created with it.
  */
 @Slf4j
 @Service
@@ -27,11 +27,9 @@ import java.util.List;
 @ConditionalOnProperty(name = "ecatlim.pending-users-digest.enabled", havingValue = "true", matchIfMissing = true)
 public class PendingUserDigestService {
 
-    private static final String REQUESTS_LINK = "/app/responsable-formacion";
-
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final PendingUserService pendingUserService;
     private final EmailService emailService;
 
     @Scheduled(cron = "${ecatlim.pending-users-digest.cron:0 0 20 * * *}", zone = "Atlantic/Canary")
@@ -64,19 +62,11 @@ public class PendingUserDigestService {
                 .toList();
         String groupName = scoutGroup.getName() + " " + scoutGroup.getGroupNumber();
 
-        // Replace yesterday's notification so the bell never piles up one per day
-        notificationService.resolve(head.getId(), NotificationType.PENDING_USER_REQUESTS, scoutGroup.getId());
-        notificationService.notifyUsers(List.of(head.getId()), NotificationType.PENDING_USER_REQUESTS,
-                pending.size() == 1 ? "1 solicitud de alta pendiente" : pending.size() + " solicitudes de alta pendientes",
-                abbreviate(String.join(", ", descriptions)), REQUESTS_LINK, true, scoutGroup.getId());
+        // Each request has its own notification, created when it was made; this only covers any that lack one
+        pending.forEach(request -> pendingUserService.notifyHeadIfMissing(head, request));
 
         emailService.sendPendingUserRequestsDigestEmail(head.getEmail(),
                 head.getProfile().getName() != null ? head.getProfile().getName() : head.getEmail(),
                 groupName, descriptions);
-    }
-
-    /** The notification description column holds 500 characters. */
-    private static String abbreviate(String text) {
-        return text.length() <= 500 ? text : text.substring(0, 497) + "...";
     }
 }

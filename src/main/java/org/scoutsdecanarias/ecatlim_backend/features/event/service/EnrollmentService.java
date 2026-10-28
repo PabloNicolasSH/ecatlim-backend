@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
+import org.scoutsdecanarias.ecatlim_backend.core.exception.ResourceNotFoundException;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStage;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.EducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.education_stage.UserEducationStage;
@@ -13,8 +14,11 @@ import org.scoutsdecanarias.ecatlim_backend.features.enrollment.EnrollmentDocume
 import org.scoutsdecanarias.ecatlim_backend.features.enrollment.UserEnrollmentDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.AttendedEventDto;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentUnenrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
+import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventConfiguration;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
+import org.scoutsdecanarias.ecatlim_backend.features.event.enums.EventStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.BlockDetailDto;
@@ -26,6 +30,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.module.ModuleDetailDto;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.dto.RecognitionSummaryDto;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.repository.RecognitionRequestRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.User;
+import org.scoutsdecanarias.ecatlim_backend.features.user.enums.Role;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserEducationStageRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserLessonBlockRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.user.repository.UserRepository;
@@ -37,6 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -112,7 +118,7 @@ public class EnrollmentService {
         validateHierarchyRequirements(user, stage);
 
         if (userStageRepository.existsByUserIdAndEducationStageId(user.getId(), stageId)) {
-            throw new IllegalStateException("Ya estás inscrito en esta etapa");
+            throw new EcatlimException("Ya estás inscrito en esta etapa", HttpStatus.CONFLICT);
         }
 
         UserEducationStage enrollment = new UserEducationStage();
@@ -142,14 +148,36 @@ public class EnrollmentService {
 
     @Transactional
     public Event enrollStudent(Integer id, String userEmail, List<Integer> lessonBlockIds) {
-        User user = userRepository.findByEmail(userEmail).orElseThrow();
-        Event event = eventRepository.findById(id).orElseThrow();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
 
-        for (Integer lessonBlockId : lessonBlockIds) {
-            LessonBlock lessonBlock = lessonBlockRepository.findById(lessonBlockId).orElseThrow();
+        validateEnrollmentOpen(event);
+        if (!user.isEnabled() || !user.getRoles().contains(Role.STUDENT)) {
+            throw new EcatlimException("Solo el alumnado puede inscribirse en un evento", HttpStatus.FORBIDDEN);
+        }
 
+        List<LessonBlock> blocks = new ArrayList<>();
+        for (Integer lessonBlockId : new LinkedHashSet<>(lessonBlockIds)) {
+            LessonBlock lessonBlock = event.getLessonBlocks().stream()
+                    .filter(block -> block.getId().equals(lessonBlockId))
+                    .findFirst()
+                    .orElseThrow(() -> new EcatlimException("Uno de los bloques formativos no pertenece a este evento", HttpStatus.BAD_REQUEST));
+
+            boolean canTakeBlock = userLessonBlockRepository.findByUserIdAndLessonBlockId(user.getId(), lessonBlockId)
+                    .map(progress -> !progress.isCompleted())
+                    .orElse(false);
+            if (!canTakeBlock) {
+                throw new EcatlimException("No puedes inscribirte en el bloque " + lessonBlock.getCode()
+                        + ": no estás cursando su etapa o ya lo has superado", HttpStatus.FORBIDDEN);
+            }
+            blocks.add(lessonBlock);
+        }
+
+        for (LessonBlock lessonBlock : blocks) {
             boolean alreadyEnrolled = eventEnrollmentRepository
-                    .existsByUserIdAndEventIdAndLessonBlockId(user.getId(), event.getId(), lessonBlockId);
+                    .existsByUserIdAndEventIdAndLessonBlockId(user.getId(), event.getId(), lessonBlock.getId());
 
             if (!alreadyEnrolled) {
                 EventEnrollment enrollment = new EventEnrollment();
@@ -159,7 +187,7 @@ public class EnrollmentService {
 
                 event.getEnrollments().add(enrollment);
 
-                eventPublisher.publishEvent(new StudentEnrolledEvent(event.getId(), user.getId(), lessonBlockId));
+                eventPublisher.publishEvent(new StudentEnrolledEvent(event.getId(), user.getId(), lessonBlock.getId()));
             }
         }
 
@@ -168,20 +196,70 @@ public class EnrollmentService {
 
     @Transactional
     public Event unenrollStudent(Integer id, String userEmail, List<Integer> lessonBlockIds) {
-        User user = userRepository.findByEmail(userEmail).orElseThrow();
-        Event event = eventRepository.findById(id).orElseThrow();
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
 
-        for (Integer blockId : lessonBlockIds) {
+        if (event.isClosed() || event.getEndDate().isBefore(LocalDateTime.now())) {
+            throw new EcatlimException("Ya no puedes desinscribirte: el plazo de inscripción ha terminado", HttpStatus.CONFLICT);
+        }
+
+        Set<Integer> blockIds = new LinkedHashSet<>(lessonBlockIds);
+        for (Integer blockId : blockIds) {
+            EventEnrollment enrollment = eventEnrollmentRepository
+                    .findByUserIdAndEventIdAndLessonBlockId(user.getId(), event.getId(), blockId)
+                    .orElseThrow(() -> new EcatlimException("No estás inscrito en uno de los bloques indicados", HttpStatus.BAD_REQUEST));
+            if (enrollment.getAttendance() != null) {
+                throw new EcatlimException("No puedes desinscribirte de un bloque con asistencia ya registrada", HttpStatus.CONFLICT);
+            }
+        }
+
+        for (Integer blockId : blockIds) {
+            // Published before the delete: assigned activities are cascade-deleted with the enrollment.
+            eventPublisher.publishEvent(new StudentUnenrolledEvent(event.getId(), user.getId(), blockId));
             eventEnrollmentRepository.deleteByUserIdAndEventIdAndLessonBlockId(user.getId(), event.getId(), blockId);
         }
 
         event.getEnrollments().removeIf(enrollment ->
                 enrollment.getUser().getId().equals(user.getId()) &&
-                        lessonBlockIds.contains(enrollment.getLessonBlock().getId())
+                        blockIds.contains(enrollment.getLessonBlock().getId())
         );
 
         return eventRepository.save(event);
     }
+
+    /**
+     * Drops the enrollments of a deactivated user in events that have not ended, together with their tasks and
+     * notifications. Past enrollments are kept as history.
+     */
+    @Transactional
+    public void releaseUpcomingEnrollments(Integer userId) {
+        for (EventEnrollment enrollment : eventEnrollmentRepository.findUpcomingByUserId(userId, LocalDateTime.now())) {
+            eventPublisher.publishEvent(new StudentUnenrolledEvent(
+                    enrollment.getEvent().getId(), userId, enrollment.getLessonBlock().getId()));
+            enrollment.getEvent().getEnrollments().remove(enrollment);
+            eventEnrollmentRepository.delete(enrollment);
+        }
+    }
+
+    private void validateEnrollmentOpen(Event event) {
+        if (event.getStatus() != EventStatus.PUBLISHED) {
+            throw new EcatlimException("Este evento no está abierto a inscripciones", HttpStatus.CONFLICT);
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (event.getEndDate().isBefore(now)) {
+            throw new EcatlimException("El evento ya ha finalizado", HttpStatus.CONFLICT);
+        }
+        EventConfiguration config = event.getEventConfiguration();
+        if (config != null && config.getDateOpenInscription() != null && now.isBefore(config.getDateOpenInscription())) {
+            throw new EcatlimException("El plazo de inscripción todavía no ha abierto", HttpStatus.CONFLICT);
+        }
+        if (event.isClosed()) {
+            throw new EcatlimException("El plazo de inscripción está cerrado", HttpStatus.CONFLICT);
+        }
+    }
+
 
     @Transactional
     public List<AttendedEventDto> getAttendedEvents(String userEmail, Integer stageId) {
@@ -238,7 +316,7 @@ public class EnrollmentService {
                             && UserEducationStage.StageStatus.COMPLETED.equals(ue.getStatus()));
 
             if (!previousDone) {
-                throw new SecurityException("Debes completar primero la etapa: " + stage.getPreviousStage().getName());
+                throw new EcatlimException("Debes completar primero la etapa: " + stage.getPreviousStage().getName(), HttpStatus.FORBIDDEN);
             }
         }
     }

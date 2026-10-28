@@ -8,6 +8,8 @@ import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroup;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.enums.NotificationType;
+import org.scoutsdecanarias.ecatlim_backend.features.notification.service.NotificationService;
 import org.scoutsdecanarias.ecatlim_backend.features.scout_group.ScoutGroupService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.dto.PendingUserFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.user.entity.PendingUser;
@@ -21,6 +23,7 @@ import org.scoutsdecanarias.ecatlim_backend.shared.email.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,12 +32,15 @@ import java.util.List;
 @AllArgsConstructor
 public class PendingUserService {
 
+    private static final String REQUESTS_LINK = "/app/responsable-formacion";
+
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final ScoutGroupService scoutGroupService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public List<PendingUser> getAllPendingUsers() {
         return pendingUserRepository.findAll();
@@ -50,6 +56,7 @@ public class PendingUserService {
         return pendingUserRepository.findAllByScoutGroup(scoutGroup);
     }
 
+    @Transactional
     public void addPendingUser(PendingUserFormDto pendingUser) {
 
         if (userRepository.findByEmail(pendingUser.email()).isPresent()) {
@@ -64,6 +71,10 @@ public class PendingUserService {
             throw new EcatlimException("Este NIF ya está de alta en el sistema", HttpStatus.CONFLICT);
         }
 
+        if (pendingUserRepository.existsByNif(IdDocuments.normalize(pendingUser.nif()))) {
+            throw new EcatlimException("Ya existe una solicitud de alta con este NIF", HttpStatus.CONFLICT);
+        }
+
         PendingUser newPendingUser = new PendingUser();
         newPendingUser.setName(pendingUser.name());
         newPendingUser.setSurname(pendingUser.surname());
@@ -75,9 +86,45 @@ public class PendingUserService {
         }
 
         emailService.sendPendingUserCreatedEmail(newPendingUser.getEmail(), newPendingUser.getName(), newPendingUser.getSurname(), newPendingUser.getNif(), newPendingUser.getScoutGroup());
-        pendingUserRepository.save(newPendingUser);
+        PendingUser saved = pendingUserRepository.save(newPendingUser);
+        notifyHeadsOfEducation(saved);
     }
 
+    /**
+     * Each registration request gets its own notification for the heads of education of its scout group; it is
+     * resolved for all of them as soon as one accepts or rejects the request.
+     */
+    private void notifyHeadsOfEducation(PendingUser request) {
+        if (request.getScoutGroup() == null) {
+            return;
+        }
+        List<Integer> headIds = userRepository.findAllByRolesContaining(Role.HEAD_OF_EDUCATION).stream()
+                .filter(head -> head.isEnabled() && isInGroup(head, request.getScoutGroup()))
+                .map(User::getId)
+                .toList();
+        notificationService.notifyUsers(headIds, NotificationType.PENDING_USER_REQUESTS,
+                "Solicitud de alta pendiente", request.getName() + " " + request.getSurname() + " (" + request.getEmail() + ")",
+                REQUESTS_LINK, true, request.getId());
+    }
+
+    /**
+     * Creates the notification of a request for a head of education who does not have it yet, such as requests
+     * made before notifications were per request or heads who joined the group later.
+     */
+    public void notifyHeadIfMissing(User head, PendingUser request) {
+        if (!notificationService.exists(head.getId(), NotificationType.PENDING_USER_REQUESTS, request.getId())) {
+            notificationService.notifyUsers(List.of(head.getId()), NotificationType.PENDING_USER_REQUESTS,
+                    "Solicitud de alta pendiente", request.getName() + " " + request.getSurname() + " (" + request.getEmail() + ")",
+                    REQUESTS_LINK, true, request.getId());
+        }
+    }
+
+    private static boolean isInGroup(User user, ScoutGroup scoutGroup) {
+        return user.getProfile() != null && user.getProfile().getScoutGroup() != null
+                && user.getProfile().getScoutGroup().getId().equals(scoutGroup.getId());
+    }
+
+    @Transactional
     public void createUserFromRequest(PendingUserFormDto pendingUserFormDto) {
         if (userRepository.findByEmail(pendingUserFormDto.email()).isPresent()) {
             throw new EcatlimException("Con este email ya se ha solicitado que se le dé de alta en el sistema", HttpStatus.CONFLICT);
@@ -107,13 +154,16 @@ public class PendingUserService {
         emailService.sendWelcomeEmail(pendingUserFormDto.email(), pendingUserFormDto.name(), password);
         userRepository.save(newUser);
         pendingUserRepository.delete(pendingUser);
+        notificationService.resolveAll(NotificationType.PENDING_USER_REQUESTS, pendingUser.getId());
     }
 
+    @Transactional
     public void createUserFromRequestByHeadEducation(String headEmail, PendingUserFormDto pendingUserFormDto) {
         assertRequestBelongsToHeadEducation(headEmail, pendingUserFormDto.email());
         createUserFromRequest(pendingUserFormDto);
     }
 
+    @Transactional
     public void deletePendingUserByHeadEducation(String headEmail, PendingUserFormDto pendingUserFormDto) {
         assertRequestBelongsToHeadEducation(headEmail, pendingUserFormDto.email());
         deletePendingUser(pendingUserFormDto);
@@ -131,9 +181,12 @@ public class PendingUserService {
         }
     }
 
+    @Transactional
     public void deletePendingUser(PendingUserFormDto pendingUserFormDto) {
         if (pendingUserRepository.findByEmail(pendingUserFormDto.email()).isPresent()) {
-            pendingUserRepository.delete(pendingUserRepository.findByEmail(pendingUserFormDto.email()).get());
+            PendingUser pendingUser = pendingUserRepository.findByEmail(pendingUserFormDto.email()).get();
+            pendingUserRepository.delete(pendingUser);
+            notificationService.resolveAll(NotificationType.PENDING_USER_REQUESTS, pendingUser.getId());
         }
     }
 }

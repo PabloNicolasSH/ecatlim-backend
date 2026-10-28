@@ -90,6 +90,9 @@ public class HeadEducationService {
             throw new EcatlimException("No puedes desactivar tu propio usuario", HttpStatus.BAD_REQUEST);
         }
         member.setEnabled(enabled);
+        if (!enabled) {
+            enrollmentService.releaseUpcomingEnrollments(member.getId());
+        }
         return toMemberDto(userRepository.save(member));
     }
 
