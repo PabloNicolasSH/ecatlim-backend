@@ -49,6 +49,9 @@ public class User {
 
     private LocalDateTime passwordChangedAt;
 
+    /** Last time the person logged in with their password, not counting the silent renewals of the session. */
+    private LocalDateTime lastLoginAt;
+
     /** Encrypted TOTP secret. Only usable for logins once totpEnabled is set by confirming a first code. */
     @JsonIgnore
     private String totpSecret;

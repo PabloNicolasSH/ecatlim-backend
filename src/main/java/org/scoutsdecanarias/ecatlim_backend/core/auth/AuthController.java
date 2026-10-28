@@ -95,7 +95,7 @@ public class AuthController {
             refreshTokenService.revokeAll(user.getId());
             throw new EcatlimException("La sesión no es válida, vuelva a iniciar sesión", HttpStatus.UNAUTHORIZED);
         }
-        return ResponseEntity.ok(sessionService.open(user, null));
+        return ResponseEntity.ok(sessionService.renew(user));
     }
 
     @PostMapping("/logout")

@@ -149,7 +149,7 @@ class AuthControllerTest {
         user.getRoles().add(Role.STUDENT);
         when(refreshTokenService.consume("tok")).thenReturn(user);
         AuthResponse session = AuthResponse.authenticated("access2", "refresh2", false, null, null);
-        when(sessionService.open(user, null)).thenReturn(session);
+        when(sessionService.renew(user)).thenReturn(session);
 
         assertThat(controller.refresh(new AuthController.RefreshRequest("tok")).getBody()).isSameAs(session);
     }
