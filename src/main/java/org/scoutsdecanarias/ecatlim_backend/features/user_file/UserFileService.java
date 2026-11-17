@@ -178,8 +178,13 @@ public class UserFileService {
                 && group.getHeadOfEducation().getId().equals(requester.getId());
     }
 
-    public ResponseEntity<byte[]> downloadUserFileThumbnail(Integer id) {
+    @Transactional
+    public ResponseEntity<byte[]> downloadUserFileThumbnail(Integer id, String requesterEmail) {
         UserFile file = userFileRepository.get(id);
+        if (file == null) {
+            throw new ResourceNotFoundException("Archivo no encontrado");
+        }
+        assertCanAccess(file, requesterEmail);
 
         BlobDirectory directory = getFileTypeDirectory(file.getFileType());
         String blobName = file.getUuid() + file.getName().substring(file.getName().lastIndexOf("."));

@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface PendingUserRepository extends JpaRepository<PendingUser, Integer>, JpaSpecificationExecutor<PendingUser> {
     Optional<PendingUser> findByEmail(String email);
+    boolean existsByNif(String nif);
 
     List<PendingUser> findAllByScoutGroup(ScoutGroup scoutGroup);
 }

@@ -8,6 +8,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.scoutsdecanarias.ecatlim_backend.core.exception.EcatlimException;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.ForumPublicationFormDto;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.dto.SurveyResponseDto;
+import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.Activity;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.ActivityProgress;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.SurveyActivity;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.entity.SurveyQuestion;
@@ -25,6 +27,7 @@ import org.scoutsdecanarias.ecatlim_backend.shared.blob.BlobStorageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,6 +72,7 @@ class ActivityServiceParticipantTest {
     void surveyMustAnswerEveryQuestionExactlyOnce() {
         SurveyActivity survey = new SurveyActivity();
         survey.setSurveyQuestions(List.of(question(1), question(2)));
+        open(survey);
         when(activityRepository.findById(10)).thenReturn(Optional.of(survey));
         when(userRepository.findByEmail("student@test.com")).thenReturn(Optional.of(user(7, "student@test.com")));
         when(progressRepository.findByActivityIdAndStudentId(10, 7)).thenReturn(Optional.of(new ActivityProgress()));
@@ -81,6 +85,11 @@ class ActivityServiceParticipantTest {
                 List.of(new SurveyResponseDto(1, "a"), new SurveyResponseDto(1, "b"))))
                 .isInstanceOf(EcatlimException.class);
         verify(surveyResponseRepository, never()).save(any());
+    }
+
+    private static void open(Activity activity) {
+        activity.setAvailableAt(LocalDateTime.now().minusHours(1));
+        activity.setDueDate(LocalDateTime.now().plusHours(1));
     }
 
     private static SurveyQuestion question(int id) {
@@ -101,5 +110,51 @@ class ActivityServiceParticipantTest {
                 .extracting("status").isEqualTo(HttpStatus.FORBIDDEN);
         verifyNoInteractions(blobStorageService);
         verify(fileRepository, never()).save(any());
+    }
+
+    @Test
+    void surveyCannotBeAnsweredBeforeItOpensOrAfterTheDeadline() {
+        SurveyActivity survey = new SurveyActivity();
+        when(activityRepository.findById(10)).thenReturn(Optional.of(survey));
+        when(userRepository.findByEmail("student@test.com")).thenReturn(Optional.of(user(7, "student@test.com")));
+        when(progressRepository.findByActivityIdAndStudentId(10, 7)).thenReturn(Optional.of(new ActivityProgress()));
+
+        survey.setAvailableAt(LocalDateTime.now().plusHours(1));
+        survey.setDueDate(LocalDateTime.now().plusHours(2));
+        assertThatThrownBy(() -> activityService.submitSurveyResponses(10, "student@test.com", List.of(new SurveyResponseDto(1, "a"))))
+                .isInstanceOf(EcatlimException.class)
+                .extracting("status").isEqualTo(HttpStatus.CONFLICT);
+
+        survey.setAvailableAt(LocalDateTime.now().minusHours(2));
+        survey.setDueDate(LocalDateTime.now().minusHours(1));
+        assertThatThrownBy(() -> activityService.submitSurveyResponses(10, "student@test.com", List.of(new SurveyResponseDto(1, "a"))))
+                .isInstanceOf(EcatlimException.class)
+                .extracting("status").isEqualTo(HttpStatus.CONFLICT);
+        verify(surveyResponseRepository, never()).save(any());
+    }
+
+    @Test
+    void reEnrollingDoesNotDuplicateTheProgressOfAnActivity() {
+        ForumActivity forum = new ForumActivity();
+        forum.setId(10);
+        when(activityRepository.findByEventIdAndLessonBlockId(3, 1)).thenReturn(List.of(forum));
+        when(progressRepository.findByActivityIdAndStudentId(10, 7)).thenReturn(Optional.of(new ActivityProgress()));
+
+        activityService.handleStudentEnrolled(new StudentEnrolledEvent(3, 7, 1));
+
+        verify(progressRepository).saveAll(List.of());
+        verifyNoInteractions(notificationService);
+    }
+
+    @Test
+    void nonParticipantCannotReadForumPublications() {
+        when(activityRepository.findById(10)).thenReturn(Optional.of(new ForumActivity()));
+        when(userRepository.findByEmail("outsider@test.com")).thenReturn(Optional.of(user(7, "outsider@test.com")));
+        when(progressRepository.findByActivityIdAndStudentId(10, 7)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> activityService.getPublicationsSorted(10, "outsider@test.com"))
+                .isInstanceOf(EcatlimException.class)
+                .extracting("status").isEqualTo(HttpStatus.FORBIDDEN);
+        verifyNoInteractions(forumRepository);
     }
 }

@@ -12,6 +12,12 @@ import java.util.Optional;
 @Repository
 public interface EventEnrollmentRepository extends JpaRepository<EventEnrollment, Integer> {
     boolean existsByUserId(Integer userId);
+
+    @Query("SELECT ee FROM EventEnrollment ee WHERE ee.user.id = :userId AND ee.attendance IS NULL AND ee.event.endDate > :now")
+List<EventEnrollment> findUpcomingByUserId(@Param("userId") Integer userId, @Param("now") java.time.LocalDateTime now);
+
+@Query("SELECT ee FROM EventEnrollment ee WHERE ee.user.id = :userId AND ee.lessonBlock.id = :lessonBlockId AND ee.attendance IS NULL AND ee.event.endDate > :now")
+List<EventEnrollment> findUpcomingByUserIdAndLessonBlockId(@Param("userId") Integer userId, @Param("lessonBlockId") Integer lessonBlockId, @Param("now") java.time.LocalDateTime now);
     boolean existsByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
     Optional<EventEnrollment> findByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);
     void deleteByUserIdAndEventIdAndLessonBlockId(Integer userId, Integer eventId, Integer lessonBlockId);

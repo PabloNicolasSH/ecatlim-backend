@@ -50,6 +50,13 @@ public class NotificationService {
     }
 
     /**
+     * Whether the user was ever notified about a given reference, resolved or not.
+     */
+    public boolean exists(Integer userId, NotificationType type, Integer referenceId) {
+        return notificationRepository.existsByUserIdAndTypeAndReferenceId(userId, type, referenceId);
+    }
+
+    /**
      * Marks as fulfilled the action notifications of a user tied to a given reference.
      */
     public void resolve(Integer userId, NotificationType type, Integer referenceId) {
@@ -93,6 +100,13 @@ public class NotificationService {
         if (notification.getReadAt() == null) {
             notification.setReadAt(LocalDateTime.now());
         }
+    }
+
+    public void deleteNotification(String email, Integer notificationId) {
+        User user = getUser(email);
+        Notification notification = notificationRepository.findByIdAndUserId(notificationId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with ID: " + notificationId));
+        notificationRepository.delete(notification);
     }
 
     public void markAllAsRead(String email) {

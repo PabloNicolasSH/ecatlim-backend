@@ -22,6 +22,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
 
     List<Notification> findByTypeAndReferenceIdAndResolvedAtIsNull(NotificationType type, Integer referenceId);
 
+    boolean existsByUserIdAndTypeAndReferenceId(Integer userId, NotificationType type, Integer referenceId);
+
     List<Notification> findByUserIdAndReadAtIsNull(Integer userId);
 
     @Query("""

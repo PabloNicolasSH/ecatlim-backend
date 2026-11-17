@@ -13,8 +13,10 @@ import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.ProgressStat
 import org.scoutsdecanarias.ecatlim_backend.features.activity.enums.SurveyResponseType;
 import org.scoutsdecanarias.ecatlim_backend.features.activity.repository.*;
 import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentEnrolledEvent;
+import org.scoutsdecanarias.ecatlim_backend.features.event.dto.StudentUnenrolledEvent;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.Event;
 import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollment;
+import org.scoutsdecanarias.ecatlim_backend.features.event.service.AttendanceService;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.lesson_block.LessonBlock;
@@ -60,7 +62,9 @@ public class ActivityService {
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final BlobStorageService blobStorageService;
     private final NotificationService notificationService;
+    private final AttendanceService attendanceService;
 
+    private static final Set<Role> FULL_ACCESS_ROLES = Set.of(Role.ADMIN, Role.MANAGER_DIRECTOR, Role.MANAGEMENT, Role.EVENT_DIRECTOR);
     private static final Set<Role> STAFF_ROLES = Set.of(Role.ADMIN, Role.MANAGER_DIRECTOR, Role.MANAGEMENT, Role.EVENT_DIRECTOR, Role.TRAINER);
 
     public List<ActivityDto> getActivitiesByEventForUser(Integer eventId, String userEmail) {
@@ -69,7 +73,7 @@ public class ActivityService {
         Integer userId = user.getId();
         boolean isStaff = user.getRoles().stream().anyMatch(STAFF_ROLES::contains);
         return activityRepository.findByEventId(eventId).stream()
-                .filter(activity -> isStaff || activity.getAssignedUser() == null || activity.getAssignedUser().getId().equals(userId))
+                .filter(activity -> isStaff || progressRepository.findByActivityIdAndStudentId(activity.getId(), userId).isPresent())
                 .map(activity -> ActivityDto.fromEntity(activity).withProgressStatus(
                         progressRepository.findByActivityIdAndStudentId(activity.getId(), userId)
                                 .map(p -> p.getStatus().name())
@@ -88,6 +92,14 @@ public class ActivityService {
         User creator = userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
         LessonBlock lessonBlock = lessonBlockRepository.findById(dto.lessonBlockId()).orElseThrow(() -> new ResourceNotFoundException("Lesson Block not found with id: " + dto.lessonBlockId()));
+
+        if (!event.getLessonBlocks().contains(lessonBlock)) {
+            throw new EcatlimException("El bloque formativo no pertenece a este evento", HttpStatus.BAD_REQUEST);
+        }
+        boolean isManager = creator.getRoles().stream().anyMatch(FULL_ACCESS_ROLES::contains);
+        if (!isManager && !attendanceService.getMarkableLessonBlockIds(event, userEmail).contains(lessonBlock.getId())) {
+            throw new EcatlimException("Solo puedes crear actividades en los bloques de este evento en los que participas como formador", HttpStatus.FORBIDDEN);
+        }
 
         if (dto.responsibleId() == null) {
             throw new EcatlimException("Debes indicar el formador responsable de la actividad", HttpStatus.BAD_REQUEST);
@@ -118,7 +130,7 @@ public class ActivityService {
                 surveyActivity.setPassingScore(dto.passingScore());
                 activity = surveyActivity;
             }
-            default ->  throw new IllegalArgumentException("Invalid activity type");
+            default ->  throw new EcatlimException("El tipo de actividad no es válido", HttpStatus.BAD_REQUEST);
         }
 
         activity.setEvent(event);
@@ -189,6 +201,7 @@ public class ActivityService {
         }
 
         User student = getParticipant(activityId, userEmail);
+        assertOpenForStudents(activity, false);
 
         ForumPublication publication = new ForumPublication();
         publication.setActivity(forumActivity);
@@ -213,6 +226,7 @@ public class ActivityService {
         }
 
         User student = getParticipant(activityId, userEmail);
+        assertOpenForStudents(activity, true);
         Integer studentId = student.getId();
         Optional<User> user = Optional.of(student);
 
@@ -300,6 +314,7 @@ public class ActivityService {
         }
 
         User student = getParticipant(activityId, userEmail);
+        assertOpenForStudents(activity, true);
 
         String blobName = student.getId() + "_" + System.currentTimeMillis() + "_" + FileNames.randomBlobName(file.getOriginalFilename());
         String fileUrl;
@@ -324,6 +339,16 @@ public class ActivityService {
         return saved;
     }
 
+    private void assertOpenForStudents(Activity activity, boolean enforceDueDate) {
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(activity.getAvailableAt())) {
+            throw new EcatlimException("Esta actividad todavía no está disponible", HttpStatus.CONFLICT);
+        }
+        if (enforceDueDate && now.isAfter(activity.getDueDate())) {
+            throw new EcatlimException("El plazo de entrega de esta actividad ha terminado", HttpStatus.CONFLICT);
+        }
+    }
+
     private User getParticipant(Integer activityId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
@@ -341,8 +366,12 @@ public class ActivityService {
                 event.lessonBlockId()
         );
 
-        List<ActivityProgress> progressesForNewStudent = blockActivities.stream()
-                .filter(activity -> activity.getAssignedUser() == null).map(activity -> {
+        List<Activity> newActivities = blockActivities.stream()
+                .filter(activity -> activity.getAssignedUser() == null)
+                .filter(activity -> progressRepository.findByActivityIdAndStudentId(activity.getId(), event.studentId()).isEmpty())
+                .toList();
+
+        List<ActivityProgress> progressesForNewStudent = newActivities.stream().map(activity -> {
             ActivityProgress progress = new ActivityProgress();
             progress.setActivity(activity);
             progress.setStudentId(event.studentId());
@@ -351,17 +380,32 @@ public class ActivityService {
         }).toList();
 
         progressRepository.saveAll(progressesForNewStudent);
-        blockActivities.stream()
-                .filter(activity -> activity.getAssignedUser() == null)
-                .forEach(activity -> notifyActivityAssigned(activity, List.of(event.studentId())));
+        newActivities.forEach(activity -> notifyActivityAssigned(activity, List.of(event.studentId())));
     }
 
-    public List<ForumPublication> getPublicationsSorted(Integer activityId) {
+    @EventListener
+    @Transactional
+    public void handleStudentUnenrolled(StudentUnenrolledEvent event) {
+        for (Activity activity : activityRepository.findByEventIdAndLessonBlockId(event.eventId(), event.lessonBlockId())) {
+            progressRepository.findByActivityIdAndStudentId(activity.getId(), event.studentId())
+                    .ifPresent(progressRepository::delete);
+            notificationService.resolve(event.studentId(), NotificationType.ACTIVITY_ASSIGNED, activity.getId());
+        }
+    }
+
+    public List<ForumPublication> getPublicationsSorted(Integer activityId, String userEmail) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
         if (!(activity instanceof ForumActivity)) {
-            throw new IllegalArgumentException("This activity is not a Forum/Glossary");
+            throw new EcatlimException("Esta actividad no es un foro ni un glosario", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
+        boolean isStaff = user.getRoles().stream().anyMatch(STAFF_ROLES::contains);
+        if (!isStaff && progressRepository.findByActivityIdAndStudentId(activityId, user.getId()).isEmpty()) {
+            throw new EcatlimException("No estás inscrito en el bloque de esta actividad", HttpStatus.FORBIDDEN);
         }
 
         if (activity.getActivityType() == ActivityType.GLOSSARY) {
