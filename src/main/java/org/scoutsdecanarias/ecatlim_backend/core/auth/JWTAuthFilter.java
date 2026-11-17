@@ -21,14 +21,24 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 public class JWTAuthFilter extends OncePerRequestFilter {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    /** The only endpoints a session can use while the user still has to change a temporary password. */
+    private static final Set<String> PASSWORD_CHANGE_PATHS = Set.of("/password/change-password", "/auth/refresh", "/auth/logout", "/user/me");
+
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+
+    /** Login, refresh and second factor steps are called without a session, so a stale token must not block them. */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/auth/");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
@@ -50,6 +60,10 @@ public class JWTAuthFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (Boolean.TRUE.equals(jwtUtil.validateToken(jwt, userDetails))) {
+                    if (jwtUtil.isPasswordChangeRequired(jwt) && !PASSWORD_CHANGE_PATHS.contains(request.getRequestURI())) {
+                        writeError(response, HttpServletResponse.SC_FORBIDDEN, "Debes cambiar tu contraseña antes de continuar");
+                        return;
+                    }
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                     );
@@ -74,7 +88,11 @@ public class JWTAuthFilter extends OncePerRequestFilter {
     }
 
     private static void writeErrorResponse(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        writeError(response, HttpServletResponse.SC_UNAUTHORIZED, message);
+    }
+
+    private static void writeError(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
         response.getWriter().write(OBJECT_MAPPER.writeValueAsString(new EcatlimErrorResponse(message)));
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

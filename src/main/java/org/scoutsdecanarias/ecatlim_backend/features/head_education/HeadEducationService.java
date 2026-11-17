@@ -10,6 +10,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.event.entity.EventEnrollmen
 import org.scoutsdecanarias.ecatlim_backend.features.event.enums.PaymentStatus;
 import org.scoutsdecanarias.ecatlim_backend.features.event.repository.EventEnrollmentRepository;
 import org.scoutsdecanarias.ecatlim_backend.features.event.service.EnrollmentService;
+import org.scoutsdecanarias.ecatlim_backend.core.auth.refresh.RefreshTokenService;
 import org.scoutsdecanarias.ecatlim_backend.features.recognition.service.RecognitionService;
 import org.scoutsdecanarias.ecatlim_backend.features.head_education.dto.HeadEducationEventDto;
 import org.scoutsdecanarias.ecatlim_backend.features.head_education.dto.HeadEducationMemberDto;
@@ -42,6 +43,7 @@ public class HeadEducationService {
     private final EventEnrollmentRepository eventEnrollmentRepository;
     private final EnrollmentService enrollmentService;
     private final RecognitionService recognitionService;
+    private final RefreshTokenService refreshTokenService;
     private final StudentOverviewService studentOverviewService;
 
     @Transactional(readOnly = true)
@@ -93,6 +95,7 @@ public class HeadEducationService {
         }
         member.setEnabled(enabled);
         if (!enabled) {
+            refreshTokenService.revokeAll(member.getId());
             enrollmentService.releaseUpcomingEnrollments(member.getId());
             recognitionService.removeFromActiveCommissions(member.getId());
         }

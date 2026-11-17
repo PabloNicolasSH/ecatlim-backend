@@ -67,6 +67,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 new Rule("forgot-ip", "GET", "/password/forgot", 5, Duration.ofMinutes(15), byIp),
                 new Rule("forgot-email", "GET", "/password/forgot", 3, Duration.ofHours(1), byEmail),
                 new Rule("reset-ip", "POST", "/password/reset", 10, Duration.ofMinutes(15), byIp),
+                new Rule("mfa-verify-ip", "POST", "/auth/mfa/verify", 10, Duration.ofMinutes(1), byIp),
+                new Rule("mfa-setup-ip", "POST", "/auth/mfa/setup", 10, Duration.ofMinutes(1), byIp),
+                new Rule("mfa-setup-confirm-ip", "POST", "/auth/mfa/setup/confirm", 10, Duration.ofMinutes(1), byIp),
+                new Rule("refresh-ip", "POST", "/auth/refresh", 60, Duration.ofMinutes(1), byIp),
                 new Rule("change-password-ip", "POST", "/password/change-password", 10, Duration.ofMinutes(15), byIp),
                 new Rule("pending-user-ip", "POST", "/pending-user/request", 5, Duration.ofHours(1), byIp),
                 new Rule("scout-groups-ip", "GET", "/scout-group/all", 60, Duration.ofMinutes(1), byIp)

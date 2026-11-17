@@ -11,6 +11,7 @@ import org.scoutsdecanarias.ecatlim_backend.features.user.service.StudentOvervie
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.TrainingTeamService;
 import org.scoutsdecanarias.ecatlim_backend.features.user.service.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -156,6 +157,22 @@ public class UserController {
     public UserDto activateUser(@PathVariable Integer id) {
         log.info("METHOD activateUser - Activating user: {} by: {}", id, SecurityContextHolder.getContext().getAuthentication().getName());
         return UserDto.fromEntity(userService.activateUser(id));
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/admin/reset-password/{id}")
+    public ResponseEntity<Void> resetPassword(@PathVariable Integer id) {
+        log.info("METHOD resetPassword - Resetting the password of user: {}, by: {}", id, SecurityContextHolder.getContext().getAuthentication().getName());
+        userService.resetPasswordByAdmin(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/admin/reset-mfa/{id}")
+    public ResponseEntity<Void> resetMfa(@PathVariable Integer id) {
+        log.info("METHOD resetMfa - Resetting the two-factor authentication of user: {}, by: {}", id, SecurityContextHolder.getContext().getAuthentication().getName());
+        userService.resetMfaByAdmin(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
