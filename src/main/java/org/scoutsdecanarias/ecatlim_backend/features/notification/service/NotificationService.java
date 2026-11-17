@@ -102,6 +102,13 @@ public class NotificationService {
         }
     }
 
+    public void deleteNotification(String email, Integer notificationId) {
+        User user = getUser(email);
+        Notification notification = notificationRepository.findByIdAndUserId(notificationId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with ID: " + notificationId));
+        notificationRepository.delete(notification);
+    }
+
     public void markAllAsRead(String email) {
         LocalDateTime now = LocalDateTime.now();
         notificationRepository.findByUserIdAndReadAtIsNull(getUser(email).getId())

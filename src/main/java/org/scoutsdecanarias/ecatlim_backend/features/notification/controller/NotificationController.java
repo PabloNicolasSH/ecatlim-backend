@@ -38,6 +38,12 @@ public class NotificationController {
         notificationService.markAsRead(principal.getName(), id);
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteNotification(@PathVariable Integer id, Principal principal) {
+        log.info("METHOD deleteNotification() - User {} deleting notification {}", principal.getName(), id);
+        notificationService.deleteNotification(principal.getName(), id);
+    }
+
     @PostMapping("/read-all")
     public void markAllAsRead(Principal principal) {
         log.info("METHOD markAllAsRead() - User {} reading all notifications", principal.getName());
